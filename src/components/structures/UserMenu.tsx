@@ -356,7 +356,7 @@ export default class UserMenu extends React.Component<IProps, IState> {
                     iconClassName="mx_UserMenu_iconMessage"
                     label="Buy Credits"
                     // @ts-ignore
-                    onClick={(e) => window.location = 'https://textrp-beta.35.77.151.153.nip.io/setting/buy-credits'}
+                    onClick={(e) => window.location = 'https://frontend.textrp.io/setting/buy-credits'}
                 />
                 <IconizedContextMenuOption
                     iconClassName="mx_UserMenu_iconLock"
