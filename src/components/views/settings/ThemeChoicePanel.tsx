@@ -16,11 +16,12 @@ limitations under the License.
 
 import React from "react";
 import { logger } from "matrix-js-sdk/src/logger";
+import axios from "axios";
 
 import { _t } from "../../../languageHandler";
 import SettingsStore from "../../../settings/SettingsStore";
 import { findHighContrastTheme, findNonHighContrastTheme, getOrderedThemes, isHighContrastTheme } from "../../../theme";
-import ThemeWatcher from "../../../settings/watchers/ThemeWatcher";
+// import ThemeWatcher from "../../../settings/watchers/ThemeWatcher";
 import AccessibleButton from "../elements/AccessibleButton";
 import dis from "../../../dispatcher/dispatcher";
 import { RecheckThemePayload } from "../../../dispatcher/payloads/RecheckThemePayload";
@@ -31,12 +32,15 @@ import StyledRadioGroup from "../elements/StyledRadioGroup";
 import { SettingLevel } from "../../../settings/SettingLevel";
 import PosthogTrackers from "../../../PosthogTrackers";
 import SettingsSubsection from "./shared/SettingsSubsection";
+import UserIdentifierCustomisations from "../../../customisations/UserIdentifier";
+import {MatrixClientPeg} from "../../../MatrixClientPeg";
 
 interface IProps {}
 
 interface IThemeState {
     theme: string;
     useSystemTheme: boolean;
+    showDarkModeToggle: boolean;
 }
 
 export interface CustomThemeMessage {
@@ -62,6 +66,10 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
         };
     }
 
+    public componentDidMount(): void {
+        this.fetchDetails().then(r => {})
+    }
+
     public static calculateThemeState(): IThemeState {
         // We have to mirror the logic from ThemeWatcher.getEffectiveTheme so we
         // show the right values for things.
@@ -81,6 +89,7 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
             return {
                 theme: themeChoice,
                 useSystemTheme: true,
+                showDarkModeToggle: false,
             };
         }
 
@@ -89,6 +98,7 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
             return {
                 theme: themeChoice,
                 useSystemTheme: false,
+                showDarkModeToggle: false,
             };
         }
 
@@ -96,11 +106,13 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
         return {
             theme: themeChoice,
             useSystemTheme: SettingsStore.getValueAt(SettingLevel.DEVICE, "use_system_theme"),
+            showDarkModeToggle: false,
         };
     }
 
     private onThemeChange = (newTheme: string): void => {
         if (this.state.theme === newTheme) return;
+        if (!this.state.showDarkModeToggle) return;
 
         PosthogTrackers.trackInteraction("WebSettingsAppearanceTabThemeSelector");
 
@@ -121,11 +133,25 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
         dis.dispatch<RecheckThemePayload>({ action: Action.RecheckTheme, forceTheme: newTheme });
     };
 
-    private onUseSystemThemeChanged = (checked: boolean): void => {
-        this.setState({ useSystemTheme: checked });
-        SettingsStore.setValue("use_system_theme", null, SettingLevel.DEVICE, checked);
-        dis.dispatch<RecheckThemePayload>({ action: Action.RecheckTheme });
-    };
+    private async fetchDetails(): Promise<void> {
+        try {
+            const details = UserIdentifierCustomisations.getDisplayUserIdentifier(
+                MatrixClientPeg.get().getSafeUserId(),
+                {
+                    withDisplayName: true,
+                },
+            )
+            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark`)
+            this.setState({
+                showDarkModeToggle: true
+            })
+        } catch (e) {}
+    }
+    // private onUseSystemThemeChanged = (checked: boolean): void => {
+    //     this.setState({ useSystemTheme: checked });
+    //     SettingsStore.setValue("use_system_theme", null, SettingLevel.DEVICE, checked);
+    //     dis.dispatch<RecheckThemePayload>({ action: Action.RecheckTheme });
+    // };
 
     private onAddCustomTheme = async (): Promise<void> => {
         let currentThemes: string[] = SettingsStore.getValue("custom_themes");
@@ -194,20 +220,20 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
     }
 
     public render(): React.ReactElement<HTMLDivElement> {
-        const themeWatcher = new ThemeWatcher();
+        // const themeWatcher = new ThemeWatcher();
         let systemThemeSection: JSX.Element | undefined;
-        if (themeWatcher.isSystemThemeSupported()) {
-            systemThemeSection = (
-                <div data-testid="checkbox-use-system-theme">
-                    <StyledCheckbox
-                        checked={this.state.useSystemTheme}
-                        onChange={(e) => this.onUseSystemThemeChanged(e.target.checked)}
-                    >
-                        {SettingsStore.getDisplayName("use_system_theme")}
-                    </StyledCheckbox>
-                </div>
-            );
-        }
+        // if (themeWatcher.isSystemThemeSupported()) {
+        //     systemThemeSection = (
+        //         <div data-testid="checkbox-use-system-theme">
+        //             <StyledCheckbox
+        //                 checked={this.state.useSystemTheme}
+        //                 onChange={(e) => this.onUseSystemThemeChanged(e.target.checked)}
+        //             >
+        //                 {SettingsStore.getDisplayName("use_system_theme")}
+        //             </StyledCheckbox>
+        //         </div>
+        //     );
+        // }
 
         let customThemeForm: JSX.Element | undefined;
         if (SettingsStore.getValue("feature_custom_themes")) {

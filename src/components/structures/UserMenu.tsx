@@ -16,6 +16,7 @@ limitations under the License.
 
 import React, { createRef, ReactNode } from "react";
 import { Room } from "matrix-js-sdk/src/models/room";
+import axios from "axios";
 
 import { MatrixClientPeg } from "../../MatrixClientPeg";
 import defaultDispatcher from "../../dispatcher/dispatcher";
@@ -66,6 +67,7 @@ interface IState {
     isHighContrast: boolean;
     selectedSpace?: Room | null;
     showLiveAvatarAddon: boolean;
+    showDarkModeToggle: boolean;
 }
 
 const toRightOf = (rect: PartialDOMRect): MenuProps => {
@@ -103,10 +105,26 @@ export default class UserMenu extends React.Component<IProps, IState> {
             isHighContrast: this.isUserOnHighContrastTheme(),
             selectedSpace: SpaceStore.instance.activeSpaceRoom,
             showLiveAvatarAddon: this.context.voiceBroadcastRecordingsStore.hasCurrent(),
+            showDarkModeToggle: false,
         };
 
         OwnProfileStore.instance.on(UPDATE_EVENT, this.onProfileUpdate);
         SpaceStore.instance.on(UPDATE_SELECTED_SPACE, this.onSelectedSpaceUpdate);
+    }
+
+    private async fetchDetails(): Promise<void> {
+        try {
+            const details = UserIdentifierCustomisations.getDisplayUserIdentifier(
+                MatrixClientPeg.get().getSafeUserId(),
+                {
+                    withDisplayName: true,
+                },
+            )
+            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark`)
+            this.setState({
+                showDarkModeToggle: true
+            })
+        } catch (e) {}
     }
 
     private get hasHomePage(): boolean {
@@ -126,6 +144,7 @@ export default class UserMenu extends React.Component<IProps, IState> {
         );
         this.dispatcherRef = defaultDispatcher.register(this.onAction);
         this.themeWatcherRef = SettingsStore.watchSetting("theme", null, this.onThemeChanged);
+        this.fetchDetails().then(r => {})
     }
 
     public componentWillUnmount(): void {
@@ -412,7 +431,7 @@ export default class UserMenu extends React.Component<IProps, IState> {
                         </span>
                     </div>
 
-                    <RovingAccessibleTooltipButton
+                    {this.state.showDarkModeToggle && (<RovingAccessibleTooltipButton
                         className="mx_UserMenu_contextMenu_themeButton"
                         onClick={this.onSwitchThemeClick}
                         title={this.state.isDarkTheme ? _t("Switch to light mode") : _t("Switch to dark mode")}
@@ -422,7 +441,7 @@ export default class UserMenu extends React.Component<IProps, IState> {
                             alt={_t("Switch theme")}
                             width={16}
                         />
-                    </RovingAccessibleTooltipButton>
+                    </RovingAccessibleTooltipButton>)}
                 </div>
                 {topSection}
                 {primaryOptionList}
