@@ -24,9 +24,9 @@ export default class AuthFooter extends React.Component {
     public render(): React.ReactNode {
         return (
             <footer className="mx_AuthFooter" role="contentinfo">
-                <a href="https://matrix.org" target="_blank" rel="noreferrer noopener">
+                {/* <a href="https://matrix.org" target="_blank" rel="noreferrer noopener">
                     {_t("powered by Matrix")}
-                </a>
+                </a> */}
             </footer>
         );
     }

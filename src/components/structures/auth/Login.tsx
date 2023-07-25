@@ -415,7 +415,8 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         if (!this.state.flows) return null;
 
         // this is the ideal order we want to show the flows in
-        const order = ["m.login.password", "m.login.sso"];
+        // const order = ["m.login.password", "m.login.sso"];
+        const order = ["m.login.sso"];
 
         const flows = filterBoolean(order.map((type) => this.state.flows?.find((flow) => flow.type === type)));
         return (
@@ -503,23 +504,24 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                     )}
                 </div>
             );
-        } else if (SettingsStore.getValue(UIFeature.Registration)) {
-            footer = (
-                <span className="mx_AuthBody_changeFlow">
-                    {_t(
-                        "New? <a>Create account</a>",
-                        {},
-                        {
-                            a: (sub) => (
-                                <AccessibleButton kind="link_inline" onClick={this.onTryRegisterClick}>
-                                    {sub}
-                                </AccessibleButton>
-                            ),
-                        },
-                    )}
-                </span>
-            );
-        }
+        } 
+        // else if (SettingsStore.getValue(UIFeature.Registration)) {
+        //     footer = (
+        //         <span className="mx_AuthBody_changeFlow">
+        //             {_t(
+        //                 "New? <a>Create account</a>",
+        //                 {},
+        //                 {
+        //                     a: (sub) => (
+        //                         <AccessibleButton kind="link_inline" onClick={this.onTryRegisterClick}>
+        //                             {sub}
+        //                         </AccessibleButton>
+        //                     ),
+        //                 },
+        //             )}
+        //         </span>
+        //     );
+        // }
 
         return (
             <AuthPage>
@@ -531,10 +533,10 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                     </h1>
                     {errorTextSection}
                     {serverDeadSection}
-                    <ServerPicker
+                    {/* <ServerPicker
                         serverConfig={this.props.serverConfig}
                         onServerConfigChange={this.props.onServerConfigChange}
-                    />
+                    /> */}
                     {this.renderLoginComponentForFlows()}
                     {footer}
                 </AuthBody>
