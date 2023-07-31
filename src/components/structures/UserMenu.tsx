@@ -265,6 +265,18 @@ export default class UserMenu extends React.Component<IProps, IState> {
         this.setState({ contextMenuPosition: null }); // also close the menu
     };
 
+
+    private onCreditBuy = (ev: ButtonEvent, tabId?: string): void => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        const payload: OpenToTabPayload = { action: Action.ViewUserSettings, initialTabId: tabId };
+        defaultDispatcher.dispatch(payload);
+        this.setState({ contextMenuPosition: null }); // also close the menu
+    };
+
+    
+
     private onProvideFeedback = (ev: ButtonEvent): void => {
         ev.preventDefault();
         ev.stopPropagation();
@@ -374,8 +386,10 @@ export default class UserMenu extends React.Component<IProps, IState> {
                 <IconizedContextMenuOption
                     iconClassName="mx_UserMenu_iconMessage"
                     label="Buy Credits"
+                    onClick={(e) => this.onCreditBuy(e, UserTab.Credits)}
+                    
                     // @ts-ignore
-                    onClick={(e) => window.location = 'https://frontend.textrp.io/setting/buy-credits'}
+                    // onClick={(e) => window.location = 'https://frontend.textrp.io/setting/buy-credits'}
                 />
                 <IconizedContextMenuOption
                     iconClassName="mx_UserMenu_iconLock"
