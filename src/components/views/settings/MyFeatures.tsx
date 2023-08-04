@@ -106,7 +106,7 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
             )
             console.log("details", details)
 
-            const {data: features} = await axios.get(`https://backend.textrp.io/my-features/${"rfdmLaLLtBzHUrq2SjtnZemY39XM9jPYwL"}/main`)
+            const {data: features} = await axios.get(`https://backend.textrp.io/my-features/${details}/main`)
             this.setState({featuresData: features, phase: Phase.Ready})
         } catch (e) {
             this.setState({phase: Phase.Error})
