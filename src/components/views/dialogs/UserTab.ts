@@ -20,6 +20,7 @@ export enum UserTab {
     BuyCredits = "USER_BUY_CREDITS_TAB",
     MyFeatures = "USER_MY_FEATURES_TAB",
     Notifications = "USER_NOTIFICATIONS_TAB",
+    Credits = "BUY_CREDITS",
     Preferences = "USER_PREFERENCES_TAB",
     Keyboard = "USER_KEYBOARD_TAB",
     Sidebar = "USER_SIDEBAR_TAB",
