@@ -17,6 +17,8 @@ limitations under the License.
 export enum UserTab {
     General = "USER_GENERAL_TAB",
     Appearance = "USER_APPEARANCE_TAB",
+    BuyCredits = "USER_BUY_CREDITS_TAB",
+    MyFeatures = "USER_MY_FEATURES_TAB",
     Notifications = "USER_NOTIFICATIONS_TAB",
     Preferences = "USER_PREFERENCES_TAB",
     Keyboard = "USER_KEYBOARD_TAB",

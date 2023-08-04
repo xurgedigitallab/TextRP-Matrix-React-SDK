@@ -68,6 +68,15 @@ interface IState {
     selectedSpace?: Room | null;
     showLiveAvatarAddon: boolean;
     showDarkModeToggle: boolean;
+    user?: {
+        user: {
+            address?: string;
+            discount?: any;
+            subscriptions?: any[]
+            credit?: any
+        },
+        address: string
+    };
 }
 
 const toRightOf = (rect: PartialDOMRect): MenuProps => {
@@ -120,7 +129,11 @@ export default class UserMenu extends React.Component<IProps, IState> {
                     withDisplayName: true,
                 },
             )
-            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark`)
+            const {data: address} = await axios.post(`https://backend.textrp.io/my-address`, {
+                address: details
+            })
+            this.setState({user: address})
+            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark_mode`)
             this.setState({
                 showDarkModeToggle: true
             })
@@ -374,8 +387,12 @@ export default class UserMenu extends React.Component<IProps, IState> {
                 <IconizedContextMenuOption
                     iconClassName="mx_UserMenu_iconMessage"
                     label="Buy Credits"
-                    // @ts-ignore
-                    onClick={(e) => window.location = 'https://frontend.textrp.io/setting/buy-credits'}
+                    onClick={(e) => this.onSettingsOpen(e, UserTab.BuyCredits)}
+                />
+                <IconizedContextMenuOption
+                    iconClassName="mx_UserMenu_iconSettings"
+                    label="My NFTs"
+                    onClick={(e) => this.onSettingsOpen(e, UserTab.MyFeatures)}
                 />
                 <IconizedContextMenuOption
                     iconClassName="mx_UserMenu_iconLock"
@@ -428,6 +445,9 @@ export default class UserMenu extends React.Component<IProps, IState> {
                                     withDisplayName: true,
                                 },
                             )}
+                        </span>
+                        <span className="mx_UserMenu_contextMenu_userId">
+                            {this.state?.user?.address || ''}
                         </span>
                     </div>
 

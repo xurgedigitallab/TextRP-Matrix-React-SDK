@@ -1443,6 +1443,8 @@
     "Mentions & keywords": "Mentions & keywords",
     "Notification targets": "Notification targets",
     "There was an error loading your notification settings.": "There was an error loading your notification settings.",
+    "There was an error loading your credits settings.": "There was an error loading your credits settings.",
+    "There was an error loading your feature settings.": "There was an error loading your feature settings.",
     "Failed to save your profile": "Failed to save your profile",
     "The operation could not be completed": "The operation could not be completed",
     "Display Name": "Display Name",
@@ -3751,5 +3753,7 @@
     "Activate selected button": "Activate selected button",
     "New line": "New line",
     "Force complete": "Force complete",
-    "Search (must be enabled)": "Search (must be enabled)"
+    "Search (must be enabled)": "Search (must be enabled)",
+    "Buy Credits": "Buy Credits",
+    "My NFTs": "My NFTs"
 }

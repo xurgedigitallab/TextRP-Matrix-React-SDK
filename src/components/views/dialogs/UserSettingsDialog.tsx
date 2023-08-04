@@ -37,6 +37,8 @@ import KeyboardUserSettingsTab from "../settings/tabs/user/KeyboardUserSettingsT
 import SessionManagerTab from "../settings/tabs/user/SessionManagerTab";
 import { UserTab } from "./UserTab";
 import { NonEmptyArray } from "../../../@types/common";
+import BuyCreditsUserSettingsTab from "../settings/tabs/user/BuyCreditsUserSettingsTab";
+import MyFeaturesUserSettingsTab from "../settings/tabs/user/MyFeaturesUserSettingsTab";
 
 interface IProps {
     initialTabId?: UserTab;
@@ -99,6 +101,26 @@ export default class UserSettingsDialog extends React.Component<IProps, IState> 
                 "mx_UserSettingsDialog_bellIcon",
                 <NotificationUserSettingsTab />,
                 "UserSettingsNotifications",
+            ),
+        );
+        tabs.push(
+            new Tab(
+                UserTab.BuyCredits,
+                _td("Buy Credits"),
+                "mx_UserSettingsDialog_iconMessage",
+                <BuyCreditsUserSettingsTab />,
+                // @ts-ignore
+                "UserSettingsBuyCredits",
+            ),
+        );
+        tabs.push(
+            new Tab(
+                UserTab.MyFeatures,
+                _td("My NFTs"),
+                "mx_UserSettingsDialog_settingsIcon",
+                <MyFeaturesUserSettingsTab />,
+                // @ts-ignore
+                "UserSettingsMyFeatures",
             ),
         );
         tabs.push(
