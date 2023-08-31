@@ -116,7 +116,7 @@ export default class UserSettingsDialog extends React.Component<IProps, IState> 
         tabs.push(
             new Tab(
                 UserTab.MyFeatures,
-                _td("My NFTs"),
+                _td("Feature Packs"),
                 "mx_UserSettingsDialog_settingsIcon",
                 <MyFeaturesUserSettingsTab />,
                 // @ts-ignore

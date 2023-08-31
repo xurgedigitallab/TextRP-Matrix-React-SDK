@@ -25,7 +25,7 @@ export default class MyFeaturesUserSettingsTab extends React.Component {
     public render(): React.ReactNode {
         return (
             <SettingsTab>
-                <SettingsSection heading={_t("My NFTs")}>
+                <SettingsSection heading={_t("Feature Packs")}>
                     <MyFeatures />
                 </SettingsSection>
             </SettingsTab>

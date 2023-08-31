@@ -21,6 +21,8 @@ import { Room } from "matrix-js-sdk/src/models/room";
 import { MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixError } from "matrix-js-sdk/src/matrix";
+import { ToastContainer, toast } from "react-toastify";
+import axios from "axios";
 
 import { Icon as InfoIcon } from "../../../../res/img/element-icons/info.svg";
 import { Icon as EmailPillAvatarIcon } from "../../../../res/img/icon-email-pill-avatar.svg";
@@ -80,6 +82,7 @@ import { UNKNOWN_PROFILE_ERRORS } from "../../../utils/MultiInviter";
 import AskInviteAnywayDialog, { UnknownProfiles } from "./AskInviteAnywayDialog";
 import { SdkContextClass } from "../../../contexts/SDKContext";
 import { UserProfilesStore } from "../../../stores/UserProfilesStore";
+import "react-toastify/dist/ReactToastify.css";
 
 // we have a number of types defined from the Matrix spec which can't reasonably be altered here.
 /* eslint-disable camelcase */
@@ -536,6 +539,45 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
         return newTargets;
     }
 
+    private async fetchDetails(): Promise<void> {
+        try {
+            const details = UserIdentifierCustomisations.getDisplayUserIdentifier(
+                MatrixClientPeg.get().getSafeUserId(),
+                {
+                    withDisplayName: true,
+                },
+            );
+
+            const { data: features } = await axios.get(`https://backend.textrp.io/my-features/${details}/main`);
+            console.log("details", features);
+            return features.nfts;
+            // this.setState({ featuresData: features, phase: Phase.Ready });
+        } catch (e) {
+            // this.setState({ phase: Phase.Error });
+            console.error(e);
+            return;
+        }
+    }
+
+    private canAccessFeature = async (target: any): Promise<any> => {
+        const nfts: any = await this.fetchDetails();
+        console.log("nfts", nfts);
+
+        if (nfts) {
+            if (target._userId === "@twitterbot:synapse.textrp.io") {
+                const featureExist = nfts.filter((nft: any) => nft.feature === "twitter").length > 0;
+                return { featureExist, type: "Twitter" };
+            } else if (target._userId === "@twiliobot:synapse.textrp.io") {
+                const featureExist = nfts.filter((nft: any) => nft.feature === "twilio").length > 0;
+                return { featureExist, type: "Twilio" };
+            } else if (target._userId === "@discordbot:synapse.textrp.io") {
+                const featureExist = nfts.filter((nft: any) => nft.feature === "discord").length > 0;
+                return { featureExist, type: "Discord" };
+            }
+        }
+        return {};
+    };
+
     /**
      * Check if there are unknown profiles if promptBeforeInviteUnknownUsers setting is enabled.
      * If so show the "invite anyway?" dialog. Otherwise directly create the DM local room.
@@ -562,7 +604,20 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
         try {
             const cli = MatrixClientPeg.get();
             const targets = this.convertFilter();
-            await startDmOnFirstMessage(cli, targets);
+
+            const isAllowed: any = await this.canAccessFeature(targets[0]);
+            console.log("is allowed", isAllowed);
+
+            if (isAllowed.featureExist) {
+                await startDmOnFirstMessage(cli, targets);
+            } else {
+                toast.error(
+                    ` You don't have the ${isAllowed.type} feature enabled. Please enable the feature from "Feature Packs" section.`,
+                );
+                console.log("Not Allowed");
+                return;
+            }
+
             this.props.onFinished(true);
         } catch (err) {
             logger.error(err);
@@ -713,6 +768,8 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
                         const profile = await this.profilesStore.getOrFetchProfile(term, { shouldThrow: true });
 
                         if (profile) {
+                            console.log("Profile", profile);
+
                             // If we have a profile, we have enough information to assume that
                             // the mxid can be invited - add it to the list. We stick it at the
                             // top so it is most obviously presented to the user.
@@ -1571,6 +1628,7 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
                 title={title}
                 screenName={this.screenName}
             >
+                <ToastContainer />
                 <div className="mx_InviteDialog_content">{dialogContent}</div>
             </BaseDialog>
         );

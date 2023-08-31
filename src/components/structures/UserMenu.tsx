@@ -72,10 +72,10 @@ interface IState {
         user: {
             address?: string;
             discount?: any;
-            subscriptions?: any[]
-            credit?: any
-        },
-        address: string
+            subscriptions?: any[];
+            credit?: any;
+        };
+        address: string;
     };
 }
 
@@ -128,15 +128,15 @@ export default class UserMenu extends React.Component<IProps, IState> {
                 {
                     withDisplayName: true,
                 },
-            )
-            const {data: address} = await axios.post(`https://backend.textrp.io/my-address`, {
-                address: details
-            })
-            this.setState({user: address})
-            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark_mode`)
+            );
+            const { data: address } = await axios.post(`https://backend.textrp.io/my-address`, {
+                address: details,
+            });
+            this.setState({ user: address });
+            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark_mode`);
             this.setState({
-                showDarkModeToggle: true
-            })
+                showDarkModeToggle: true,
+            });
         } catch (e) {}
     }
 
@@ -157,7 +157,7 @@ export default class UserMenu extends React.Component<IProps, IState> {
         );
         this.dispatcherRef = defaultDispatcher.register(this.onAction);
         this.themeWatcherRef = SettingsStore.watchSetting("theme", null, this.onThemeChanged);
-        this.fetchDetails().then(r => {})
+        this.fetchDetails().then((r) => {});
     }
 
     public componentWillUnmount(): void {
@@ -339,16 +339,16 @@ export default class UserMenu extends React.Component<IProps, IState> {
                     )}
                     {SettingsStore.getValue(UIFeature.Registration)
                         ? _t(
-                            "New here? <a>Create an account</a>",
-                            {},
-                            {
-                                a: (sub) => (
-                                    <AccessibleButton kind="link_inline" onClick={this.onRegisterClick}>
-                                        {sub}
-                                    </AccessibleButton>
-                                ),
-                            },
-                        )
+                              "New here? <a>Create an account</a>",
+                              {},
+                              {
+                                  a: (sub) => (
+                                      <AccessibleButton kind="link_inline" onClick={this.onRegisterClick}>
+                                          {sub}
+                                      </AccessibleButton>
+                                  ),
+                              },
+                          )
                         : null}
                 </div>
             );
@@ -391,7 +391,7 @@ export default class UserMenu extends React.Component<IProps, IState> {
                 />
                 <IconizedContextMenuOption
                     iconClassName="mx_UserMenu_iconSettings"
-                    label="My NFTs"
+                    label="Feature packs"
                     onClick={(e) => this.onSettingsOpen(e, UserTab.MyFeatures)}
                 />
                 <IconizedContextMenuOption
@@ -446,22 +446,22 @@ export default class UserMenu extends React.Component<IProps, IState> {
                                 },
                             )}
                         </span>
-                        <span className="mx_UserMenu_contextMenu_userId">
-                            {this.state?.user?.address || ''}
-                        </span>
+                        <span className="mx_UserMenu_contextMenu_userId">{this.state?.user?.address || ""}</span>
                     </div>
 
-                    {this.state.showDarkModeToggle && (<RovingAccessibleTooltipButton
-                        className="mx_UserMenu_contextMenu_themeButton"
-                        onClick={this.onSwitchThemeClick}
-                        title={this.state.isDarkTheme ? _t("Switch to light mode") : _t("Switch to dark mode")}
-                    >
-                        <img
-                            src={require("../../../res/img/element-icons/roomlist/dark-light-mode.svg").default}
-                            alt={_t("Switch theme")}
-                            width={16}
-                        />
-                    </RovingAccessibleTooltipButton>)}
+                    {this.state.showDarkModeToggle && (
+                        <RovingAccessibleTooltipButton
+                            className="mx_UserMenu_contextMenu_themeButton"
+                            onClick={this.onSwitchThemeClick}
+                            title={this.state.isDarkTheme ? _t("Switch to light mode") : _t("Switch to dark mode")}
+                        >
+                            <img
+                                src={require("../../../res/img/element-icons/roomlist/dark-light-mode.svg").default}
+                                alt={_t("Switch theme")}
+                                width={16}
+                            />
+                        </RovingAccessibleTooltipButton>
+                    )}
                 </div>
                 {topSection}
                 {primaryOptionList}
