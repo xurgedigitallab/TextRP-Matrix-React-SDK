@@ -566,16 +566,16 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
         if (nfts) {
             if (target._userId === "@twitterbot:synapse.textrp.io") {
                 const featureExist = nfts.filter((nft: any) => nft.feature === "twitter").length > 0;
-                return { featureExist, type: "Twitter" };
+                return { isBot: true, featureExist, type: "Twitter" };
             } else if (target._userId === "@twiliobot:synapse.textrp.io") {
                 const featureExist = nfts.filter((nft: any) => nft.feature === "twilio").length > 0;
-                return { featureExist, type: "Twilio" };
+                return { isBot: true, featureExist, type: "Twilio" };
             } else if (target._userId === "@discordbot:synapse.textrp.io") {
                 const featureExist = nfts.filter((nft: any) => nft.feature === "discord").length > 0;
-                return { featureExist, type: "Discord" };
+                return { isBot: true, featureExist, type: "Discord" };
             }
         }
-        return {};
+        return { isBot: false, featureExist: false };
     };
 
     /**
@@ -608,14 +608,14 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
             const isAllowed: any = await this.canAccessFeature(targets[0]);
             console.log("is allowed", isAllowed);
 
-            if (isAllowed.featureExist) {
-                await startDmOnFirstMessage(cli, targets);
-            } else {
+            if (!isAllowed.featureExist && isAllowed.isBot) {
                 toast.error(
                     ` You don't have the ${isAllowed.type} feature enabled. Please enable the feature from "Feature Packs" section.`,
-                );
-                console.log("Not Allowed");
-                return;
+                    );
+                    console.log("Not Allowed");
+                    return;
+                } else {
+                await startDmOnFirstMessage(cli, targets);
             }
 
             this.props.onFinished(true);
