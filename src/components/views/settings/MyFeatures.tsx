@@ -252,7 +252,7 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
                                 ))}
                             </div>
                             {this.state.availableFeatures?.nfts?.length === 0 || !this.state.featuresData
-                                ? "No NFTs found on your address"
+                                ? "No NFTs available"
                                 : ""}
                         </TabPanel>
                         <TabPanel>
