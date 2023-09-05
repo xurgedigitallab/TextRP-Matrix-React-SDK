@@ -1008,9 +1008,9 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
             return this.viewLogin();
         }
         this.setStateForNewView({
-            view: Views.WELCOME,
+            view: Views.LOGIN,
         });
-        this.notifyNewScreen("welcome");
+        this.notifyNewScreen("login");
         ThemeController.isLogin = true;
         this.themeWatcher.recheck();
     }
