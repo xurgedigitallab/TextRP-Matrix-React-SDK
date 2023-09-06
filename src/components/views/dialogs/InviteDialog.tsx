@@ -547,8 +547,10 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
                     withDisplayName: true,
                 },
             );
-
-            const { data: features } = await axios.get(`https://backend.textrp.io/my-features/${details}/main`);
+            const { data: userData } = await axios.post(`https://backend.textrp.io/my-address`, { address: details });
+            const { data: features } = await axios.get(
+                `https://backend.textrp.io/my-features/${userData.address}/main`,
+            );
             console.log("details", features);
             return features.nfts;
             // this.setState({ featuresData: features, phase: Phase.Ready });
@@ -559,23 +561,62 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
         }
     }
 
+    private async getAllFeatures(): Promise<void> {
+        try {
+            const { data: res } = await axios.get(`https://backend.textrp.io/get_feature_list`);
+            console.log("features", res);
+            return res.featureList;
+            // this.setState({ featuresData: features, phase: Phase.Ready });
+        } catch (e) {
+            // this.setState({ phase: Phase.Error });
+            console.error(e);
+            return;
+        }
+    }
+
     private canAccessFeature = async (target: any): Promise<any> => {
         const nfts: any = await this.fetchDetails();
+        const features: any = await this.getAllFeatures();
         console.log("nfts", nfts);
+        console.log("all", features);
 
-        if (nfts) {
-            if (target._userId === "@twitterbot:synapse.textrp.io") {
-                const featureExist = nfts.filter((nft: any) => nft.feature === "twitter").length > 0;
-                return { isBot: true, featureExist, type: "Twitter" };
-            } else if (target._userId === "@twiliobot:synapse.textrp.io") {
-                const featureExist = nfts.filter((nft: any) => nft.feature === "twilio").length > 0;
-                return { isBot: true, featureExist, type: "Twilio" };
-            } else if (target._userId === "@discordbot:synapse.textrp.io") {
-                const featureExist = nfts.filter((nft: any) => nft.feature === "discord").length > 0;
-                return { isBot: true, featureExist, type: "Discord" };
+        const requestedFeature = features.filter((feature: any) => feature.command === target._userId)[0];
+
+        // if requestedFeature is null that means there is non bot user requested
+        if (requestedFeature) {
+            if (requestedFeature.rule === "always_enabled") {
+                return { isBot: true, featureExist: true };
             }
+
+            if (requestedFeature.rule === "always_disabled") {
+                return {
+                    isBot: true,
+                    featureExist: false,
+                    err: `You don't have the ${requestedFeature.feature} feature enabled. Please enable the feature from Feature Packs section.`,
+                };
+            }
+
+            if (requestedFeature.rule === "nft_enabled") {
+                if (!nfts) {
+                    return {
+                        isBot: true,
+                        featureExist: false,
+                        err: `You don't have the ${requestedFeature.feature} feature enabled. Please enable the feature from Feature Packs section.`,
+                    };
+                } else {
+                    const featureExist = nfts.filter((nft: any) => nft.feature === requestedFeature.feature).length > 0;
+                    return {
+                        isBot: true,
+                        featureExist,
+                        err: !featureExist
+                            ? `You don't have the ${requestedFeature.feature} feature enabled. Please enable the feature from Feature Packs section.`
+                            : null,
+                    };
+                }
+            }
+        } else {
+            return { isBot: false, featureExist: false };
         }
-        return { isBot: false, featureExist: false };
     };
 
     /**
@@ -608,14 +649,12 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
             const isAllowed: any = await this.canAccessFeature(targets[0]);
             console.log("is allowed", isAllowed);
 
-            if (!isAllowed.featureExist && isAllowed.isBot) {
-                toast.error(
-                    ` You don't have the ${isAllowed.type} feature enabled. Please enable the feature from "Feature Packs" section.`,
-                    );
-                    console.log("Not Allowed");
-                    return;
-                } else {
+            if ((!isAllowed.featureExist && !isAllowed.isBot) || (isAllowed.featureExist && isAllowed.isBot)) {
                 await startDmOnFirstMessage(cli, targets);
+            } else {
+                toast.error(isAllowed.err);
+                console.log("Not Allowed");
+                return;
             }
 
             this.props.onFinished(true);

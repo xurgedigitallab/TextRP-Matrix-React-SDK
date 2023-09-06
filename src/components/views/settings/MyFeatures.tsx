@@ -188,9 +188,9 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
             console.log("details +++ ", availableFeatures);
 
             this.setState({
-                featuresData: features,
-                availableFeatures,
-                enabledFeatures: enableFeatures,
+                featuresData: !features.msg ? features : null,
+                availableFeatures: !availableFeatures.msg ? availableFeatures : null,
+                enabledFeatures: !enableFeatures.msg ? enableFeatures : null,
                 phase: Phase.Ready,
             });
         } catch (e) {
@@ -229,17 +229,16 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
 
                         <TabPanel>
                             <div style={{ display: "flex", padding: "10px", flexWrap: "wrap", gap: "20px" }}>
-                                {this.state.enabledFeatures?.nfts.map((ni: any, i: number) => (
-                                    <>
-                                        <div key={i} style={{ display: "flex", width: "320px" }}>
-                                            <NFTCard {...ni} key={i} with_content={true} />
-                                        </div>
-                                    </>
-                                ))}
+                                {this.state.enabledFeatures &&
+                                    this.state.enabledFeatures?.nfts.map((ni: any, i: number) => (
+                                        <>
+                                            <div key={i} style={{ display: "flex", width: "320px" }}>
+                                                <NFTCard {...ni} key={i} with_content={true} />
+                                            </div>
+                                        </>
+                                    ))}
                             </div>
-                            {this.state.enabledFeatures?.nfts?.length === 0 || !this.state.featuresData
-                                ? "No NFTs found on your address"
-                                : ""}
+                            {!this.state.enabledFeatures ? "No NFTs found on your address" : ""}
                         </TabPanel>
                         <TabPanel>
                             <div style={{ display: "flex", padding: "10px", flexWrap: "wrap", gap: "20px" }}>
@@ -251,9 +250,7 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
                                     </>
                                 ))}
                             </div>
-                            {this.state.availableFeatures?.nfts?.length === 0 || !this.state.featuresData
-                                ? "No NFTs available"
-                                : ""}
+                            {!this.state.availableFeatures ? "No NFTs available" : ""}
                         </TabPanel>
                         <TabPanel>
                             <div style={{ display: "flex", padding: "10px", flexWrap: "wrap", gap: "20px" }}>
@@ -271,9 +268,7 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
                                     </>
                                 ))}
                             </div>
-                            {this.state.featuresData?.length === 0 || !this.state.featuresData
-                                ? "No NFTs found on your address"
-                                : ""}
+                            {!this.state.featuresData ? "No NFTs found on your address" : ""}
                         </TabPanel>
                     </Tabs>
                 </div>
