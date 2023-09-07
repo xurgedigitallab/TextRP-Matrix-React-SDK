@@ -87,13 +87,13 @@ export const useProfileInfo = (): {
                 return true;
             } catch (e) {
                 if(isValidClassicAddress(extractWalletAddress(term))){
-                    const response=await axios.get(`${process.env.REACT_APP_BACKEND_URL}/verify-address/${extractWalletAddress(term)}`).then((response)=>response.data);
+                    const response=await axios.get(`https://backend.textrp.io/verify-address/${extractWalletAddress(term)}`).then((response)=>response.data);
                     if(response.active)
                         setIsActive(true);
                     else
                         setIsActive(false);
                     // if(response.active){
-                    //   const link= await axios.post(`${process.env.REACT_APP_BACKEND_URL}/accounts/${extractWalletAddress(term)}/payments`,{
+                    //   const link= await axios.post(`https://backend.textrp.io/accounts/${extractWalletAddress(term)}/payments`,{
                     //         message:"my first transaction", 
                     //         amount:"2000",
                     //     },{

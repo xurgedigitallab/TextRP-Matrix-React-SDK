@@ -130,11 +130,11 @@ export default class UserMenu extends React.Component<IProps, IState> {
                     withDisplayName: true,
                 },
             )
-            const {data: address} = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/my-address`, {
+            const {data: address} = await axios.post(`https://backend.textrp.io/my-address`, {
                 address: details
             })
             this.setState({user: address})
-            await axios.get(`${process.env.REACT_APP_BACKEND_URL}/check-nft/${details}/main/dark_mode`)
+            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark_mode`)
             this.setState({
                 showDarkModeToggle: true,
             });

@@ -141,7 +141,7 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
                     withDisplayName: true,
                 },
             )
-            await axios.get(`${process.env.REACT_APP_BACKEND_URL}/check-nft/${details}/main/dark`)
+            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark`)
             this.setState({
                 showDarkModeToggle: true
             })

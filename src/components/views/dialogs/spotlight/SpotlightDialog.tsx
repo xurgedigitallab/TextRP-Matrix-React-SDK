@@ -530,7 +530,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
     const generatePaymentLink = async () => {
         try {
 
-            const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/accounts/${extractWalletAddress(trimmedQuery)}/payments`, {
+            const res = await axios.post(`https://backend.textrp.io/accounts/${extractWalletAddress(trimmedQuery)}/payments`, {
                 message: "my first transaction",
                 amount: "2000",
             }, {

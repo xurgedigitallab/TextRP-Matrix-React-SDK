@@ -17,7 +17,7 @@ import Heading from '../../../typography/Heading'
 const BuyCredits = () => {
   const [isMount] = React.useState(true)
 //   const [isPaying, setIsPaying] = useState(false)
-  const userData = async() => await axios.get(`${process.env.REACT_APP_BACKEND_URL}/me`, {
+  const userData = async() => await axios.get(`https://backend.textrp.io/me`, {
     headers: {
         "Access-Control-Allow-Origin": "*"
     }
