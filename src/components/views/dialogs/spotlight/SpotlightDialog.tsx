@@ -23,6 +23,7 @@ import { Room } from "matrix-js-sdk/src/models/room";
 import { normalize } from "matrix-js-sdk/src/utils";
 import React, { ChangeEvent, RefObject, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import sanitizeHtml from "sanitize-html";
+import axios from 'axios';
 
 import { KeyBindingAction } from "../../../../accessibility/KeyboardShortcuts";
 import {
@@ -315,7 +316,8 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
     const [showRooms, setShowRooms] = useState(true);
     const [showSpaces, setShowSpaces] = useState(false);
     const { loading: peopleLoading, users, search: searchPeople } = useUserDirectory();
-    const { loading: profileLoading, profile, search: searchProfileInfo } = useProfileInfo();
+    const { loading: profileLoading, profile, isActive, search: searchProfileInfo } = useProfileInfo();
+
     const searchParams: [IDirectoryOpts] = useMemo(
         () => [
             {
@@ -326,6 +328,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
         ],
         [trimmedQuery, showRooms, showSpaces],
     );
+    console.log("searchParams", searchPeople, searchProfileInfo);
     useDebouncedCallback(filter === Filter.PublicRooms, searchPublicRooms, searchParams);
     useDebouncedCallback(filter === Filter.People, searchPeople, searchParams);
     useDebouncedCallback(filter === Filter.People, searchProfileInfo, searchParams);
@@ -509,6 +512,39 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
         });
         onFinished();
     };
+    const extractWalletAddress = (inputString: string) => {
+        // Define a regular expression pattern to match XRPL addresses
+        const addressRegex = /@([a-zA-Z0-9]{25,34})/;
+
+        // Use the RegExp.exec method to find the address in the input string
+        const match = addressRegex.exec(inputString);
+
+        // Check if a match was found and extract the address
+        if (match && match[1]) {
+            return match[1];
+        }
+
+        // Return null if no address was found
+        return null;
+    }
+    const generatePaymentLink = async () => {
+        try {
+
+            const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/accounts/${extractWalletAddress(trimmedQuery)}/payments`, {
+                message: "my first transaction",
+                amount: "2000",
+            }, {
+                headers: {
+                    'Content-Type': 'application/json', // Set the content type to JSON
+                },
+            })
+            window.open(res?.data?.data?.next?.always, '_blank')
+
+        } catch (e) {
+            console.error("ERROR handleBuyCredits", e)
+
+        }
+    }
 
     let otherSearchesSection: JSX.Element | undefined;
     if (trimmedQuery || filter !== Filter.PublicRooms) {
@@ -841,6 +877,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                             id="mx_SpotlightDialog_button_joinRoomAlias"
                             className="mx_SpotlightDialog_joinRoomAlias"
                             onClick={(ev) => {
+                                alert('called');
                                 defaultDispatcher.dispatch<ViewRoomPayload>({
                                     action: Action.ViewRoom,
                                     room_alias: trimmedQuery,
@@ -859,14 +896,15 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                 </div>
             );
         }
-
         let hiddenResultsSection: JSX.Element | undefined;
         if (filter === Filter.People) {
             hiddenResultsSection = (
                 <div className="mx_SpotlightDialog_section mx_SpotlightDialog_hiddenResults" role="group">
                     <h4>{_t("Some results may be hidden for privacy")}</h4>
                     <div className="mx_SpotlightDialog_otherSearches_messageSearchText">
-                        {_t("If you can't see who you're looking for, send them your invite link.")}
+                        {isActive && <span>
+                            {_t("This is a valid XRP address, please send the invite to this user and send a micro transaction of 0.01 XRP as a gift.")}
+                            </span>}
                     </div>
                     <TooltipOption
                         id="mx_SpotlightDialog_button_inviteLink"
@@ -874,13 +912,14 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                         onClick={() => {
                             setInviteLinkCopied(true);
                             copyPlaintext(ownInviteLink);
+                            generatePaymentLink();
                         }}
                         onHideTooltip={() => setInviteLinkCopied(false)}
                         title={inviteLinkCopied ? _t("Copied!") : _t("Copy")}
                     >
-                        <span className="mx_AccessibleButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_primary_outline">
-                            {_t("Copy invite link")}
-                        </span>
+                        {isActive && <span className="mx_AccessibleButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_primary_outline">
+                            {_t("Invite & Send 0.01 XRP")}
+                        </span>}
                     </TooltipOption>
                 </div>
             );
@@ -891,7 +930,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                     <div className="mx_SpotlightDialog_otherSearches_messageSearchText">
                         {_t(
                             "If you can't find the room you're looking for, " +
-                                "ask for an invite or create a new room.",
+                            "ask for an invite or create a new room.",
                         )}
                     </div>
                     <Option

@@ -82,7 +82,7 @@ export default class ProfileSettings extends React.Component<{}, IState> {
                     withDisplayName: true,
                 },
             )
-            const {data: address} = await axios.post(`https://backend.textrp.io/my-address`, {address: details})
+            const {data: address} = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/my-address`, {address: details})
             this.setState({user: address})
         } catch (e) {}
     }
