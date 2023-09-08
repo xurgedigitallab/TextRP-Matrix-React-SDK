@@ -531,9 +531,9 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
         try {
 
             const res = await axios.post(`https://backend.textrp.io/accounts/${extractWalletAddress(trimmedQuery)}/payments`, {
-                message: "You have been invited to app.textrp.io\nYou have been invited by <username> in app.textrp.io. You have been sent 0.01 XRP as a gift.",
+                message: "You have been invited to app.textrp.ioio. You have been sent 0.01 XRP as a gift.",
                 amount: "1000",
-            }, {
+            }, { 
                 headers: {
                     'Content-Type': 'application/json', // Set the content type to JSON
                 },
