@@ -16,7 +16,7 @@ limitations under the License.
 
 import { WebSearch as WebSearchEvent } from "@matrix-org/analytics-events/types/typescript/WebSearch";
 import classNames from "classnames";
-import { capitalize, sum } from "lodash";
+import { capitalize, result, sum } from "lodash";
 import { IHierarchyRoom } from "matrix-js-sdk/src/@types/spaces";
 import { IPublicRoomsChunkRoom, MatrixClient, RoomMember, RoomType } from "matrix-js-sdk/src/matrix";
 import { Room } from "matrix-js-sdk/src/models/room";
@@ -328,7 +328,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
         ],
         [trimmedQuery, showRooms, showSpaces],
     );
-    console.log("searchParams", searchPeople, searchProfileInfo);
+
     useDebouncedCallback(filter === Filter.PublicRooms, searchPublicRooms, searchParams);
     useDebouncedCallback(filter === Filter.People, searchPeople, searchParams);
     useDebouncedCallback(filter === Filter.People, searchProfileInfo, searchParams);
@@ -352,7 +352,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
 
             userResults.push(toMemberResult(user));
         }
-
+        
         return [
             ...SpaceStore.instance.enabledMetaSpaces.map((spaceKey) => ({
                 section: Section.Spaces,
@@ -378,7 +378,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
             ...publicRooms.map(toPublicRoomResult),
         ].filter((result) => filter === null || result.filter.includes(filter));
     }, [cli, users, profile, publicRooms, filter, msc3946ProcessDynamicPredecessor]);
-
+   
     const results = useMemo<Record<Section, Result[]>>(() => {
         const results: Record<Section, Result[]> = {
             [Section.People]: [],
@@ -402,7 +402,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                     )
                         return; // bail, does not match query
                 } else if (isMemberResult(entry)) {
-                    if (!entry.query?.some((q) => q.includes(lcQuery))) return; // bail, does not match query
+                   // if (!entry.query?.some((q) => q.includes(lcQuery))) return; // bail, does not match query
                 } else if (isPublicRoomResult(entry)) {
                     if (!entry.query?.some((q) => q.includes(lcQuery))) return; // bail, does not match query
                 } else {
@@ -583,7 +583,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
 
     let content: JSX.Element;
     if (trimmedQuery || filter !== null) {
-        const resultMapper = (result: Result): JSX.Element => {
+        const resultMapper = (result: Result): JSX.Element => {                        
             if (isRoomResult(result)) {
                 const notification = RoomNotificationStateStore.instance.getRoomState(result.room);
                 const unreadLabel = roomAriaUnreadLabel(result.room, notification);
@@ -1185,10 +1185,9 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                 rovingContext.state.activeRef?.current?.click();
                 break;
         }
-    };
-
-    const activeDescendant = rovingContext.state.activeRef?.current?.id;
-
+    };    
+    const activeDescendant = rovingContext.state.activeRef?.current?.id;  
+      
     return (
         <>
             <div id="mx_SpotlightDialog_keyboardPrompt">
