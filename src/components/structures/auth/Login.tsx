@@ -505,23 +505,23 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                 </div>
             );
         } 
-        // else if (SettingsStore.getValue(UIFeature.Registration)) {
-        //     footer = (
-        //         <span className="mx_AuthBody_changeFlow">
-        //             {_t(
-        //                 "New? <a>Create account</a>",
-        //                 {},
-        //                 {
-        //                     a: (sub) => (
-        //                         <AccessibleButton kind="link_inline" onClick={this.onTryRegisterClick}>
-        //                             {sub}
-        //                         </AccessibleButton>
-        //                     ),
-        //                 },
-        //             )}
-        //         </span>
-        //     );
-        // }
+        else if (SettingsStore.getValue(UIFeature.Registration)) {
+            footer = (
+                <span className="mx_AuthBody_changeFlow">
+                    {_t(
+                        "New? <a>Create account</a>",
+                        {},
+                        {
+                            a: (sub) => (
+                                <AccessibleButton kind="link_inline" onClick={this.onTryRegisterClick}>
+                                    {sub}
+                                </AccessibleButton>
+                            ),
+                        },
+                    )}
+                </span>
+            );
+        }
 
         return (
             <AuthPage>
@@ -533,10 +533,10 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                     </h1>
                     {errorTextSection}
                     {serverDeadSection}
-                    {/* <ServerPicker
+                    <ServerPicker
                         serverConfig={this.props.serverConfig}
                         onServerConfigChange={this.props.onServerConfigChange}
-                    /> */}
+                    />
                     {this.renderLoginComponentForFlows()}
                     {footer}
                 </AuthBody>

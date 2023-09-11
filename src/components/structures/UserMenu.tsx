@@ -122,18 +122,19 @@ export default class UserMenu extends React.Component<IProps, IState> {
     }
 
     private async fetchDetails(): Promise<void> {
+        console.log('::::::::::::$$$$$$$$$$$$$$$ ', process.env.REACT_APP_BACKEND_URL);
         try {
             const details = UserIdentifierCustomisations.getDisplayUserIdentifier(
                 MatrixClientPeg.get().getSafeUserId(),
                 {
                     withDisplayName: true,
                 },
-            );
-            const { data: address } = await axios.post(`https://backend.textrp.io/my-address`, {
-                address: details,
-            });
-            this.setState({ user: address });
-            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark_mode`);
+            )
+            const {data: address} = await axios.post(`https://backend.textrp.io/my-address`, {
+                address: details
+            })
+            this.setState({user: address})
+            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark_mode`)
             this.setState({
                 showDarkModeToggle: true,
             });
