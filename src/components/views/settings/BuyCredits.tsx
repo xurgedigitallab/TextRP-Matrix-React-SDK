@@ -22,6 +22,7 @@ import { MatrixClientPeg } from "../../../MatrixClientPeg";
 import { _t } from "../../../languageHandler";
 import UserIdentifierCustomisations from "../../../customisations/UserIdentifier";
 import AccessibleButton from "../elements/AccessibleButton";
+import { getXRPLPrice } from "../../../modules/XRPLtoUSD";
 
 // TODO: this "view" component still has far too much application logic in it,
 // which should be factored out to other files.
@@ -29,7 +30,8 @@ import AccessibleButton from "../elements/AccessibleButton";
 enum Phase {
     Loading = "loading",
     Ready = "ready",
-    Persisting = "persisting", // technically a meta-state for Ready, but whatever
+    Persisting = "persisting",
+    // technically a meta-state for Ready, but whatever
     // unrecoverable error - eg can't load push rules
     Error = "error",
     // error saving individual rule
@@ -43,38 +45,38 @@ interface IState {
 
     // Optional stuff is required when `phase === Ready`
     creditPackages?: {
-        data: any[]
+        data: any[];
     };
     selectedCredit?: number;
     xrpPrice?: number;
     isLoading: boolean;
+    usdPrice?: string;
     user?: {
         user: {
             address?: string;
             discount?: any;
-            subscriptions?: any[]
+            subscriptions?: any[];
             credit?: {
                 balance: string;
-            }
-        },
-        address: string
+            };
+        };
+        address: string;
     };
 }
 
 export default class BuyCredits extends React.PureComponent<IProps, IState> {
-
     public constructor(props: IProps) {
         super(props);
 
         this.state = {
             phase: Phase.Loading,
             creditPackages: {
-                data: []
+                data: [],
             },
-            isLoading: false
+            isLoading: false,
+            usdPrice: "",
         };
     }
-
 
     private async fetchDetails(): Promise<void> {
         try {
@@ -83,53 +85,54 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                 {
                     withDisplayName: true,
                 },
-            )
-            console.log("details", details)
+            );
+            console.log("details", details);
 
-            const {data: address} = await axios.post(`https://backend.textrp.io/my-address`, {address: details})
-            const {data: creditPackages} = await axios.get(`https://backend.textrp.io/credits`)
-            const {data: xrpPrice} = await axios.get(`https://api.binance.com/api/v3/avgPrice?symbol=XRPUSDT`)
-            this.setState({creditPackages, xrpPrice: Number(xrpPrice.price), user: address, phase: Phase.Ready})
+            const { data: address } = await axios.post(`https://backend.textrp.io/my-address`, { address: details });
+            const { data: creditPackages } = await axios.get(`https://backend.textrp.io/credits`);
+            // const { data: xrpPrice } = await axios.get(`https://api.binance.com/api/v3/avgPrice?symbol=XRPUSDT`);
+
+            const price: any = await getXRPLPrice();
+
+            this.setState({ usdPrice: price });
+
+            this.setState({ creditPackages, xrpPrice: Number(price), user: address, phase: Phase.Ready });
         } catch (e) {
-            this.setState({phase: Phase.Error})
-            console.error(e)
+            this.setState({ phase: Phase.Error });
+            console.error(e);
         }
     }
 
     private async handleBuyCredits(): Promise<void> {
         try {
-            this.setState({isLoading: true})
+            this.setState({ isLoading: true });
             const details = UserIdentifierCustomisations.getDisplayUserIdentifier(
                 MatrixClientPeg.get().getSafeUserId(),
                 {
                     withDisplayName: true,
                 },
-            )
-            console.log('this.state.selectedCredit', this.state.selectedCredit)
-            const res = await axios
-                .post(`https://backend.textrp.io/payment/credit/${this.state.selectedCredit}`, {
-                    address: details
-                })
-            window.open(res?.data?.data?.next?.always, '_blank')
-            this.setState({isLoading: false})
+            );
+            console.log("this.state.selectedCredit", this.state.selectedCredit);
+            const res = await axios.post(`https://backend.textrp.io/payment/credit/${this.state.selectedCredit}`, {
+                address: details,
+            });
+            window.open(res?.data?.data?.next?.always, "_blank");
+            this.setState({ isLoading: false });
         } catch (e) {
-            console.error("ERROR handleBuyCredits", e)
-            this.setState({isLoading: false})
+            console.error("ERROR handleBuyCredits", e);
+            this.setState({ isLoading: false });
         }
     }
 
-
     public componentDidMount(): void {
-        console.log("buy mounted")
+        console.log("buy mounted");
         // noinspection JSIgnoredPromiseFromCall
         this.fetchDetails();
     }
 
-    public componentWillUnmount(): void {
-    }
+    public componentWillUnmount(): void {}
 
-    public componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>): void {
-    }
+    public componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>): void {}
 
     public render(): React.ReactNode {
         if (this.state.phase === Phase.Loading) {
@@ -142,20 +145,16 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
         return (
             <>
                 <div>
-                    <p className="">
-                        Your credits balance
-                    </p>
-                    <b>
-                        {this.state.user?.user?.credit?.balance}
-                    </b>
-                    <p className="">
-                        Select the amount to buy
-                    </p>
-                    <select onChange={(e) => {
-                        this.setState({selectedCredit: Number(e.target.value)})
-                    }}>
+                    <p className="">Your credits balance</p>
+                    <b>{this.state.user?.user?.credit?.balance}</b>
+                    <p className="">Select the amount to buy</p>
+                    <select
+                        onChange={(e) => {
+                            this.setState({ selectedCredit: Number(e.target.value) });
+                        }}
+                    >
                         <option value="">Select Package</option>
-                        {(this.state?.creditPackages?.data || [])?.map(p => (
+                        {(this.state?.creditPackages?.data || [])?.map((p) => (
                             <>
                                 <option value={p.id}>{p.name}</option>
                             </>
@@ -163,19 +162,24 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                     </select>
                 </div>
                 <div>
-                    <p style={{margin: 0}}>
-                        You will be charged
-                    </p>
+                    <p style={{ margin: 0 }}>You will be charged</p>
                     <b>
-                        {this.state?.creditPackages?.data?.find(p => p.id == this.state.selectedCredit)?.price || 0} XRP ({(this.state?.creditPackages?.data?.find(p => p.id == this.state.selectedCredit)?.price || 0) * this.state.xrpPrice} USD)
+                        {this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price || 0}{" "}
+                        XRP (
+                        {(
+                            (this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price ||
+                                0) * parseFloat(this.state.usdPrice)
+                        ).toFixed(2)}{" "}
+                        USD)
                     </b>
                 </div>
                 <div>
-                    <p style={{margin: 0}}>
-                        Your new credits balance will be
-                    </p>
+                    <p style={{ margin: 0 }}>Your new credits balance will be</p>
                     <b>
-                        {parseFloat(this.state?.creditPackages?.data?.find(p => p.id == this.state.selectedCredit)?.available_credits || 0) + parseFloat(this.state.user?.user?.credit?.balance)}
+                        {parseFloat(
+                            this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)
+                                ?.available_credits || 0,
+                        ) + parseFloat(this.state.user?.user?.credit?.balance)}
                     </b>
                 </div>
                 <AccessibleButton
