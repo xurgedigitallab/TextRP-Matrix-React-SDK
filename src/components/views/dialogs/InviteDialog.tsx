@@ -805,7 +805,6 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
                 if (term[0] === "@" && term.indexOf(":") > 1) {
                     try {
                         const profile = await this.profilesStore.getOrFetchProfile(term, { shouldThrow: true });
-
                         if (profile) {
                             console.log("Profile", profile);
 
@@ -813,7 +812,7 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
                             // the mxid can be invited - add it to the list. We stick it at the
                             // top so it is most obviously presented to the user.
                             r.results.splice(0, 0, {
-                                user_id: term,
+                                user_id: profile["user_id"],
                                 display_name: profile["displayname"],
                                 avatar_url: profile["avatar_url"],
                             });
