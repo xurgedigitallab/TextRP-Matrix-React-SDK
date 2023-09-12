@@ -78,9 +78,8 @@ export const useProfileInfo = (): {
             setLoading(true);
             try {
                 const result = await MatrixClientPeg.get().getProfileInfo(term);
-                console.log('@@@@@@',process.env.REACT_APP_BACKEND_URL)
                 updateResult(term, {
-                    user_id: term,
+                    user_id: result.user_id?result.user_id:term,
                     avatar_url: result.avatar_url,
                     display_name: result.displayname,
                 });
