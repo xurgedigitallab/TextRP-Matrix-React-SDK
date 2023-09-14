@@ -521,8 +521,7 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                     )}
                 </span>
             );
-        }
-
+        }        
         return (
             <AuthPage>
                 <AuthHeader disableLanguageSelector={this.props.isSyncing || this.state.busyLoggingIn} />
@@ -533,10 +532,10 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                     </h1>
                     {errorTextSection}
                     {serverDeadSection}
-                    <ServerPicker
+                    {/* <ServerPicker
                         serverConfig={this.props.serverConfig}
                         onServerConfigChange={this.props.onServerConfigChange}
-                    />
+                    /> */}
                     {this.renderLoginComponentForFlows()}
                     {footer}
                 </AuthBody>
