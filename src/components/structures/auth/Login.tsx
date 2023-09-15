@@ -419,6 +419,8 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         const order = ["m.login.sso"];
 
         const flows = filterBoolean(order.map((type) => this.state.flows?.find((flow) => flow.type === type)));
+        console.log("HHHHHHHHHHHHHHHHH",flows);
+        
         return (
             <React.Fragment>
                 {flows.map((flow) => {
@@ -505,23 +507,23 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                 </div>
             );
         } 
-        else if (SettingsStore.getValue(UIFeature.Registration)) {
-            footer = (
-                <span className="mx_AuthBody_changeFlow">
-                    {_t(
-                        "New? <a>Create account</a>",
-                        {},
-                        {
-                            a: (sub) => (
-                                <AccessibleButton kind="link_inline" onClick={this.onTryRegisterClick}>
-                                    {sub}
-                                </AccessibleButton>
-                            ),
-                        },
-                    )}
-                </span>
-            );
-        }        
+        // else if (SettingsStore.getValue(UIFeature.Registration)) {
+        //     footer = (
+        //         <span className="mx_AuthBody_changeFlow">
+        //             {_t(
+        //                 "New? <a>Create account</a>",
+        //                 {},
+        //                 {
+        //                     a: (sub) => (
+        //                         <AccessibleButton kind="link_inline" onClick={this.onTryRegisterClick}>
+        //                             {sub}
+        //                         </AccessibleButton>
+        //                     ),
+        //                 },
+        //             )}
+        //         </span>
+        //     );
+        // }        
         return (
             <AuthPage>
                 <AuthHeader disableLanguageSelector={this.props.isSyncing || this.state.busyLoggingIn} />
