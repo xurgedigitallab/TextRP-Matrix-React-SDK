@@ -82,12 +82,12 @@ export const useProfileInfo = (): {
             } catch (e) {
                 if (isValidClassicAddress(extractWalletAddress(term))) {
                     const response = await axios
-                        .get(`${SdkConfig.get("backend_url")}/verify-address/${extractWalletAddress(term)}`)
+                        .get(`${URL}/verify-address/${extractWalletAddress(term)}`)
                         .then((response) => response.data);
                     if (response.active) setIsActive(true);
                     else setIsActive(false);
                     // if(response.active){
-                    //   const link= await axios.post(`https://backend.textrp.io/accounts/${extractWalletAddress(term)}/payments`,{
+                    //   const link= await axios.post(`${URL}/accounts/${extractWalletAddress(term)}/payments`,{
                     //         message:"my first transaction",
                     //         amount:"2000",
                     //     },{

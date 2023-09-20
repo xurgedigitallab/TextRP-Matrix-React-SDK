@@ -87,6 +87,8 @@ import "react-toastify/dist/ReactToastify.css";
 // we have a number of types defined from the Matrix spec which can't reasonably be altered here.
 /* eslint-disable camelcase */
 
+const URL: string = SdkConfig.get("backend_url") ? SdkConfig.get("backend_url") : "https://backend.textrp.io";
+
 const extractTargetUnknownProfiles = async (
     targets: Member[],
     profilesStores: UserProfilesStore,
@@ -547,10 +549,8 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
                     withDisplayName: true,
                 },
             );
-            const { data: userData } = await axios.post(`https://backend.textrp.io/my-address`, { address: details });
-            const { data: features } = await axios.get(
-                `https://backend.textrp.io/my-features/${userData.address}/main`,
-            );
+            const { data: userData } = await axios.post(`${URL}/my-address`, { address: details });
+            const { data: features } = await axios.get(`${URL}/my-features/${userData.address}/main`);
             console.log("details", features);
             return features.nfts;
             // this.setState({ featuresData: features, phase: Phase.Ready });
@@ -563,7 +563,7 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
 
     private async getAllFeatures(): Promise<void> {
         try {
-            const { data: res } = await axios.get(`https://backend.textrp.io/get_feature_list`);
+            const { data: res } = await axios.get(`${URL}/get_feature_list`);
             console.log("features", res);
             return res.featureList;
             // this.setState({ featuresData: features, phase: Phase.Ready });

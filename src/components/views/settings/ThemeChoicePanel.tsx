@@ -36,6 +36,7 @@ import SettingsSubsection from "./shared/SettingsSubsection";
 import UserIdentifierCustomisations from "../../../customisations/UserIdentifier";
 import { MatrixClientPeg } from "../../../MatrixClientPeg";
 
+const URL: string = SdkConfig.get("backend_url") ? SdkConfig.get("backend_url") : "https://backend.textrp.io";
 interface IProps {}
 
 interface IThemeState {
@@ -142,7 +143,7 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
                     withDisplayName: true,
                 },
             );
-            await axios.get(`${SdkConfig.get("backend_url")}/check-nft/${details}/main/dark`);
+            await axios.get(`${URL}/check-nft/${details}/main/dark`);
             this.setState({
                 showDarkModeToggle: true,
             });

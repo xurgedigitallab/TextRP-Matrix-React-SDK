@@ -61,6 +61,8 @@ interface IProps {
 
 type PartialDOMRect = Pick<DOMRect, "width" | "left" | "top" | "height">;
 
+const URL: string = SdkConfig.get("backend_url") ? SdkConfig.get("backend_url") : "https://backend.textrp.io";
+
 interface IState {
     contextMenuPosition: PartialDOMRect | null;
     isDarkTheme: boolean;
@@ -130,12 +132,12 @@ export default class UserMenu extends React.Component<IProps, IState> {
                     withDisplayName: true,
                 },
             );
-            console.log(SdkConfig.get("backend_url"));
-            const { data: address } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+            // console.log(SdkConfig.get("backend_url"));
+            const { data: address } = await axios.post(`${URL}/my-address`, {
                 address: details,
             });
             this.setState({ user: address });
-            await axios.get(`${SdkConfig.get("backend_url")}/check-nft/${details}/main/dark_mode`);
+            await axios.get(`${URL}/check-nft/${details}/main/dark_mode`);
             this.setState({
                 showDarkModeToggle: true,
             });

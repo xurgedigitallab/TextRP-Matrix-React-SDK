@@ -28,6 +28,8 @@ import SdkConfig from "../../../SdkConfig";
 // TODO: this "view" component still has far too much application logic in it,
 // which should be factored out to other files.
 
+const URL: string = SdkConfig.get("backend_url") ? SdkConfig.get("backend_url") : "https://backend.textrp.io";
+
 enum Phase {
     Loading = "loading",
     Ready = "ready",
@@ -177,20 +179,14 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
             // console.log("RSGFDGFDGDFSFG");
             // debugger;
             // console.log(SdkConfig.get());
-            const { data: userData } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+            const { data: userData } = await axios.post(`${URL}/my-address`, {
                 address: details,
             });
             console.log("addrrr", userData);
 
-            const { data: features } = await axios.get(
-                `${SdkConfig.get("backend_url")}/my-features/${userData.address}/main/all`,
-            );
-            const { data: availableFeatures } = await axios.get(
-                `${SdkConfig.get("backend_url")}/my-features/${userData.address}/main/`,
-            );
-            const { data: enableFeatures } = await axios.get(
-                `${SdkConfig.get("backend_url")}/my-features/${userData.address}/main/enabled`,
-            );
+            const { data: features } = await axios.get(`${URL}/my-features/${userData.address}/main/all`);
+            const { data: availableFeatures } = await axios.get(`${URL}/my-features/${userData.address}/main/`);
+            const { data: enableFeatures } = await axios.get(`${URL}/my-features/${userData.address}/main/enabled`);
             console.log("details +++ ", availableFeatures);
 
             this.setState({

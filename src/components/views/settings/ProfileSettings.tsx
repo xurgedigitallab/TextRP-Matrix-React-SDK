@@ -33,6 +33,8 @@ import { SettingsSubsectionHeading } from "./shared/SettingsSubsectionHeading";
 import axios from "axios";
 import SdkConfig from "../../../SdkConfig";
 
+const URL: string = SdkConfig.get("backend_url") ? SdkConfig.get("backend_url") : "https://backend.textrp.io";
+
 interface IState {
     originalDisplayName: string;
     displayName: string;
@@ -83,7 +85,7 @@ export default class ProfileSettings extends React.Component<{}, IState> {
                     withDisplayName: true,
                 },
             );
-            const { data: address } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+            const { data: address } = await axios.post(`${URL}/my-address`, {
                 address: details,
             });
             this.setState({ user: address });

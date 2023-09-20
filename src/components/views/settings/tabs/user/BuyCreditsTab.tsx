@@ -15,11 +15,13 @@ import SdkConfig from "../../../../../SdkConfig";
 // import Button from '../UI/Button'
 // import { swrFetcher } from '@/helpers'
 
+const URL: string = SdkConfig.get("backend_url") ? SdkConfig.get("backend_url") : "https://backend.textrp.io";
+
 const BuyCredits = () => {
     const [isMount] = React.useState(true);
     //   const [isPaying, setIsPaying] = useState(false)
     const userData = async () =>
-        await axios.get(`${SdkConfig.get("backend_url")}/me`, {
+        await axios.get(`${URL}/me`, {
             headers: {
                 "Access-Control-Allow-Origin": "*",
             },
