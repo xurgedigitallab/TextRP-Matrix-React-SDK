@@ -17,6 +17,7 @@ limitations under the License.
 import React from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 import axios from "axios";
+import SdkConfig from "../../../SdkConfig";
 
 import { _t } from "../../../languageHandler";
 import SettingsStore from "../../../settings/SettingsStore";
@@ -33,7 +34,7 @@ import { SettingLevel } from "../../../settings/SettingLevel";
 import PosthogTrackers from "../../../PosthogTrackers";
 import SettingsSubsection from "./shared/SettingsSubsection";
 import UserIdentifierCustomisations from "../../../customisations/UserIdentifier";
-import {MatrixClientPeg} from "../../../MatrixClientPeg";
+import { MatrixClientPeg } from "../../../MatrixClientPeg";
 
 interface IProps {}
 
@@ -67,7 +68,7 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
     }
 
     public componentDidMount(): void {
-        this.fetchDetails().then(r => {})
+        this.fetchDetails().then((r) => {});
     }
 
     public static calculateThemeState(): IThemeState {
@@ -140,11 +141,11 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
                 {
                     withDisplayName: true,
                 },
-            )
-            await axios.get(`https://backend.textrp.io/check-nft/${details}/main/dark`)
+            );
+            await axios.get(`${SdkConfig.get("backend_url")}/check-nft/${details}/main/dark`);
             this.setState({
-                showDarkModeToggle: true
-            })
+                showDarkModeToggle: true,
+            });
         } catch (e) {}
     }
     // private onUseSystemThemeChanged = (checked: boolean): void => {

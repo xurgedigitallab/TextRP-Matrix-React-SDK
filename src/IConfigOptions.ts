@@ -152,6 +152,7 @@ export interface IConfigOptions {
     enable_presence_by_hs_url?: Record<string, boolean>; // <HomeserverName, Enabled>
 
     terms_and_conditions_links?: { url: string; text: string }[];
+    backend_url: string;
 
     latex_maths_delims?: {
         inline?: {

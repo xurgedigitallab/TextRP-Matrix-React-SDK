@@ -23,6 +23,7 @@ import { _t } from "../../../languageHandler";
 import UserIdentifierCustomisations from "../../../customisations/UserIdentifier";
 import AccessibleButton from "../elements/AccessibleButton";
 import { getXRPLPrice } from "../../../modules/XRPLtoUSD";
+import SdkConfig from "../../../SdkConfig";
 
 // TODO: this "view" component still has far too much application logic in it,
 // which should be factored out to other files.
@@ -88,8 +89,10 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
             );
             console.log("details", details);
 
-            const { data: address } = await axios.post(`https://backend.textrp.io/my-address`, { address: details });
-            const { data: creditPackages } = await axios.get(`https://backend.textrp.io/credits`);
+            const { data: address } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                address: details,
+            });
+            const { data: creditPackages } = await axios.get(`${SdkConfig.get("backend_url")}/credits`);
             // const { data: xrpPrice } = await axios.get(`https://api.binance.com/api/v3/avgPrice?symbol=XRPUSDT`);
 
             const price: any = await getXRPLPrice();
@@ -113,9 +116,12 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                 },
             );
             console.log("this.state.selectedCredit", this.state.selectedCredit);
-            const res = await axios.post(`https://backend.textrp.io/payment/credit/${this.state.selectedCredit}`, {
-                address: details,
-            });
+            const res = await axios.post(
+                `${SdkConfig.get("backend_url")}/payment/credit/${this.state.selectedCredit}`,
+                {
+                    address: details,
+                },
+            );
             window.open(res?.data?.data?.next?.always, "_blank");
             this.setState({ isLoading: false });
         } catch (e) {

@@ -24,6 +24,7 @@ import { MatrixClientPeg } from "../../../MatrixClientPeg";
 import { _t } from "../../../languageHandler";
 import UserIdentifierCustomisations from "../../../customisations/UserIdentifier";
 import "react-tabs/style/react-tabs.css";
+import SdkConfig from "../../../SdkConfig";
 // TODO: this "view" component still has far too much application logic in it,
 // which should be factored out to other files.
 
@@ -173,17 +174,22 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
                     withDisplayName: true,
                 },
             );
-            const { data: userData } = await axios.post(`https://backend.textrp.io/my-address`, { address: details });
+            // console.log("RSGFDGFDGDFSFG");
+            // debugger;
+            // console.log(SdkConfig.get());
+            const { data: userData } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                address: details,
+            });
             console.log("addrrr", userData);
 
             const { data: features } = await axios.get(
-                `https://backend.textrp.io/my-features/${userData.address}/main/all`,
+                `${SdkConfig.get("backend_url")}/my-features/${userData.address}/main/all`,
             );
             const { data: availableFeatures } = await axios.get(
-                `https://backend.textrp.io/my-features/${userData.address}/main/`,
+                `${SdkConfig.get("backend_url")}/my-features/${userData.address}/main/`,
             );
             const { data: enableFeatures } = await axios.get(
-                `https://backend.textrp.io/my-features/${userData.address}/main/enabled`,
+                `${SdkConfig.get("backend_url")}/my-features/${userData.address}/main/enabled`,
             );
             console.log("details +++ ", availableFeatures);
 
