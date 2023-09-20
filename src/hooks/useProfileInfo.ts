@@ -56,7 +56,6 @@ export const useProfileInfo = (): {
         if (match && match[1]) {
           return match[1];
         }
-      
         // Return null if no address was found
         return null;
       }
@@ -72,12 +71,13 @@ export const useProfileInfo = (): {
             updateQuery(term);
             if (!term?.length || !term.startsWith("@") || !term.includes(":")) {
                 setProfile(null);
+                setIsActive(false);
                 return true;
             }
 
             setLoading(true);
             try {
-                const result = await MatrixClientPeg.get().getProfileInfo(term);
+                const result:any = await MatrixClientPeg.get().getProfileInfo(term);
                 updateResult(term, {
                     user_id: result.user_id?result.user_id:term,
                     avatar_url: result.avatar_url,

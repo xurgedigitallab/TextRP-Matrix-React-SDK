@@ -531,14 +531,14 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
         try {
 
             const res = await axios.post(`https://backend.textrp.io/accounts/${extractWalletAddress(trimmedQuery)}/payments`, {
-                message: "You have been invited to app.textrp.ioio. You have been sent 0.01 XRP as a gift.",
+                message: "You have been invited to app.textrp.io. You have been sent 0.01 XRP as a gift.",
                 amount: "1000",
             }, { 
                 headers: {
                     'Content-Type': 'application/json', // Set the content type to JSON
                 },
             })
-            window.open(res?.data?.data?.next?.always, '_blank')
+           // window.open(res?.data?.data?.next?.always, '_blank')
 
         } catch (e) {
             console.error("ERROR handleBuyCredits", e)
@@ -895,14 +895,14 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                     </div>
                 </div>
             );
-        }
+        }        
         let hiddenResultsSection: JSX.Element | undefined;
         if (filter === Filter.People) {
             hiddenResultsSection = (
                 <div className="mx_SpotlightDialog_section mx_SpotlightDialog_hiddenResults" role="group">
                     <h4>{_t("Some results may be hidden for privacy")}</h4>
                     <div className="mx_SpotlightDialog_otherSearches_messageSearchText">
-                        {isActive && <span>
+                        {isActive && users.length === 0 && <span>
                             {_t("This is a valid XRP address, please send the invite to this user and send a micro transaction of 0.01 XRP as a gift.")}
                             </span>}
                     </div>
@@ -917,7 +917,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                         onHideTooltip={() => setInviteLinkCopied(false)}
                         title={inviteLinkCopied ? _t("Copied!") : _t("Copy")}
                     >
-                        {isActive && <span className="mx_AccessibleButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_primary_outline">
+                        {isActive && users.length === 0 && <span className="mx_AccessibleButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_primary_outline">
                             {_t("Invite & Send 0.01 XRP")}
                         </span>}
                     </TooltipOption>
