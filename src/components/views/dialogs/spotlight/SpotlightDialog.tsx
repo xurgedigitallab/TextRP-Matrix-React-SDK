@@ -23,7 +23,7 @@ import { Room } from "matrix-js-sdk/src/models/room";
 import { normalize } from "matrix-js-sdk/src/utils";
 import React, { ChangeEvent, RefObject, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import sanitizeHtml from "sanitize-html";
-import axios from 'axios';
+import axios from "axios";
 
 import { KeyBindingAction } from "../../../../accessibility/KeyboardShortcuts";
 import {
@@ -81,6 +81,7 @@ import RoomAvatar from "../../avatars/RoomAvatar";
 import { useFeatureEnabled } from "../../../../hooks/useSettings";
 import { filterBoolean } from "../../../../utils/arrays";
 import { transformSearchTerm } from "../../../../utils/SearchInput";
+import SdkConfig from "../../../../SdkConfig";
 
 const MAX_RECENT_SEARCHES = 10;
 const SECTION_LIMIT = 50; // only show 50 results per section for performance reasons
@@ -352,7 +353,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
 
             userResults.push(toMemberResult(user));
         }
-        
+
         return [
             ...SpaceStore.instance.enabledMetaSpaces.map((spaceKey) => ({
                 section: Section.Spaces,
@@ -378,7 +379,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
             ...publicRooms.map(toPublicRoomResult),
         ].filter((result) => filter === null || result.filter.includes(filter));
     }, [cli, users, profile, publicRooms, filter, msc3946ProcessDynamicPredecessor]);
-   
+
     const results = useMemo<Record<Section, Result[]>>(() => {
         const results: Record<Section, Result[]> = {
             [Section.People]: [],
@@ -402,7 +403,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                     )
                         return; // bail, does not match query
                 } else if (isMemberResult(entry)) {
-                   // if (!entry.query?.some((q) => q.includes(lcQuery))) return; // bail, does not match query
+                    // if (!entry.query?.some((q) => q.includes(lcQuery))) return; // bail, does not match query
                 } else if (isPublicRoomResult(entry)) {
                     if (!entry.query?.some((q) => q.includes(lcQuery))) return; // bail, does not match query
                 } else {
@@ -526,25 +527,26 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
 
         // Return null if no address was found
         return null;
-    }
+    };
     const generatePaymentLink = async () => {
         try {
-
-            const res = await axios.post(`http://127.0.0.1:8080/accounts/${extractWalletAddress(trimmedQuery)}/payments`, {
-                message: "You have been invited to app.textrp.io. You have been sent 0.01 XRP as a gift.",
-                amount: "0.01",
-            }, { 
-                headers: {
-                    'Content-Type': 'application/json', // Set the content type to JSON
+            const res = await axios.post(
+                `${SdkConfig.get("backend_url")}/accounts/${extractWalletAddress(trimmedQuery)}/payments`,
+                {
+                    message: "You have been invited to app.textrp.io. You have been sent 0.01 XRP as a gift.",
+                    amount: "0.01",
                 },
-            })
-           // window.open(res?.data?.data?.next?.always, '_blank')
-
+                {
+                    headers: {
+                        "Content-Type": "application/json", // Set the content type to JSON
+                    },
+                },
+            );
+            // window.open(res?.data?.data?.next?.always, '_blank')
         } catch (e) {
-            console.error("ERROR handleBuyCredits", e)
-
+            console.error("ERROR handleBuyCredits", e);
         }
-    }
+    };
 
     let otherSearchesSection: JSX.Element | undefined;
     if (trimmedQuery || filter !== Filter.PublicRooms) {
@@ -583,7 +585,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
 
     let content: JSX.Element;
     if (trimmedQuery || filter !== null) {
-        const resultMapper = (result: Result): JSX.Element => {                        
+        const resultMapper = (result: Result): JSX.Element => {
             if (isRoomResult(result)) {
                 const notification = RoomNotificationStateStore.instance.getRoomState(result.room);
                 const unreadLabel = roomAriaUnreadLabel(result.room, notification);
@@ -877,7 +879,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                             id="mx_SpotlightDialog_button_joinRoomAlias"
                             className="mx_SpotlightDialog_joinRoomAlias"
                             onClick={(ev) => {
-                                alert('called');
+                                alert("called");
                                 defaultDispatcher.dispatch<ViewRoomPayload>({
                                     action: Action.ViewRoom,
                                     room_alias: trimmedQuery,
@@ -895,16 +897,20 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                     </div>
                 </div>
             );
-        }        
+        }
         let hiddenResultsSection: JSX.Element | undefined;
         if (filter === Filter.People) {
             hiddenResultsSection = (
                 <div className="mx_SpotlightDialog_section mx_SpotlightDialog_hiddenResults" role="group">
                     <h4>{_t("Some results may be hidden for privacy")}</h4>
                     <div className="mx_SpotlightDialog_otherSearches_messageSearchText">
-                        {isActive && users.length === 0 && <span>
-                            {_t("This is a valid XRP address, please send the invite to this user and send a micro transaction of 0.01 XRP as a gift.")}
-                            </span>}
+                        {isActive && users.length === 0 && (
+                            <span>
+                                {_t(
+                                    "This is a valid XRP address, please send the invite to this user and send a micro transaction of 0.01 XRP as a gift.",
+                                )}
+                            </span>
+                        )}
                     </div>
                     <TooltipOption
                         id="mx_SpotlightDialog_button_inviteLink"
@@ -917,9 +923,11 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                         onHideTooltip={() => setInviteLinkCopied(false)}
                         title={inviteLinkCopied ? _t("Copied!") : _t("Copy")}
                     >
-                        {isActive && users.length === 0 && <span className="mx_AccessibleButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_primary_outline">
-                            {_t("Invite & Send 0.01 XRP")}
-                        </span>}
+                        {isActive && users.length === 0 && (
+                            <span className="mx_AccessibleButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_primary_outline">
+                                {_t("Invite & Send 0.01 XRP")}
+                            </span>
+                        )}
                     </TooltipOption>
                 </div>
             );
@@ -930,7 +938,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                     <div className="mx_SpotlightDialog_otherSearches_messageSearchText">
                         {_t(
                             "If you can't find the room you're looking for, " +
-                            "ask for an invite or create a new room.",
+                                "ask for an invite or create a new room.",
                         )}
                     </div>
                     <Option
@@ -1185,8 +1193,8 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                 rovingContext.state.activeRef?.current?.click();
                 break;
         }
-    };    
-    const activeDescendant = rovingContext.state.activeRef?.current?.id;  
+    };
+    const activeDescendant = rovingContext.state.activeRef?.current?.id;
     return (
         <>
             <div id="mx_SpotlightDialog_keyboardPrompt">
