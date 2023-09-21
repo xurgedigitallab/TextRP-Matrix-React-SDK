@@ -31,6 +31,7 @@ import { chromeFileInputFix } from "../../../utils/BrowserWorkarounds";
 import PosthogTrackers from "../../../PosthogTrackers";
 import { SettingsSubsectionHeading } from "./shared/SettingsSubsectionHeading";
 import axios from "axios";
+import SdkConfig from "../../../SdkConfig";
 
 interface IState {
     originalDisplayName: string;
@@ -39,10 +40,10 @@ interface IState {
         user: {
             address?: string;
             discount?: any;
-            subscriptions?: any[]
-            credit?: any
-        },
-        address: string
+            subscriptions?: any[];
+            credit?: any;
+        };
+        address: string;
     };
     originalAvatarUrl: string | null;
     avatarUrl?: string | ArrayBuffer;
@@ -71,7 +72,7 @@ export default class ProfileSettings extends React.Component<{}, IState> {
     }
 
     public componentDidMount(): void {
-        this.fetchDetails().then(r => {})
+        this.fetchDetails().then((r) => {});
     }
 
     private async fetchDetails(): Promise<void> {
@@ -81,9 +82,11 @@ export default class ProfileSettings extends React.Component<{}, IState> {
                 {
                     withDisplayName: true,
                 },
-            )
-            const {data: address} = await axios.post(`https://backend.textrp.io/my-address`, {address: details})
-            this.setState({user: address})
+            );
+            const { data: address } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                address: details,
+            });
+            this.setState({ user: address });
         } catch (e) {}
     }
     private uploadAvatar = (): void => {
@@ -225,7 +228,9 @@ export default class ProfileSettings extends React.Component<{}, IState> {
                         </p>
                         <p>
                             {this.state?.user?.address && (
-                                <span className="mx_ProfileSettings_profile_controls_userId">{this.state.user.address}</span>
+                                <span className="mx_ProfileSettings_profile_controls_userId">
+                                    {this.state.user.address}
+                                </span>
                             )}
                         </p>
                     </div>

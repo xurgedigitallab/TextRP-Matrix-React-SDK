@@ -547,9 +547,11 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
                     withDisplayName: true,
                 },
             );
-            const { data: userData } = await axios.post(`https://backend.textrp.io/my-address`, { address: details });
+            const { data: userData } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                address: details,
+            });
             const { data: features } = await axios.get(
-                `https://backend.textrp.io/my-features/${userData.address}/main`,
+                `${SdkConfig.get("backend_url")}/my-features/${userData.address}/main`,
             );
             console.log("details", features);
             return features.nfts;
@@ -563,7 +565,7 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
 
     private async getAllFeatures(): Promise<void> {
         try {
-            const { data: res } = await axios.get(`https://backend.textrp.io/get_feature_list`);
+            const { data: res } = await axios.get(`${SdkConfig.get("backend_url")}/get_feature_list`);
             console.log("features", res);
             return res.featureList;
             // this.setState({ featuresData: features, phase: Phase.Ready });

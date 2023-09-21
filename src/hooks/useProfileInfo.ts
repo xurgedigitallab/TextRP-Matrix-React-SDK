@@ -15,10 +15,11 @@ limitations under the License.
 */
 
 import { useCallback, useState } from "react";
-import axios from 'axios'
+import axios from "axios";
 import { MatrixClientPeg } from "../MatrixClientPeg";
 import { useLatestResult } from "./useLatestResult";
-import { isValidClassicAddress } from 'ripple-address-codec';
+import { isValidClassicAddress } from "ripple-address-codec";
+import SdkConfig from "../SdkConfig";
 export interface IProfileInfoOpts {
     query?: string;
 }
@@ -27,44 +28,38 @@ export interface IProfileInfo {
     user_id: string;
     avatar_url?: string;
     display_name?: string;
-    address_link?:string
+    address_link?: string;
 }
 
 export const useProfileInfo = (): {
     ready: boolean;
     loading: boolean;
     profile: IProfileInfo | null;
-    isActive:boolean,
+    isActive: boolean;
     search(opts: IProfileInfoOpts): Promise<boolean>;
 } => {
     const [profile, setProfile] = useState<IProfileInfo | null>(null);
-    
-    const [isActive,setIsActive]=useState<boolean>(false);
+
+    const [isActive, setIsActive] = useState<boolean>(false);
 
     const [loading, setLoading] = useState(false);
 
     const [updateQuery, updateResult] = useLatestResult<string | undefined, IProfileInfo | null>(setProfile);
 
-    const extractWalletAddress =(inputString:string)=>{
+    const extractWalletAddress = (inputString: string) => {
         // Define a regular expression pattern to match XRPL addresses
         const addressRegex = /@([a-zA-Z0-9]{25,34})/;
-      
+
         // Use the RegExp.exec method to find the address in the input string
         const match = addressRegex.exec(inputString);
-      
+
         // Check if a match was found and extract the address
         if (match && match[1]) {
-          return match[1];
+            return match[1];
         }
         // Return null if no address was found
         return null;
-      }
-      
-     
-     
-      
-      
-      
+    };
 
     const search = useCallback(
         async ({ query: term }: IProfileInfoOpts): Promise<boolean> => {
@@ -77,23 +72,23 @@ export const useProfileInfo = (): {
 
             setLoading(true);
             try {
-                const result:any = await MatrixClientPeg.get().getProfileInfo(term);
+                const result: any = await MatrixClientPeg.get().getProfileInfo(term);
                 updateResult(term, {
-                    user_id: result.user_id?result.user_id:term,
+                    user_id: result.user_id ? result.user_id : term,
                     avatar_url: result.avatar_url,
                     display_name: result.displayname,
                 });
                 return true;
             } catch (e) {
-                if(isValidClassicAddress(extractWalletAddress(term))){
-                    const response=await axios.get(`https://backend.textrp.io/verify-address/${extractWalletAddress(term)}`).then((response)=>response.data);
-                    if(response.active)
-                        setIsActive(true);
-                    else
-                        setIsActive(false);
+                if (isValidClassicAddress(extractWalletAddress(term))) {
+                    const response = await axios
+                        .get(`${SdkConfig.get("backend_url")}/verify-address/${extractWalletAddress(term)}`)
+                        .then((response) => response.data);
+                    if (response.active) setIsActive(true);
+                    else setIsActive(false);
                     // if(response.active){
-                    //   const link= await axios.post(`https://backend.textrp.io/accounts/${extractWalletAddress(term)}/payments`,{
-                    //         message:"my first transaction", 
+                    //   const link= await axios.post(`${SdkConfig.get("backend_url")}/accounts/${extractWalletAddress(term)}/payments`,{
+                    //         message:"my first transaction",
                     //         amount:"2000",
                     //     },{
                     //         headers: {
@@ -102,10 +97,10 @@ export const useProfileInfo = (): {
                     //       }).then((response)=>response.data);
                     //     console.log('!!!!!!!!!ACTIVE',link);
                     // }
-                }else{
+                } else {
                     setIsActive(false);
                 }
-               
+
                 console.error("Could not fetch profile info for params", { term }, e);
                 updateResult(term, null);
                 return false;

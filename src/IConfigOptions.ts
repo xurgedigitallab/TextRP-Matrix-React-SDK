@@ -90,6 +90,7 @@ export interface IConfigOptions {
     default_device_display_name?: string; // for device naming on login+registration
 
     setting_defaults?: Record<string, any>; // <SettingName, Value>
+    backend_url: string;
 
     integrations_ui_url?: string;
     integrations_rest_url?: string;

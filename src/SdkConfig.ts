@@ -39,6 +39,8 @@ export const DEFAULTS: DeepReadonly<IConfigOptions> = {
         participant_limit: 8,
         brand: "Element Call",
     },
+    backend_url: "http://localhost:8080",
+    // backend_url:"https://backend.textrp.io",
 
     // @ts-ignore - we deliberately use the camelCase version here so we trigger
     // the fallback behaviour. If we used the snake_case version then we'd break
