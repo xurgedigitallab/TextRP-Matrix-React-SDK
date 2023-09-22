@@ -91,8 +91,9 @@ export const TAG_ORDER: TagID[] = [
     DefaultTagID.ServerNotice,
     DefaultTagID.Suggested,
     DefaultTagID.Archived,
+    DefaultTagID.Bot,
 ];
-const ALWAYS_VISIBLE_TAGS: TagID[] = [DefaultTagID.DM, DefaultTagID.Untagged];
+const ALWAYS_VISIBLE_TAGS: TagID[] = [DefaultTagID.DM, DefaultTagID.Untagged, DefaultTagID.Bot];
 
 interface ITagAesthetics {
     sectionLabel: string;
@@ -414,6 +415,12 @@ const TAG_AESTHETICS: TagAestheticsMap = {
         isInvite: false,
         defaultHidden: false,
         AuxButtonComponent: UntaggedAuxButton,
+    },
+    [DefaultTagID.Bot]: {
+        sectionLabel: _td("Bot"),
+        isInvite: false,
+        defaultHidden: false,
+        AuxButtonComponent: DmAuxButton,
     },
     [DefaultTagID.LowPriority]: {
         sectionLabel: _td("Low priority"),
