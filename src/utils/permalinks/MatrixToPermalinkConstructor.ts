@@ -16,7 +16,7 @@ limitations under the License.
 
 import PermalinkConstructor, { PermalinkParts } from "./PermalinkConstructor";
 
-export const host = "matrix.to";
+export const host = "app.textrp.io";
 export const baseUrl = `https://${host}`;
 export const baseUrlPattern = `^(?:https?://)?${host.replace(".", "\\.")}/#/(.*)`;
 
