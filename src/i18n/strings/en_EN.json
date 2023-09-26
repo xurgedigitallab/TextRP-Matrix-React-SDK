@@ -905,6 +905,7 @@
     "Home": "Home",
     "Favourites": "Favourites",
     "People": "People",
+    "Bot":"Bots",
     "Other rooms": "Other rooms",
     "You joined the call": "You joined the call",
     "%(senderName)s joined the call": "%(senderName)s joined the call",
