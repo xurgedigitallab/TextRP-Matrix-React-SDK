@@ -56,7 +56,7 @@ export const NFTCard = (props: {
     twitter: boolean;
     twilio: boolean;
     dark_mode: boolean;
-    feature: string;
+    feature: string[];
     taxon: string;
     with_content?: boolean;
 }): ReactElement => {
@@ -115,9 +115,34 @@ export const NFTCard = (props: {
                         {props.contract_address}
                         <br />
                         {props.feature && (
-                            <>
-                                <b>Feature Available : </b> {props.feature} <br />{" "}
-                            </>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "start",
+                                    alignItems: "center",
+                                    flexWrap: "wrap",
+                                }}
+                            >
+                                <b>Feature Available : </b>{" "}
+                                {props.feature.map((items, index) => {
+                                    console.log(items);
+                                    return (
+                                        <span
+                                            style={{
+                                                backgroundColor: "var(--accent)",
+                                                borderRadius: "3px",
+                                                color: "white",
+                                                paddingInline: "5px",
+                                                paddingBlock: "1px",
+                                                marginLeft: "5px",
+                                            }}
+                                        >
+                                            {items}
+                                        </span>
+                                    );
+                                })}{" "}
+                                <br />{" "}
+                            </div>
                         )}
                         <b> Taxon : </b> {props.taxon}
                     </p>
@@ -125,7 +150,7 @@ export const NFTCard = (props: {
                 </div>
             )}
 
-            {props.feature && (
+            {/* {props.feature && (
                 <div
                     style={{
                         position: "absolute",
@@ -149,7 +174,7 @@ export const NFTCard = (props: {
                     />{" "}
                     {props.feature.charAt(0).toUpperCase() + props.feature.slice(1)}
                 </div>
-            )}
+            )} */}
         </div>
     );
 };
