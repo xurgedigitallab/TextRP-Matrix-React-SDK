@@ -56,7 +56,7 @@ export const NFTCard = (props: {
     twitter: boolean;
     twilio: boolean;
     dark_mode: boolean;
-    feature: string[];
+    feature: string[]|string;
     taxon: string;
     with_content?: boolean;
 }): ReactElement => {
@@ -124,7 +124,7 @@ export const NFTCard = (props: {
                                 }}
                             >
                                 <b>Feature Available : </b>{" "}
-                                {props.feature.map((items, index) => {
+                                { Array.isArray(props.feature)?props.feature.map((items, index) => {
                                     console.log(items);
                                     return (
                                         <span
@@ -140,7 +140,18 @@ export const NFTCard = (props: {
                                             {items}
                                         </span>
                                     );
-                                })}{" "}
+                                }): <span
+                                style={{
+                                    backgroundColor: "var(--accent)",
+                                    borderRadius: "3px",
+                                    color: "white",
+                                    paddingInline: "5px",
+                                    paddingBlock: "1px",
+                                    marginLeft: "5px",
+                                }}
+                            >
+                                {props.feature}
+                            </span>}{" "}
                                 <br />{" "}
                             </div>
                         )}
