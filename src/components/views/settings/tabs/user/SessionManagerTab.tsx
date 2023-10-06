@@ -39,6 +39,7 @@ import QuestionDialog from "../../../dialogs/QuestionDialog";
 import { FilterVariation } from "../../devices/filter";
 import { OtherSessionsSectionHeading } from "../../devices/OtherSessionsSectionHeading";
 import { SettingsSection } from "../../shared/SettingsSection";
+import EnvLabel from "./EnvLabel";
 
 const confirmSignOut = async (sessionsToSignOutCount: number): Promise<boolean> => {
     const { finished } = Modal.createDialog(QuestionDialog, {
@@ -284,6 +285,7 @@ const SessionManagerTab: React.FC = () => {
                     </SettingsSubsection>
                 )}
                 <LoginWithQRSection onShowQr={onShowQrClicked} versions={clientVersions} capabilities={capabilities} />
+                <EnvLabel/>
             </SettingsSection>
         </SettingsTab>
     );
