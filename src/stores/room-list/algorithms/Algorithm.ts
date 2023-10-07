@@ -469,7 +469,7 @@ export class Algorithm extends EventEmitter {
             // an intentional invocation.
             logger.warn("Resetting known rooms, initiating regeneration");
         }
-
+        
         // Before we go any further we need to clear (but remember) the sticky room to
         // avoid accidentally duplicating it in the list.
         const oldStickyRoom = this._stickyRoom;
@@ -503,7 +503,7 @@ export class Algorithm extends EventEmitter {
         // Now process all the joined rooms. This is a bit more complicated
         for (const room of memberships[EffectiveMembership.Join]) {
             const tags = this.getTagsOfJoinedRoom(room);
-
+            
             let inTag = false;
             if (tags.length > 0) {
                 for (const tag of tags) {
@@ -563,7 +563,9 @@ export class Algorithm extends EventEmitter {
 
     private getTagsOfJoinedRoom(room: Room): TagID[] {
         let tags = Object.keys(room.tags || {});
-
+        if (room.name.includes("bot")) {
+            tags = [DefaultTagID.Bot];
+        }               
         if (tags.length === 0) {
             // Check to see if it's a DM if it isn't anything else
             if (DMRoomMap.shared().getUserIdForRoomId(room.roomId)) {
