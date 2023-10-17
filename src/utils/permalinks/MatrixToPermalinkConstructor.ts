@@ -33,7 +33,7 @@ export default class MatrixToPermalinkConstructor extends PermalinkConstructor {
     }
 
     public forRoom(roomIdOrAlias: string, serverCandidates: string[]): string {
-        return `${baseUrl}/#/${roomIdOrAlias}${this.encodeServerCandidates(serverCandidates)}`;
+        return `${baseUrl}/#/room/${roomIdOrAlias}${this.encodeServerCandidates(serverCandidates)}`;
     }
 
     public forUser(userId: string): string {
