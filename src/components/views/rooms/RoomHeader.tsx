@@ -635,22 +635,23 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
     public componentDidMount(): void {
         this.client.on(RoomStateEvent.Events, this.onRoomStateEvents);
-
-        const getAddress = async () => {
-            const { data: address1 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
-                address: this.props.room.myUserId,
-            });
-            const { data: address2 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
-                address: this.props.room.summaryHeroes[0],
-            });
-            this.txnInfo["sender"] = address1.address;
-            this.txnInfo["reciever"] = address2.address;
-            this.txnInfo["recieverId"] = this.props.room.summaryHeroes[0];
-        };
-        getAddress();
-        console.log("TTTTTTTTT2", this.txnInfo, this.props.room.summaryHeroes[0]);
-
         RightPanelStore.instance.on(UPDATE_EVENT, this.onRightPanelStoreUpdate);
+    }
+    public componentDidUpdate(): void {
+        if (this.props.room) {
+            const getAddress = async () => {
+                const { data: address1 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                    address: this.props.room.myUserId,
+                });
+                const { data: address2 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                    address: this.props.room.summaryHeroes[0],
+                });
+                this.txnInfo["sender"] = address1.address;
+                this.txnInfo["reciever"] = address2.address;
+                this.txnInfo["recieverId"] = this.props.room.summaryHeroes[0];
+            };
+            getAddress();     
+        }
     }
 
     public componentWillUnmount(): void {
