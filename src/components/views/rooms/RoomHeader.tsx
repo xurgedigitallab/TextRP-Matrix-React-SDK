@@ -15,13 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FC, useState, useMemo, useCallback } from "react";
+import React, { FC, useState, useMemo, useCallback, useEffect } from "react";
 import classNames from "classnames";
 import { throttle } from "lodash";
+import QRCode from "../elements/QRCode";
+import { TooltipOption } from "../dialogs/spotlight/TooltipOption";
+import axios from "axios";
+import { copyPlaintext } from "../../../utils/strings";
+import { Tabs, Tab, TabList, TabPanel } from "react-tabs";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
 import { CallType } from "matrix-js-sdk/src/webrtc/call";
 import { ISearchResults } from "matrix-js-sdk/src/@types/search";
-
 import type { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import { _t } from "../../../languageHandler";
@@ -34,7 +38,9 @@ import E2EIcon from "./E2EIcon";
 import DecoratedRoomAvatar from "../avatars/DecoratedRoomAvatar";
 import AccessibleButton, { ButtonEvent } from "../elements/AccessibleButton";
 import AccessibleTooltipButton from "../elements/AccessibleTooltipButton";
+import { LOGIN, WHATSAPP } from "../../../FeaturesConstant";
 import RoomTopic from "../elements/RoomTopic";
+import { isComponentEnabled } from "../../../service";
 import RoomName from "../elements/RoomName";
 import { E2EStatus } from "../../../utils/ShieldUtils";
 import { IOOBData } from "../../../stores/ThreepidInviteStore";
@@ -71,7 +77,6 @@ import { Alignment } from "../elements/Tooltip";
 import RoomCallBanner from "../beacon/RoomCallBanner";
 import { shouldShowComponent } from "../../../customisations/helpers/UIComponents";
 import { UIComponent } from "../../../settings/UIFeature";
-
 class DisabledWithReason {
     public constructor(public readonly reason: string) {}
 }
@@ -135,13 +140,19 @@ interface VideoCallButtonProps {
  */
 const VideoCallButton: FC<VideoCallButtonProps> = ({ room, busy, setBusy, behavior }) => {
     const [menuOpen, buttonRef, openMenu, closeMenu] = useContextMenu();
-
+    const [enabled, setEnabled] = useState(false);
     const startLegacyCall = useCallback(async (): Promise<void> => {
         setBusy(true);
         await LegacyCallHandler.instance.placeCall(room.roomId, CallType.Video);
         setBusy(false);
     }, [setBusy, room]);
-
+    useEffect(() => {
+        const getResult = async () => {
+            let result = await isComponentEnabled(WHATSAPP);
+            setEnabled(result);
+        };
+        getResult();
+    }, []);
     const startElementCall = useCallback(() => {
         setBusy(true);
         defaultDispatcher.dispatch<ViewRoomPayload>({
@@ -152,7 +163,6 @@ const VideoCallButton: FC<VideoCallButtonProps> = ({ room, busy, setBusy, behavi
         });
         setBusy(false);
     }, [setBusy, room]);
-
     const { onClick, tooltip, disabled } = useMemo(() => {
         if (behavior instanceof DisabledWithReason) {
             return {
@@ -369,6 +379,126 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
     }
 };
 
+const Xrp = (props) => {
+    const [show, setShow] = useState(false);
+    const [amount, setAmount] = useState(0);
+    const [inviteLinkCopied, setInviteLinkCopied] = useState<boolean>(false);
+
+    const makeTxn = async () => {
+        try {
+            const res = await axios.post(`${SdkConfig.get("backend_url")}/accounts/makeTxn/${amount}`, {
+                address: props.txnInfo.recieverId,
+            });
+            setShow(false);
+            window.open(res?.data?.data?.next?.always, "_blank");
+        } catch (e) {
+            console.error("ERROR handleBuyCredits", e);
+        }
+    };
+    return (
+        <>
+            <div className="mx_RoomHeader_button_xrp" onClick={() => setShow((pre) => !pre)}></div>
+            {show && (
+                <div className="mx_Dialog mx_xrp_model">
+                    <AccessibleButton
+                        className="mx_SearchBar_cancel_my"
+                        onClick={() => setShow((pre) => !pre)}
+                        aria-label={_t("Cancel")}
+                    ></AccessibleButton>
+                    <div className="grid grid-cols-2 gap-4 my-8 ">
+                        <Tabs>
+                            <TabList>
+                                <Tab>
+                                    <img
+                                        src={require("../../../../res/img/element-icons/upload2.svg").default}
+                                        className="mx_xrp_receive"
+                                        alt="send"
+                                    />
+                                    <span className="shift_little">Send</span>
+                                </Tab>
+                                <Tab>
+                                    <img
+                                        src={require("../../../../res/img/element-icons/download.svg").default}
+                                        className="mx_xrp_receive"
+                                        alt="receive"
+                                    />
+                                    <span className="shift_little">Receive</span>
+                                </Tab>
+                            </TabList>
+
+                            <TabPanel>
+                                <div className="mx_tab_div">
+                                    <div>
+                                        <label htmlFor="recieverAddress">Destination : </label>
+                                        <input
+                                            className="mx_Field"
+                                            type="text"
+                                            style={{ width: "310px" }}
+                                            id="recieverAddress"
+                                            disabled
+                                            value={props.txnInfo.reciever}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="recieverTag">Destination Tag : </label>
+                                        <input
+                                            className="mx_Field"
+                                            type="text"
+                                            style={{ width: "310px" }}
+                                            id="recieverTag"
+                                            disabled
+                                            value={props.txnInfo.recieverId}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="xrpAmount">Amount of XRP : </label>
+                                        <input
+                                            type="number"
+                                            id="xrpAmount"
+                                            value={amount}
+                                            onChange={(e) => setAmount(Number(e.target.value))}
+                                        />
+                                    </div>
+                                    <button style={{ marginTop: "10px" }} onClick={makeTxn}>
+                                        Send XRP
+                                    </button>
+                                </div>
+                            </TabPanel>
+                            <TabPanel>
+                                <div className="mx_tab_div2">
+                                    <QRCode
+                                        data={[{ data: Buffer.from(props.txnInfo.sender ?? ""), mode: "byte" }]}
+                                        className="mx_QRCode"
+                                    />
+                                    <div style={{ background: "#eeeeee",paddingInline: "9px", borderRadius: "5px"}}>
+                                        <span>{props.txnInfo.sender}</span>
+                                        <TooltipOption
+                                            id="mx_SpotlightDialog_button_inviteLink"
+                                            className="mx_SpotlightDialog_inviteLink"
+                                            onClick={() => {
+                                                setInviteLinkCopied(true);
+                                                copyPlaintext(props.txnInfo.sender);
+                                            }}
+                                            onHideTooltip={() => setInviteLinkCopied(false)}
+                                            title={inviteLinkCopied ? _t("Copied!") : _t("Copy")}
+                                        >
+                                            <img
+                                                src={require("../../../../res/img/element-icons/copy.svg").default}
+                                                className="mx_xrp_copy"
+                                                alt="send"
+                                            />
+                                        </TooltipOption>
+                                    </div>
+                                    <span style={{marginTop: "5px"}}>Scan Or Copy wallet address</span>
+                                </div>
+                            </TabPanel>
+                        </Tabs>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+};
 interface CallLayoutSelectorProps {
     call: ElementCall;
 }
@@ -490,11 +620,10 @@ export default class RoomHeader extends React.Component<IProps, IState> {
         showButtons: true,
         enableRoomOptionsMenu: true,
     };
-
     public static contextType = RoomContext;
     public context!: React.ContextType<typeof RoomContext>;
     private readonly client = this.props.room.client;
-
+    txnInfo = {};
     public constructor(props: IProps, context: IState) {
         super(props, context);
         const notiStore = RoomNotificationStateStore.instance.getRoomState(props.room);
@@ -506,6 +635,21 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
     public componentDidMount(): void {
         this.client.on(RoomStateEvent.Events, this.onRoomStateEvents);
+
+        const getAddress = async () => {
+            const { data: address1 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                address: this.props.room.myUserId,
+            });
+            const { data: address2 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                address: this.props.room.summaryHeroes[0],
+            });
+            this.txnInfo["sender"] = address1.address;
+            this.txnInfo["reciever"] = address2.address;
+            this.txnInfo["recieverId"] = this.props.room.summaryHeroes[0];
+        };
+        getAddress();
+        console.log("TTTTTTTTT2", this.txnInfo, this.props.room.summaryHeroes[0]);
+
         RightPanelStore.instance.on(UPDATE_EVENT, this.onRightPanelStoreUpdate);
     }
 
@@ -564,7 +708,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
     private renderButtons(isVideoRoom: boolean): React.ReactNode {
         const startButtons: JSX.Element[] = [];
-
+        startButtons.push(<Xrp txnInfo={this.txnInfo} />);
         if (!this.props.viewingCall && this.props.inRoom && !this.context.tombstone) {
             startButtons.push(<CallButtons key="calls" room={this.props.room} />);
         }
@@ -720,7 +864,6 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
     public render(): React.ReactNode {
         const isVideoRoom = SettingsStore.getValue("feature_video_rooms") && calcIsVideoRoom(this.props.room);
-
         let roomAvatar: JSX.Element | null = null;
         if (this.props.room) {
             roomAvatar = (

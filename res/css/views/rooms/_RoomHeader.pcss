@@ -198,7 +198,123 @@ limitations under the License.
         }
     }
 }
+.mx_xrp_model{
+        position:fixed;
+        left:50%;
+        top:40%;
+        box-sizing: border-box;
+        padding: 15px;
+        box-shadow: 0px 0px 10px rgba(120, 118, 118, 0.485);
+        transform:translate(-50%,-50%);
+        min-width: 700px;
+        width:auto;
+        height:400px;
+        border: 2px solid rgb(236, 234, 234);
+        z-index:9999;
+}
+.mx_SearchBar_cancel_my {
+    background-color: $icon-button-color;
+    mask: url("$(res)/img/cancel.svg");
+    mask-repeat: no-repeat;
+    mask-position: right;
+    mask-size: 18px;
+    padding: 15px;
+    margin: 0 12px 0 3px;
+    cursor: pointer;
+}
+.mx_RoomHeader_button_xrp {
+    cursor: pointer;
+    flex: 0 0 auto;
+    margin-left: 1px;
+    margin-right: 1px;
+    height: 24px;
+    width: 26px;
+    position: relative;
+    background: black;
 
+    &::before {
+        content: "";
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        height: 15px;
+        width: 17px;
+        mask-image: url("$(res)/img/element-icons/xrp.svg");
+        background-color: white;
+        mask-repeat: no-repeat;
+        mask-size: contain;
+    }
+}
+.mx_xrp_send{
+    &::before {
+        content: "";
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        height: 25px;
+        width: 25px;
+        mask-image: url("$(res)/img/element-icons/upload2.svg");
+        background-color: black;
+        mask-repeat: no-repeat;
+        mask-size: contain;
+    }
+}
+.mx_tab_div{
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    height: 100%;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+} 
+.mx_tab_div2{
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    height: 100%;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+} 
+.mx_tab_div2 > div{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mx_tab_div > div{
+    display: flex;
+    width: 100%;
+    margin: 5px;
+    align-items: center;
+    justify-content: left;
+
+}
+.mx_xrp_receive{
+    width: 18px !important;
+    height: 18px !important;
+    overflow: hidden;
+}  
+.mx_xrp_copy{
+    width: 15px !important;
+    height: 15px !important;
+    overflow: hidden;
+    margin: 0px 0px -3px 4px;
+}  
+.shift_little{
+    position: relative;
+    left: 7px;
+    padding-right: 5px;
+}
+.mx_xrp_transaction {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
 .mx_RoomHeader_button_unreadIndicator_bg {
     position: absolute;
     right: var(--RoomHeader-indicator-dot-offset);
@@ -276,6 +392,7 @@ limitations under the License.
     mask-size: 20px;
     mask-position: center;
 }
+
 
 .mx_RoomHeader_videoCallButton::before {
     mask-image: url("$(res)/img/element-icons/call/video-call.svg");

@@ -37,7 +37,7 @@ limitations under the License.
         content: "";
         width: 24px;
         height: 24px;
-        top: 27px;
+        top: 17px;
         left: 20px;
         mask-position: center;
         mask-repeat: no-repeat;
@@ -57,7 +57,37 @@ limitations under the License.
         }
     }
 }
+@define-mixin SpacePillButtonDisable {
+    position: relative;
+    padding: 16px 32px 16px 72px;
+    width: 432px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid $input-border-color;
+    font-size: $font-17px;
+    font-weight: var(--font-semi-bold);
+    margin: 20px 0;
 
+    > div {
+        margin-top: 4px;
+        font-weight: normal;
+        font-size: $font-15px;
+        color: $secondary-content;
+    }
+
+    &::before {
+        position: absolute;
+        content: "";
+        width: 24px;
+        height: 24px;
+        top: 17px;
+        left: 20px;
+        mask-position: center;
+        mask-repeat: no-repeat;
+        mask-size: 24px;
+        background-color: $tertiary-content;
+    }
+}
 .mx_SpaceRoomView {
     --innerWidth: 428px;
 

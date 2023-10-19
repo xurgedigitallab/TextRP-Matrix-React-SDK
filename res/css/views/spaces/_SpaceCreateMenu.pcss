@@ -45,9 +45,37 @@ limitations under the License.
         .mx_SpaceCreateMenuType {
             @mixin SpacePillButton;
         }
+        .mx_SpaceCreateMenuType2 {
+            @mixin SpacePillButtonDisable;
+        }
 
         .mx_SpaceCreateMenuType_public::before {
             mask-image: url("$(res)/img/globe.svg");
+        }
+        .personal1{
+            position:absolute;
+            right: 21px;
+            top: 2px;
+            width: 18px;
+            height: 22px;
+            background: black;
+            mask-repeat: no-repeat;
+            mask-image: url("$(res)/img/nft-token-13058.svg");
+            mask-size: 18px;
+        }
+        .disable{
+            opacity: 0.3;
+        }
+        .personal{
+            position:absolute;
+            right:0px;
+            top:2px;
+            width: 18px;
+            height: 22px;
+            background: black;
+            mask-repeat: no-repeat;
+            mask-image: url("$(res)/img/element-icons/lock.svg");
+            mask-size: 15px;
         }
 
         .mx_SpaceCreateMenuType_private::before {

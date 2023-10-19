@@ -106,7 +106,7 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
         }
     }
 
-    private async handleBuyCredits(): Promise<void> {
+    private async handleBuyCredits(): Promise<void> {        
         try {
             this.setState({ isLoading: true });
             const details = UserIdentifierCustomisations.getDisplayUserIdentifier(
@@ -134,12 +134,13 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
         console.log("buy mounted");
         // noinspection JSIgnoredPromiseFromCall
         this.fetchDetails();
+        this.setState({ selectedCredit: 0});
+        
     }
 
     public componentWillUnmount(): void {}
 
     public componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>): void {}
-
     public render(): React.ReactNode {
         if (this.state.phase === Phase.Loading) {
             // Ends up default centered
