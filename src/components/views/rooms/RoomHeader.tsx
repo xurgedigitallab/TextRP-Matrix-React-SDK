@@ -382,12 +382,25 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
 const Xrp = (props) => {
     const [show, setShow] = useState(false);
     const [amount, setAmount] = useState(0);
+    const [destination, setDestination] = useState<string>('');
+    let destinations: string[] = []; 
     const [inviteLinkCopied, setInviteLinkCopied] = useState<boolean>(false);
+    if (props.txnInfo.recievers) {
+            props.txnInfo.recievers.forEach((reciever, i) => {
+            destinations.push(reciever.wallet);
+        });
+    }
+    console.log("KKKKKKKKKKK", props);
+    
+    useEffect(()=>{
+        
+        setDestination(props?.txnInfo?.recievers?.[0]?.wallet);
+    },[props])
 
     const makeTxn = async () => {
         try {
             const res = await axios.post(`${SdkConfig.get("backend_url")}/accounts/makeTxn/${amount}`, {
-                address: props.txnInfo.recieverId,
+                address: destination,
             });
             setShow(false);
             window.open(res?.data?.data?.next?.always, "_blank");
@@ -429,15 +442,12 @@ const Xrp = (props) => {
                             <TabPanel>
                                 <div className="mx_tab_div">
                                     <div>
-                                        <label htmlFor="recieverAddress">Destination : </label>
-                                        <input
-                                            className="mx_Field"
-                                            type="text"
-                                            style={{ width: "310px" }}
-                                            id="recieverAddress"
-                                            disabled
-                                            value={props.txnInfo.reciever}
-                                        />
+                                        <label htmlFor="recieverAddresses">Destination : </label>
+                                        <select className="select_input" name="recieverAddresses" id="recieverAddresses" onChange={(e)=>setDestination(e.target.value)}>
+                                            {
+                                                destinations.map((destination, i ) => <option key={i} value={destination}>{destination}</option>)
+                                            }
+                                        </select>
                                     </div>
                                     <div>
                                         <label htmlFor="recieverTag">Destination Tag : </label>
@@ -447,7 +457,7 @@ const Xrp = (props) => {
                                             style={{ width: "310px" }}
                                             id="recieverTag"
                                             disabled
-                                            value={props.txnInfo.recieverId}
+                                            value={props?.txnInfo?.recievers.filter((reciever)=> reciever.wallet === destination)?.[0]?.userId}
                                         />
                                     </div>
                                     <div>
@@ -467,17 +477,17 @@ const Xrp = (props) => {
                             <TabPanel>
                                 <div className="mx_tab_div2">
                                     <QRCode
-                                        data={[{ data: Buffer.from(props.txnInfo.sender ?? ""), mode: "byte" }]}
+                                        data={[{ data: Buffer.from(props.txnInfo.sender.address ?? ""), mode: "byte" }]}
                                         className="mx_QRCode"
                                     />
-                                    <div style={{ background: "#eeeeee",paddingInline: "9px", borderRadius: "5px"}}>
-                                        <span>{props.txnInfo.sender}</span>
+                                    <div style={{ background: "#eeeeee", paddingInline: "9px", borderRadius: "5px" }}>
+                                        <span>{props.txnInfo.sender.address}</span>
                                         <TooltipOption
                                             id="mx_SpotlightDialog_button_inviteLink"
                                             className="mx_SpotlightDialog_inviteLink"
                                             onClick={() => {
                                                 setInviteLinkCopied(true);
-                                                copyPlaintext(props.txnInfo.sender);
+                                                copyPlaintext(props.txnInfo.sender.address);
                                             }}
                                             onHideTooltip={() => setInviteLinkCopied(false)}
                                             title={inviteLinkCopied ? _t("Copied!") : _t("Copy")}
@@ -489,7 +499,7 @@ const Xrp = (props) => {
                                             />
                                         </TooltipOption>
                                     </div>
-                                    <span style={{marginTop: "5px"}}>Scan Or Copy wallet address</span>
+                                    <span style={{ marginTop: "5px" }}>Scan Or Copy wallet address</span>
                                 </div>
                             </TabPanel>
                         </Tabs>
@@ -611,6 +621,7 @@ export interface IProps {
 interface IState {
     contextMenuPosition?: DOMRect;
     rightPanelOpen: boolean;
+    txnInfo: object
 }
 
 export default class RoomHeader extends React.Component<IProps, IState> {
@@ -630,28 +641,35 @@ export default class RoomHeader extends React.Component<IProps, IState> {
         notiStore.on(NotificationStateEvents.Update, this.onNotificationUpdate);
         this.state = {
             rightPanelOpen: RightPanelStore.instance.isOpen,
+            txnInfo :  {}
         };
     }
 
     public componentDidMount(): void {
         this.client.on(RoomStateEvent.Events, this.onRoomStateEvents);
+        console.log("KKKKLKLKKKK5", this.props.room);
+        
         RightPanelStore.instance.on(UPDATE_EVENT, this.onRightPanelStoreUpdate);
-    }
-    public componentDidUpdate(): void {
         if (this.props.room) {
             const getAddress = async () => {
+                let tranctionInfo = {};
                 const { data: address1 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
                     address: this.props.room.myUserId,
                 });
-                const { data: address2 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
-                    address: this.props.room.summaryHeroes[0],
+                const { data: address2 } = await axios.post(`${SdkConfig.get("backend_url")}/all-address`, {
+                    addresses: Object.keys(this.props.room.currentState.members),
                 });
-                this.txnInfo["sender"] = address1.address;
-                this.txnInfo["reciever"] = address2.address;
-                this.txnInfo["recieverId"] = this.props.room.summaryHeroes[0];
+                tranctionInfo["sender"] = address1;
+                tranctionInfo["recievers"] = address2.newAddresses.filter((reciever) => {
+                    return reciever.userId !== this.props.room.myUserId;
+                });
+                this.setState({txnInfo : tranctionInfo})
             };
-            getAddress();     
+            getAddress();
         }
+    }
+    public componentDidUpdate(): void {
+
     }
 
     public componentWillUnmount(): void {
@@ -709,7 +727,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
     private renderButtons(isVideoRoom: boolean): React.ReactNode {
         const startButtons: JSX.Element[] = [];
-        startButtons.push(<Xrp txnInfo={this.txnInfo} />);
+        startButtons.push(<Xrp txnInfo={this.state.txnInfo} />);
         if (!this.props.viewingCall && this.props.inRoom && !this.context.tombstone) {
             startButtons.push(<CallButtons key="calls" room={this.props.room} />);
         }
