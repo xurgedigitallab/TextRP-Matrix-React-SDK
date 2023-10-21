@@ -19,6 +19,7 @@ import React, { FC, useState, useMemo, useCallback, useEffect } from "react";
 import classNames from "classnames";
 import { throttle } from "lodash";
 import QRCode from "../elements/QRCode";
+import Autocompleter, { IProviderCompletions } from "../../../autocomplete/Autocompleter";
 import { TooltipOption } from "../dialogs/spotlight/TooltipOption";
 import axios from "axios";
 import { copyPlaintext } from "../../../utils/strings";
@@ -382,20 +383,19 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
 const Xrp = (props) => {
     const [show, setShow] = useState(false);
     const [amount, setAmount] = useState(0);
-    const [destination, setDestination] = useState<string>('');
-    let destinations: string[] = []; 
+    const [destination, setDestination] = useState<string>("");
+    let destinations: string[] = [];
     const [inviteLinkCopied, setInviteLinkCopied] = useState<boolean>(false);
     if (props.txnInfo.recievers) {
-            props.txnInfo.recievers.forEach((reciever, i) => {
+        props.txnInfo.recievers.forEach((reciever, i) => {
             destinations.push(reciever.wallet);
         });
     }
     console.log("KKKKKKKKKKK", props);
-    
-    useEffect(()=>{
-        
+
+    useEffect(() => {
         setDestination(props?.txnInfo?.recievers?.[0]?.wallet);
-    },[props])
+    }, [props]);
 
     const makeTxn = async () => {
         try {
@@ -443,10 +443,17 @@ const Xrp = (props) => {
                                 <div className="mx_tab_div">
                                     <div>
                                         <label htmlFor="recieverAddresses">Destination : </label>
-                                        <select className="select_input" name="recieverAddresses" id="recieverAddresses" onChange={(e)=>setDestination(e.target.value)}>
-                                            {
-                                                destinations.map((destination, i ) => <option key={i} value={destination}>{destination}</option>)
-                                            }
+                                        <select
+                                            className="select_input"
+                                            name="recieverAddresses"
+                                            id="recieverAddresses"
+                                            onChange={(e) => setDestination(e.target.value)}
+                                        >
+                                            {destinations.map((destination, i) => (
+                                                <option key={i} value={destination}>
+                                                    {destination}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
                                     <div>
@@ -457,7 +464,11 @@ const Xrp = (props) => {
                                             style={{ width: "310px" }}
                                             id="recieverTag"
                                             disabled
-                                            value={props?.txnInfo?.recievers.filter((reciever)=> reciever.wallet === destination)?.[0]?.userId}
+                                            value={
+                                                props?.txnInfo?.recievers.filter(
+                                                    (reciever) => reciever.wallet === destination,
+                                                )?.[0]?.userId
+                                            }
                                         />
                                     </div>
                                     <div>
@@ -621,7 +632,11 @@ export interface IProps {
 interface IState {
     contextMenuPosition?: DOMRect;
     rightPanelOpen: boolean;
-    txnInfo: object
+    txnInfo: object;
+    members: IProviderCompletions[];
+}
+export interface IMemeber {
+    completionId: string;
 }
 
 export default class RoomHeader extends React.Component<IProps, IState> {
@@ -641,35 +656,60 @@ export default class RoomHeader extends React.Component<IProps, IState> {
         notiStore.on(NotificationStateEvents.Update, this.onNotificationUpdate);
         this.state = {
             rightPanelOpen: RightPanelStore.instance.isOpen,
-            txnInfo :  {}
+            txnInfo: {},
+            members: [],
         };
     }
 
     public componentDidMount(): void {
         this.client.on(RoomStateEvent.Events, this.onRoomStateEvents);
-        console.log("KKKKLKLKKKK5", this.props.room);
-        
         RightPanelStore.instance.on(UPDATE_EVENT, this.onRightPanelStoreUpdate);
         if (this.props.room) {
             const getAddress = async () => {
+                let autocompleter = new Autocompleter(this.props.room);
+                autocompleter
+                    ?.getCompletions("@r", { beginning: true, end: 1, start: 1 }, false, 20)
+                    .then((completions) => {
+                        this.setState({members: completions})
+                    });
+            };
+            getAddress();
+        }
+    }
+    componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>, snapshot?: any): void {
+        if (prevState.members !== this.state.members) {
+            let members = [];
+            this.state.members[0].completions.forEach((completion) => {
+                members.push(completion.completionId);
+            });            
+            const getTxnInfo = async () => {
                 let tranctionInfo = {};
                 const { data: address1 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
                     address: this.props.room.myUserId,
                 });
                 const { data: address2 } = await axios.post(`${SdkConfig.get("backend_url")}/all-address`, {
-                    addresses: Object.keys(this.props.room.currentState.members),
+                    addresses: members,
                 });
                 tranctionInfo["sender"] = address1;
                 tranctionInfo["recievers"] = address2.newAddresses.filter((reciever) => {
                     return reciever.userId !== this.props.room.myUserId;
                 });
-                this.setState({txnInfo : tranctionInfo})
+                this.setState({ txnInfo: tranctionInfo });
+            };
+            getTxnInfo();
+        }
+        if (prevProps !== this.props) {
+            const getAddress = async () => {
+                let autocompleter = new Autocompleter(this.props.room);
+                autocompleter
+                    ?.getCompletions("@r", { beginning: true, end: 1, start: 1 }, false, 20)
+                    .then((completions) => {
+                        this.setState({members: completions})
+                    });
             };
             getAddress();
         }
-    }
-    public componentDidUpdate(): void {
-
+        
     }
 
     public componentWillUnmount(): void {
