@@ -676,10 +676,10 @@ export default class RoomHeader extends React.Component<IProps, IState> {
             getAddress();
         }
     }
-    componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>, snapshot?: any): void {
+    componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>, snapshot?: any): void {        
         if (prevState.members !== this.state.members) {
             let members = [];
-            this.state.members[0].completions.forEach((completion) => {
+            this.state?.members[0]?.completions.forEach((completion) => {
                 members.push(completion.completionId);
             });            
             const getTxnInfo = async () => {
