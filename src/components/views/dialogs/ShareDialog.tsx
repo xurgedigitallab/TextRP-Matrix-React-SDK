@@ -16,6 +16,8 @@ limitations under the License.
 */
 
 import * as React from "react";
+import axios from "axios";
+import SdkConfig from "../../../SdkConfig";
 import { Room } from "matrix-js-sdk/src/models/room";
 import { User } from "matrix-js-sdk/src/models/user";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
@@ -81,6 +83,7 @@ interface EventProps extends BaseProps {
 interface IState {
     linkSpecificEvent: boolean;
     permalinkCreator: RoomPermalinkCreator | null;
+    address: string
 }
 
 export default class ShareDialog extends React.PureComponent<XOR<Props, EventProps>, IState> {
@@ -97,9 +100,20 @@ export default class ShareDialog extends React.PureComponent<XOR<Props, EventPro
             // MatrixEvent defaults to share linkSpecificEvent
             linkSpecificEvent: this.props.target instanceof MatrixEvent,
             permalinkCreator,
+            address: ''
         };
     }
-
+    componentDidMount(): void {
+        if (this.props.target instanceof User || this.props.target instanceof RoomMember) {
+            const addressCall = async () => {
+                const { data: address2 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                    address: this.props.target.userId,
+                });
+                this.setState({address: address2.address})
+            };
+            addressCall();
+        }
+    }
     public static onLinkClick(e: React.MouseEvent): void {
         e.preventDefault();
         selectText(e.currentTarget);
@@ -120,7 +134,7 @@ export default class ShareDialog extends React.PureComponent<XOR<Props, EventPro
                 return this.state.permalinkCreator!.forShareableRoom();
             }
         } else if (this.props.target instanceof User || this.props.target instanceof RoomMember) {
-            return makeUserPermalink(this.props.target.userId);
+            return makeUserPermalink(this.state.address);
         } else if (this.state.linkSpecificEvent) {
             return this.props.permalinkCreator!.forEvent(this.props.target.getId()!);
         } else {
