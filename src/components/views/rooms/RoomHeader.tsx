@@ -393,6 +393,7 @@ const Xrp = (props) => {
             destinations.push(reciever.wallet);
         });
     }
+    
     useEffect(() => {
         if (props.txnInfo.userHoldings) {
            let holdings = new Set();
@@ -408,6 +409,7 @@ const Xrp = (props) => {
             const res = await axios.post(`${SdkConfig.get("backend_url")}/accounts/makeTxn/${amount}`, {
                 address: destination,
                 currency,
+                sender: props.txnInfo.sender.address
             });
             setShow(false);
             window.open(res?.data?.data?.next?.always, "_blank");
