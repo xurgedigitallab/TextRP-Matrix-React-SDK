@@ -17,7 +17,7 @@ limitations under the License.
 
 import React, { FC, useState, useMemo, useCallback, useEffect } from "react";
 import classNames from "classnames";
-import { throttle } from "lodash";
+import { set, throttle } from "lodash";
 import QRCode from "../elements/QRCode";
 import Autocompleter, { IProviderCompletions } from "../../../autocomplete/Autocompleter";
 import { TooltipOption } from "../dialogs/spotlight/TooltipOption";
@@ -383,6 +383,8 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
 const Xrp = (props) => {
     const [show, setShow] = useState(false);
     const [amount, setAmount] = useState(0);
+    const [currency, setCurrency] = useState("XRP");
+    const [tokens, setTokens] = useState([]);
     const [destination, setDestination] = useState<string>("");
     let destinations: string[] = [];
     const [inviteLinkCopied, setInviteLinkCopied] = useState<boolean>(false);
@@ -391,16 +393,21 @@ const Xrp = (props) => {
             destinations.push(reciever.wallet);
         });
     }
-    console.log("KKKKKKKKKKK", props);
-
     useEffect(() => {
+        if (props.txnInfo.userHoldings) {
+           let holdings = new Set();
+           props.txnInfo.userHoldings.forEach(element => {
+               holdings.add(element.currency);
+           });
+           setTokens([...holdings]);
+       }
         setDestination(props?.txnInfo?.recievers?.[0]?.wallet);
     }, [props]);
-
     const makeTxn = async () => {
         try {
             const res = await axios.post(`${SdkConfig.get("backend_url")}/accounts/makeTxn/${amount}`, {
                 address: destination,
+                currency,
             });
             setShow(false);
             window.open(res?.data?.data?.next?.always, "_blank");
@@ -472,16 +479,45 @@ const Xrp = (props) => {
                                         />
                                     </div>
                                     <div>
-                                        <label htmlFor="xrpAmount">Amount of XRP : </label>
+                                        <label htmlFor="recieverAddresses">Currency : </label>
+                                        <select
+                                            className="select_input2"
+                                            name="recieverAddresses"
+                                            id="recieverAddresses"
+                                            onChange={(e) => setCurrency(e.target.value)}
+                                        >
+                                            {tokens.map((token, i) => (
+                                                <option key={i} value={token}>
+                                                    {token}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <label htmlFor="recieverTag" style={{marginLeft: "20px"}}>Holdings : </label>
+                                        <input
+                                            className="mx_Field"
+                                            type="text"
+                                            style={{ width: "120px" }}
+                                            id="recieverTag"
+                                            disabled
+                                            value={
+                                                props?.txnInfo?.userHoldings.filter(
+                                                    (holding) => holding.currency === currency,
+                                                )?.[0]?.value
+                                            }
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="xrpAmount">{`Amount of ${currency} :`} </label>
                                         <input
                                             type="number"
                                             id="xrpAmount"
+                                            style={{marginLeft: "5px"}}
                                             value={amount}
                                             onChange={(e) => setAmount(Number(e.target.value))}
                                         />
                                     </div>
                                     <button style={{ marginTop: "10px" }} onClick={makeTxn}>
-                                        Send XRP
+                                        {`Send ${currency}`}
                                     </button>
                                 </div>
                             </TabPanel>
@@ -670,26 +706,31 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                 autocompleter
                     ?.getCompletions("@r", { beginning: true, end: 1, start: 1 }, false, 20)
                     .then((completions) => {
-                        this.setState({members: completions})
+                        this.setState({ members: completions });
                     });
             };
             getAddress();
         }
     }
-    componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>, snapshot?: any): void {        
+    componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>, snapshot?: any): void {
         if (prevState.members !== this.state.members) {
             let members = [];
             this.state?.members[0]?.completions.forEach((completion) => {
                 members.push(completion.completionId);
-            });            
+            });
             const getTxnInfo = async () => {
                 let tranctionInfo = {};
+
                 const { data: address1 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
                     address: this.props.room.myUserId,
                 });
                 const { data: address2 } = await axios.post(`${SdkConfig.get("backend_url")}/all-address`, {
                     addresses: members,
                 });
+                const { data: holdings } = await axios.get(
+                    `${SdkConfig.get("backend_url")}/get-all-holding/${address1.address}`,
+                );
+                tranctionInfo["userHoldings"] = holdings;
                 tranctionInfo["sender"] = address1;
                 tranctionInfo["recievers"] = address2.newAddresses.filter((reciever) => {
                     return reciever.userId !== this.props.room.myUserId;
@@ -704,12 +745,11 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                 autocompleter
                     ?.getCompletions("@r", { beginning: true, end: 1, start: 1 }, false, 20)
                     .then((completions) => {
-                        this.setState({members: completions})
+                        this.setState({ members: completions });
                     });
             };
             getAddress();
         }
-        
     }
 
     public componentWillUnmount(): void {
@@ -767,7 +807,9 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
     private renderButtons(isVideoRoom: boolean): React.ReactNode {
         const startButtons: JSX.Element[] = [];
-        startButtons.push(<Xrp txnInfo={this.state.txnInfo} />);
+        if (Object.keys(this.state.txnInfo).length) {
+            startButtons.push(<Xrp txnInfo={this.state.txnInfo} />);
+        }
         if (!this.props.viewingCall && this.props.inRoom && !this.context.tombstone) {
             startButtons.push(<CallButtons key="calls" room={this.props.room} />);
         }
