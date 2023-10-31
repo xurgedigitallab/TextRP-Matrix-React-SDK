@@ -34,6 +34,7 @@ import defaultDispatcher from "../../../dispatcher/dispatcher";
 import { Action } from "../../../dispatcher/actions";
 import { UserTab } from "../dialogs/UserTab";
 import SettingsStore from "../../../settings/SettingsStore";
+import CustomSelect from "./CustomSelect";
 import RoomHeaderButtons from "../right_panel/RoomHeaderButtons";
 import E2EIcon from "./E2EIcon";
 import DecoratedRoomAvatar from "../avatars/DecoratedRoomAvatar";
@@ -311,6 +312,8 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
                 );
             }
         } else if (hasLegacyCall || hasJitsiWidget || hasGroupCall) {
+            console.log("GGGGGGGGGGGGGGGG1");
+
             return (
                 <>
                     {makeVoiceCallButton(new DisabledWithReason(_t("Ongoing call")))}
@@ -318,6 +321,8 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
                 </>
             );
         } else if (functionalMembers.length <= 1) {
+            console.log("GGGGGGGGGGGGGGGG2");
+
             return (
                 <>
                     {makeVoiceCallButton(new DisabledWithReason(_t("There's no one here to call")))}
@@ -325,6 +330,8 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
                 </>
             );
         } else if (functionalMembers.length === 2) {
+            console.log("GGGGGGGGGGGGGGGG3");
+
             return (
                 <>
                     {makeVoiceCallButton("legacy_or_jitsi")}
@@ -332,6 +339,8 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
                 </>
             );
         } else if (mayEditWidgets) {
+            console.log("GGGGGGGGGGGGGGGG4");
+
             return (
                 <>
                     {makeVoiceCallButton("legacy_or_jitsi")}
@@ -342,6 +351,8 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
             const videoCallBehavior = mayCreateElementCalls
                 ? "element"
                 : new DisabledWithReason(_t("You do not have permission to start video calls"));
+            console.log("GGGGGGGGGGGGGGGG5");
+
             return (
                 <>
                     {makeVoiceCallButton(new DisabledWithReason(_t("You do not have permission to start voice calls")))}
@@ -350,6 +361,8 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
             );
         }
     } else if (hasLegacyCall || hasJitsiWidget) {
+        console.log("GGGGGGGGGGGGGGGG6");
+
         return (
             <>
                 {makeVoiceCallButton(new DisabledWithReason(_t("Ongoing call")))}
@@ -357,6 +370,8 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
             </>
         );
     } else if (functionalMembers.length <= 1) {
+        console.log("GGGGGGGGGGGGGGGG7");
+
         return (
             <>
                 {makeVoiceCallButton(new DisabledWithReason(_t("There's no one here to call")))}
@@ -364,6 +379,8 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
             </>
         );
     } else if (functionalMembers.length === 2 || mayEditWidgets) {
+        console.log("GGGGGGGGGGGGGGGG8");
+
         return (
             <>
                 {makeVoiceCallButton("legacy_or_jitsi")}
@@ -371,6 +388,8 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
             </>
         );
     } else {
+        console.log("GGGGGGGGGGGGGGGG9");
+
         return (
             <>
                 {makeVoiceCallButton(new DisabledWithReason(_t("You do not have permission to start voice calls")))}
@@ -390,26 +409,25 @@ const Xrp = (props) => {
     const [inviteLinkCopied, setInviteLinkCopied] = useState<boolean>(false);
     if (props.txnInfo.recievers) {
         props.txnInfo.recievers.forEach((reciever, i) => {
-            destinations.push(reciever.wallet);
+            destinations.push(reciever);
         });
     }
-    
+
     useEffect(() => {
         if (props.txnInfo.userHoldings) {
-           let holdings = new Set();
-           props.txnInfo.userHoldings.forEach(element => {
-               holdings.add(element.currency);
-           });
-           setTokens([...holdings]);
-       }
-        setDestination(props?.txnInfo?.recievers?.[0]?.wallet);
+            let holdings = new Set();
+            props.txnInfo.userHoldings.forEach((element) => {
+                holdings.add(element.currency);
+            });
+            setTokens([...holdings]);
+        }
     }, [props]);
     const makeTxn = async () => {
         try {
             const res = await axios.post(`${SdkConfig.get("backend_url")}/accounts/makeTxn/${amount}`, {
                 address: destination,
                 currency,
-                sender: props.txnInfo.sender.address
+                sender: props.txnInfo.sender.address,
             });
             setShow(false);
             window.open(res?.data?.data?.next?.always, "_blank");
@@ -452,7 +470,11 @@ const Xrp = (props) => {
                                 <div className="mx_tab_div">
                                     <div>
                                         <label htmlFor="recieverAddresses">Destination : </label>
-                                        <select
+                                        <CustomSelect
+                                            options={destinations}
+                                            onChange={(value) => setDestination(value)}
+                                        />
+                                        {/* <select
                                             className="select_input"
                                             name="recieverAddresses"
                                             id="recieverAddresses"
@@ -463,7 +485,7 @@ const Xrp = (props) => {
                                                     {destination}
                                                 </option>
                                             ))}
-                                        </select>
+                                        </select> */}
                                     </div>
                                     <div>
                                         <label htmlFor="recieverTag">Destination Tag : </label>
@@ -476,7 +498,7 @@ const Xrp = (props) => {
                                             value={
                                                 props?.txnInfo?.recievers.filter(
                                                     (reciever) => reciever.wallet === destination,
-                                                )?.[0]?.userId
+                                                )?.[0]?.userId || null
                                             }
                                         />
                                     </div>
@@ -494,7 +516,9 @@ const Xrp = (props) => {
                                                 </option>
                                             ))}
                                         </select>
-                                        <label htmlFor="recieverTag" style={{marginLeft: "20px"}}>Holdings : </label>
+                                        <label htmlFor="recieverTag" style={{ marginLeft: "20px" }}>
+                                            Holdings :{" "}
+                                        </label>
                                         <input
                                             className="mx_Field"
                                             type="text"
@@ -513,7 +537,7 @@ const Xrp = (props) => {
                                         <input
                                             type="number"
                                             id="xrpAmount"
-                                            style={{marginLeft: "5px"}}
+                                            style={{ marginLeft: "5px" }}
                                             value={amount}
                                             onChange={(e) => setAmount(Number(e.target.value))}
                                         />
@@ -717,8 +741,10 @@ export default class RoomHeader extends React.Component<IProps, IState> {
     componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>, snapshot?: any): void {
         if (prevState.members !== this.state.members) {
             let members = [];
+            let membersWithDisplayname = [];
             this.state?.members[0]?.completions.forEach((completion) => {
                 members.push(completion.completionId);
+                membersWithDisplayname.push({ userId: completion.completionId, displayName: completion.completion });
             });
             const getTxnInfo = async () => {
                 let tranctionInfo = {};
@@ -732,8 +758,16 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                 const { data: holdings } = await axios.get(
                     `${SdkConfig.get("backend_url")}/get-all-holding/${address1.address}`,
                 );
+                address2.newAddresses.forEach((element) => {
+                    membersWithDisplayname.forEach((e) => {
+                        if (element.userId === e.userId) {
+                            element.displayName = e.displayName;
+                        }
+                    });
+                });
                 tranctionInfo["userHoldings"] = holdings;
                 tranctionInfo["sender"] = address1;
+
                 tranctionInfo["recievers"] = address2.newAddresses.filter((reciever) => {
                     return reciever.userId !== this.props.room.myUserId;
                 });
@@ -809,6 +843,8 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
     private renderButtons(isVideoRoom: boolean): React.ReactNode {
         const startButtons: JSX.Element[] = [];
+        console.log("ZZZXXXZZZXXX", this.props.activeCall, this.props.viewingCall);
+
         if (Object.keys(this.state.txnInfo).length) {
             startButtons.push(<Xrp txnInfo={this.state.txnInfo} />);
         }
