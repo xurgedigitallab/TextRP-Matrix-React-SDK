@@ -312,8 +312,6 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
                 );
             }
         } else if (hasLegacyCall || hasJitsiWidget || hasGroupCall) {
-            console.log("GGGGGGGGGGGGGGGG1");
-
             return (
                 <>
                     {makeVoiceCallButton(new DisabledWithReason(_t("Ongoing call")))}
@@ -321,8 +319,6 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
                 </>
             );
         } else if (functionalMembers.length <= 1) {
-            console.log("GGGGGGGGGGGGGGGG2");
-
             return (
                 <>
                     {makeVoiceCallButton(new DisabledWithReason(_t("There's no one here to call")))}
@@ -330,8 +326,6 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
                 </>
             );
         } else if (functionalMembers.length === 2) {
-            console.log("GGGGGGGGGGGGGGGG3");
-
             return (
                 <>
                     {makeVoiceCallButton("legacy_or_jitsi")}
@@ -339,8 +333,6 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
                 </>
             );
         } else if (mayEditWidgets) {
-            console.log("GGGGGGGGGGGGGGGG4");
-
             return (
                 <>
                     {makeVoiceCallButton("legacy_or_jitsi")}
@@ -351,8 +343,6 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
             const videoCallBehavior = mayCreateElementCalls
                 ? "element"
                 : new DisabledWithReason(_t("You do not have permission to start video calls"));
-            console.log("GGGGGGGGGGGGGGGG5");
-
             return (
                 <>
                     {makeVoiceCallButton(new DisabledWithReason(_t("You do not have permission to start voice calls")))}
@@ -370,8 +360,6 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
             </>
         );
     } else if (functionalMembers.length <= 1) {
-        console.log("GGGGGGGGGGGGGGGG7");
-
         return (
             <>
                 {makeVoiceCallButton(new DisabledWithReason(_t("There's no one here to call")))}
@@ -379,8 +367,6 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
             </>
         );
     } else if (functionalMembers.length === 2 || mayEditWidgets) {
-        console.log("GGGGGGGGGGGGGGGG8");
-
         return (
             <>
                 {makeVoiceCallButton("legacy_or_jitsi")}
@@ -388,8 +374,6 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
             </>
         );
     } else {
-        console.log("GGGGGGGGGGGGGGGG9");
-
         return (
             <>
                 {makeVoiceCallButton(new DisabledWithReason(_t("You do not have permission to start voice calls")))}
@@ -412,7 +396,6 @@ const Xrp = (props) => {
             destinations.push(reciever);
         });
     }
-
     useEffect(() => {
         if (props.txnInfo.userHoldings) {
             let holdings = new Set();
@@ -420,6 +403,9 @@ const Xrp = (props) => {
                 holdings.add(element.currency);
             });
             setTokens([...holdings]);
+        }
+        if (props.appShown && props.buttonShown) {
+            setShow(false);
         }
     }, [props]);
     const makeTxn = async () => {
@@ -437,7 +423,15 @@ const Xrp = (props) => {
     };
     return (
         <>
-            <div className="mx_RoomHeader_button_xrp" onClick={() => setShow((pre) => !pre)}></div>
+            <div
+                className="mx_RoomHeader_button_xrp"
+                onClick={() => {
+                    if (props.appShown && props.toggleFun) {
+                        props.toggleFun();
+                    }
+                    setShow((pre) => !pre);
+                }}
+            ></div>
             {show && (
                 <div className="mx_Dialog mx_xrp_model">
                     <AccessibleButton
@@ -474,18 +468,6 @@ const Xrp = (props) => {
                                             options={destinations}
                                             onChange={(value) => setDestination(value)}
                                         />
-                                        {/* <select
-                                            className="select_input"
-                                            name="recieverAddresses"
-                                            id="recieverAddresses"
-                                            onChange={(e) => setDestination(e.target.value)}
-                                        >
-                                            {destinations.map((destination, i) => (
-                                                <option key={i} value={destination}>
-                                                    {destination}
-                                                </option>
-                                            ))}
-                                        </select> */}
                                     </div>
                                     <div>
                                         <label htmlFor="recieverTag">Destination Tag : </label>
@@ -843,10 +825,15 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
     private renderButtons(isVideoRoom: boolean): React.ReactNode {
         const startButtons: JSX.Element[] = [];
-        console.log("ZZZXXXZZZXXX", this.props.activeCall, this.props.viewingCall);
-
         if (Object.keys(this.state.txnInfo).length) {
-            startButtons.push(<Xrp txnInfo={this.state.txnInfo} />);
+            startButtons.push(
+                <Xrp
+                    txnInfo={this.state.txnInfo}
+                    toggleFun={this.props.onAppsClick}
+                    appShown={this.props.appsShown}
+                    buttonShown={!this.props.viewingCall && this.props.onAppsClick}
+                />,
+            );
         }
         if (!this.props.viewingCall && this.props.inRoom && !this.context.tombstone) {
             startButtons.push(<CallButtons key="calls" room={this.props.room} />);
@@ -867,7 +854,6 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                 />,
             );
         }
-
         if (!this.props.viewingCall && this.props.onAppsClick) {
             startButtons.push(
                 <AccessibleTooltipButton
