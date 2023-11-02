@@ -36,8 +36,8 @@ export default class MatrixToPermalinkConstructor extends PermalinkConstructor {
         return `${baseUrl}/#/room/${roomIdOrAlias}${this.encodeServerCandidates(serverCandidates)}`;
     }
 
-    public forUser(userId: string): string {
-        return `${baseUrl}/#/${userId}`;
+    public forUser(userId: string): string {        
+        return `${baseUrl}/#/user/${userId}`;
     }
 
     public forEntity(entityId: string): string {
