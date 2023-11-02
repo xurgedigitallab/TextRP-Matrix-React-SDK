@@ -134,7 +134,7 @@ export default class ShareDialog extends React.PureComponent<XOR<Props, EventPro
                 return this.state.permalinkCreator!.forShareableRoom();
             }
         } else if (this.props.target instanceof User || this.props.target instanceof RoomMember) {
-            return makeUserPermalink(this.state.address);
+            return makeUserPermalink(this.props.target.userId);
         } else if (this.state.linkSpecificEvent) {
             return this.props.permalinkCreator!.forEvent(this.props.target.getId()!);
         } else {
