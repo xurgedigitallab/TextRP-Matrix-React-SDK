@@ -41,7 +41,7 @@ export const DEFAULTS: DeepReadonly<IConfigOptions> = {
     },
     // backend_url: "http://localhost:8080",
     backend_url: "https://backend.textrp.io",
-
+    xrpl_bridge_bot : "@rU5kJVrcojGMZeUCG2xnhZcea9rDCoYMsq:synapse.textrp.io",
     // @ts-ignore - we deliberately use the camelCase version here so we trigger
     // the fallback behaviour. If we used the snake_case version then we'd break
     // everyone's config which has the camelCase property because our default would

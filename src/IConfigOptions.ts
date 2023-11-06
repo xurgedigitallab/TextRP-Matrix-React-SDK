@@ -91,7 +91,7 @@ export interface IConfigOptions {
 
     setting_defaults?: Record<string, any>; // <SettingName, Value>
     backend_url: string;
-
+    xrpl_bridge_bot: string,
     integrations_ui_url?: string;
     integrations_rest_url?: string;
     integrations_widgets_urls?: string[];
