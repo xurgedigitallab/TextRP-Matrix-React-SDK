@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import useOutsideClick from "./useOutsideClick";
-function CustomSelect({ options, onChange }) {
+function CustomSelect({ options, onChange, destinationPre }) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedOption, setSelectedOption] = useState(null);
     const ref = useRef();
@@ -18,7 +18,9 @@ function CustomSelect({ options, onChange }) {
 
     return (
         <div ref={ref} className="custom-select" id="recieverAddresses" onClick={() => setIsOpen(!isOpen)}>
-            <div className="selected-option">{selectedOption || "Select an address"}</div>
+            <div className="selected-option">
+                {destinationPre || "Select an address"}
+            </div>
             {isOpen && (
                 <div className="options">
                     {options.map((option) => (

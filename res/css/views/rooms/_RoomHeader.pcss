@@ -19,33 +19,76 @@ limitations under the License.
     --RoomHeader-indicator-dot-offset: -3px;
     --RoomHeader-indicator-pulseColor: $alert;
 }
+.qrscan {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    background-color: #f2f5f8;
+    margin-right: 10px;
+    cursor: pointer;
+    &::after {
+        content: "";
+        position: absolute;
+        top: 8px;
+        right: 17px;
+        height: 25px;
+        width: 25px;
+        mask-image: url("$(res)/img/qr-code.svg");
+        background-color: rgb(20, 141, 255);
+        mask-repeat: no-repeat;
+        mask-size: contain;
+    }
+}
+.qrscan2 {
+    width: 36px;
+    position: absolute;
+    top: 10px;
+    right: 0px;
+    height: 34px;
+    border-radius: 4px;
+    background-color: #f2f5f8;
+    margin-right: 10px;
+    cursor: pointer;
+    &::after {
+        content: "";
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        height: 25px;
+        width: 25px;
+        mask-image: url("$(res)/img/qr-code.svg");
+        background-color: rgb(20, 141, 255);
+        mask-repeat: no-repeat;
+        mask-size: contain;
+    }
+}
 .custom-select {
     position: relative;
-    width: 350px;
-    background: $background;
-    height: 30px;
+    flex-grow: 1;
+    margin-right: 10px;
+    height: 40px;
     margin-left: 5px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
     font-size: 14px !important;
     cursor: pointer;
-
+    z-index: 3;
+    background-color: #f2f5f8;
+    color: #61708b;
+    border: none;
+    border-radius: 5px;
     .selected-option {
         height: 13px;
         padding: 5px;
         margin-left: 5px;
-        border-radius: 5px;
-        color: $authpage-primary-color;
-        background-color: $background;
-        &::after{
+        margin-top: 6px;
+        &::after {
             content: "";
             position: absolute;
-            top: 8px;
+            top: 10px;
             right: 0px;
-            height: 15px;
-            width: 17px;
+            height: 20px;
+            width: 20px;
             mask-image: url("$(res)/img/feather-customised/chevron-down.svg");
-            background-color: $authpage-primary-color;
+            background-color: black;
             mask-repeat: no-repeat;
             mask-size: contain;
         }
@@ -72,10 +115,6 @@ limitations under the License.
         }
     }
 }
-
-
-
-
 
 .mx_RoomHeader {
     flex: 0 0 50px;
@@ -255,6 +294,91 @@ limitations under the License.
         }
     }
 }
+.slider-container {
+    position: relative;
+    padding: 0 10px; /* Padding to prevent overflow */
+}
+
+.slider {
+    -webkit-appearance: none; /* Override default appearance */
+    width: calc(100% - 20px); /* Width accounting for padding */
+    margin: 24px 10px; /* Space for tooltip */
+}
+
+.tooltip {
+    padding: 4px 8px;
+    border-radius: 4px;
+    position: absolute;
+    top: -17px; /* Position above the slider */
+    transform: translateX(-50%); /* Center the tooltip */
+    pointer-events: none; /* Ignore mouse for tooltip */
+    background-color: grey;
+    color: white;
+    &::before {
+        content: "";
+        position: absolute;
+        top: 17px;
+        left: 34px;
+        height: 25px;
+        width: 25px;
+        mask-image: url("$(res)/img/down.svg");
+        background-color: grey;
+        mask-repeat: no-repeat;
+        mask-size: contain;
+    }
+}
+.flags {
+    flex-grow: 1;
+    margin-left: 5px;
+    padding-right: 10px;
+}
+/* For styling the thumb and track of the slider for different browsers, you might need additional CSS. */
+.qrCodePrompt {
+    padding: 20px;
+    background-color: $background;
+    border: 2px solid rgb(236, 234, 234);
+    border-radius: 8px;
+}
+.memos {
+    display: flex;
+    justify-content: right;
+    flex-grow: 1;
+    align-items: center;
+    margin-top: 5px;
+    margin-left: 5px;
+    margin-right: 10px;
+    flex-flow: column;
+}
+.textarea123 {
+    border: none;
+    background-color: #f2f5f8;
+    color: #61708b;
+    border-radius: 4px;
+    padding: 5px;
+}
+.labelfomat {
+    width: 50px;
+    padding: 5px;
+    margin-right: 5px;
+    border-radius: 4px;
+    text-align: center;
+    background-color: #f2f5f8;
+    color: #61708b;
+}
+.inputoflast {
+    border: none;
+    background-color: #f2f5f8;
+    border-radius: 4px;
+    padding: 5px;
+    color: #61708b;
+}
+.lastInput {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    margin: 5px;
+}
 .mx_xrp_model {
     position: fixed;
     left: 50%;
@@ -262,12 +386,12 @@ limitations under the License.
     box-sizing: border-box;
     padding: 15px;
     box-shadow: 0px 0px 10px rgba(120, 118, 118, 0.485);
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -35%);
     min-width: 700px;
     width: auto;
-    height: 400px;
+    min-height: 455px;
     border: 2px solid rgb(236, 234, 234);
-    z-index: 9999;
+    z-index: 99;
 }
 .mx_SearchBar_cancel_my {
     background-color: $icon-button-color;
@@ -346,6 +470,7 @@ limitations under the License.
     display: flex;
     width: 100%;
     margin: 5px;
+    position: relative;
     align-items: center;
     justify-content: left;
 }
@@ -418,12 +543,140 @@ limitations under the License.
     margin-left: 5px;
     border-radius: 5px;
 }
+.amount {
+    position: absolute;
+    z-index: 1;
+    top: 40px;
+    left: 67px;
+}
 .select_input2 {
-    width: 200px;
-    height: 30px;
+    height: 40px;
     padding: 5px;
-    margin-left: 5px;
-    border-radius: 5px;
+    width: 70px;
+    margin-inline: 5px;
+    color: #61708b;
+    background-color: #f2f5f8;
+    border-radius: 4px;
+    border: none;
+}
+/* Styling for Chrome, Safari, and other WebKit browsers */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    width: 16px; /* Set a specific slider handle width */
+    height: 16px; /* Set a specific slider handle height */
+    border-radius: 50%; /* Make it circular */
+    background: #fff; /* Slider handle color */
+    border: 2px solid #91d5ff;
+    cursor: pointer; /* Cursor on hover */
+    margin-top: -7px; /* Align with the track */
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%; /* Full-width */
+    height: 1px; /* Slider track height */
+    border-radius: 2px; /* Track corner rounding */
+    cursor: pointer;
+    outline: none;
+}
+
+/* Styling for Firefox */
+input[type="range"]::-moz-range-thumb {
+    width: 16px; /* Set a specific slider handle width */
+    height: 16px; /* Set a specific slider handle height */
+    border: none; /* Remove default border */
+    border-radius: 50%; /* Make it circular */
+    background: #fff; /* Slider handle color */
+    border: 2px solid #91d5ff;
+    cursor: pointer; /* Cursor on hover */
+    outline: none;
+}
+
+input[type="range"]::-moz-range-track {
+    width: 100%; /* Full-width */
+    height: 1px; /* Slider track height */
+    background: #ccc; /* Track color */
+    border-radius: 2px; /* Track corner rounding */
+    outline: none;
+}
+
+/* Styling for IE and Edge */
+input[type="range"]::-ms-thumb {
+    width: 16px; /* Set a specific slider handle width */
+    height: 16px; /* Set a specific slider handle height */
+    background: #fb0101; /* Slider handle color */
+    border: 2px solid #91d5ff;
+    cursor: pointer; /* Cursor on hover */
+    outline: none;
+}
+
+input[type="range"]::-ms-track {
+    width: 100%; /* Full-width */
+    height: 1px; /* Slider track height */
+    background: transparent; /* IE uses 'color' to style the track */
+    border-color: transparent;
+    color: #ddd; /* IE uses 'color' to style the track */
+    cursor: pointer;
+    outline: none;
+}
+
+/* Common styles */
+input[type="range"] {
+    -webkit-appearance: none; /* Reset default browser styles */
+    margin: 10px 0; /* Provide sufficient space */
+    width: 100%; /* Full-width */
+}
+
+/* Focus styles */
+input[type="range"]:focus-within {
+    outline: none !important;
+    border-color: #eee;
+}
+
+input[type="range"]:focus-within::-webkit-slider-runnable-track {
+    outline: none !important;
+    border-color: #eee;
+}
+
+input[type="range"]:focus-within::-moz-range-track {
+    outline: none !important;
+    border-color: #eee;
+}
+
+input[type="range"]:focus-within::-ms-track {
+    outline: none !important;
+    border-color: #eee;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-progress {
+    background: #91d5ff; /* Color of the progressed track */
+    height: 4px; /* Height of the progressed track */
+}
+
+input[type="range"]::-moz-range-track {
+    background: #ddd; /* Color of the entire track */
+    height: 4px; /* Height of the entire track */
+}
+
+/* IE and Edge (pre-Chromium versions) */
+input[type="range"]::-ms-fill-lower {
+    background: #91d5ff; /* Color of the progressed track */
+}
+
+input[type="range"]::-ms-fill-upper {
+    background: #ddd; /* Color of the rest of the track */
+}
+
+.select_input3 {
+    flex-grow: 1;
+    height: 30px;
+    border-radius: 4px;
+    padding: 5px;
+    margin-right: 10px;
+    color: #61708b;
+    background-color: #f2f5f8;
+    border: none;
 }
 .mx_RoomHeader_button--highlight,
 .mx_RoomHeader_button:hover {

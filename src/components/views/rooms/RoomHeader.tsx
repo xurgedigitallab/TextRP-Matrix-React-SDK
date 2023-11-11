@@ -15,9 +15,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FC, useState, useMemo, useCallback, useEffect } from "react";
+import React, { FC, useState, useMemo, useCallback, useEffect, useRef } from "react";
 import classNames from "classnames";
 import { set, throttle } from "lodash";
+import { NonEmptyArray } from "../../../@types/common";
+import { ReactElement } from "react";
+import Dropdown from "../elements/Dropdown";
+import { Icon as CaretIcon } from "../../../../res/img/feather-customised/dropdown-arrow.svg";
 import QRCode from "../elements/QRCode";
 import Autocompleter, { IProviderCompletions } from "../../../autocomplete/Autocompleter";
 import { TooltipOption } from "../dialogs/spotlight/TooltipOption";
@@ -41,6 +45,7 @@ import DecoratedRoomAvatar from "../avatars/DecoratedRoomAvatar";
 import AccessibleButton, { ButtonEvent } from "../elements/AccessibleButton";
 import AccessibleTooltipButton from "../elements/AccessibleTooltipButton";
 import { LOGIN, WHATSAPP } from "../../../FeaturesConstant";
+import { QrReader } from "react-qr-reader"; // make sure the library import is correct
 import RoomTopic from "../elements/RoomTopic";
 import { isComponentEnabled } from "../../../service";
 import RoomName from "../elements/RoomName";
@@ -134,6 +139,43 @@ interface VideoCallButtonProps {
     setBusy: (value: boolean) => void;
     behavior: DisabledWithReason | "legacy_or_jitsi" | "element" | "jitsi_or_element";
 }
+
+export const QRCodeScanner = ({ setShowQRScanner, setScannedData }) => {
+    // Handle the result callback with a function
+    const handleResult = (result, error) => {
+        if (!!result) {
+            setScannedData(result?.text); // or just result if it's already a string
+            setShowQRScanner(false);
+        }
+
+        if (!!error) {
+            console.error(error);
+        }
+    };
+    const constraints = {
+        facingMode: "environment", // Use the environment-facing camera
+    };
+
+    return (
+        <>
+            <div
+                style={{ width: "500px", position: "fixed", top: "15%", right: "30%", zIndex: 100 }}
+                className="qrCodePrompt mx_dialog"
+            >
+                <AccessibleButton
+                    className="mx_SearchBar_cancel_my"
+                    onClick={() => setShowQRScanner((pre) => !pre)}
+                    aria-label={_t("Cancel")}
+                ></AccessibleButton>
+                <h2 style={{ textAlign: "center" }}>Place your QR here</h2>
+                <QrReader
+                    constraints={constraints} // Add the constraints prop here
+                    onResult={handleResult} // Provide the handleResult function as the onResult prop
+                />
+            </div>
+        </>
+    );
+};
 
 /**
  * Button for starting video calls, supporting both legacy 1:1 calls, Jitsi
@@ -351,8 +393,6 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
             );
         }
     } else if (hasLegacyCall || hasJitsiWidget) {
-        console.log("GGGGGGGGGGGGGGGG6");
-
         return (
             <>
                 {makeVoiceCallButton(new DisabledWithReason(_t("Ongoing call")))}
@@ -388,7 +428,26 @@ const Xrp = (props) => {
     const [amount, setAmount] = useState(0);
     const [currency, setCurrency] = useState("XRP");
     const [tokens, setTokens] = useState([]);
+    const [expanded, setExpanded] = useState(false);
+    const [fee, setFee] = useState(0);
+    const [memo, setMemo] = useState("");
+    const [flags, setFlags] = useState("");
+    const [invoice, setInvoice] = useState("");
+    const [calculatedFee, setCalculatedFee] = useState(0);
     const [destination, setDestination] = useState<string>("");
+    const [tooltip, setTooltip] = useState(false);
+    const [maxCoin, setMaxCoin] = useState("");
+    const [showQRScanner, setShowQRScanner] = useState(false);
+    const [whichOne, setWhichOne] = useState(0);
+    const [scannedData, setScannedData] = useState("");
+    const [minCoin, setMinCoin] = useState("");
+    const [memos, setMemos] = useState([]);
+    const [memoId, setMemoId] = useState(0);
+    const [maxNumber, setMaxNumber] = useState(0);
+    const [minNumber, setMinNumber] = useState(0);
+    const [value, setValue] = useState(0);
+    const sliderRef = useRef(null); // Reference to the slider element
+    const tooltipRef = useRef(null);
     let destinations: string[] = [];
     const [inviteLinkCopied, setInviteLinkCopied] = useState<boolean>(false);
     if (props.txnInfo.recievers) {
@@ -396,6 +455,16 @@ const Xrp = (props) => {
             destinations.push(reciever);
         });
     }
+    useEffect(() => {
+        if (whichOne === 1) {
+            alert("This is one");
+            setDestination(scannedData);
+        }
+        if (whichOne === 2) {
+            alert("This is two");
+            setInvoice(scannedData);
+        }
+    }, [scannedData]);
     useEffect(() => {
         if (props.txnInfo.userHoldings) {
             let holdings = new Set();
@@ -413,13 +482,110 @@ const Xrp = (props) => {
             const res = await axios.post(`${SdkConfig.get("backend_url")}/accounts/makeTxn/${amount}`, {
                 address: destination,
                 currency,
+                memos,
+                invoice,
+                fee: Number(calculatedFee) * 1000000,
+                flags,
+                SendMax: maxNumber * 1000000,
+                DeliverMin: minNumber * 1000000,
                 sender: props.txnInfo.sender.address,
+                DestinationTag:
+                    props?.txnInfo?.recievers.filter((reciever) => reciever.wallet === destination)?.[0]?.userId ||
+                    null,
+                SourceTag: props.txnInfo.senderId,
             });
             setShow(false);
             window.open(res?.data?.data?.next?.always, "_blank");
         } catch (e) {
             console.error("ERROR handleBuyCredits", e);
         }
+    };
+    const getWebkitBackground = (value) => {
+        // Calculate the percentage of the value in respect to the min and max values
+        const percentage = (value / 100) * 100;
+        // Generate gradient background with dynamic stopping point based on value
+        return `-webkit-gradient(linear, left top, right top, color-stop(${percentage}%, #91d5ff), color-stop(${percentage}%, #ddd))`;
+    };
+
+    // Function to generate dynamic styles for the Mozilla slider thumb
+    const getMozBackground = (value) => {
+        // Calculate the percentage of the value in respect to the min and max values
+        const percentage = (value / 100) * 100;
+        // Generate gradient background with dynamic stopping point based on value
+        return `linear-gradient(to right, #91d5ff ${percentage}%, #ddd ${percentage}%)`;
+    };
+    const styles = {
+        background: getWebkitBackground(value), // For WebKit browsers
+        // MozAppearance: "none", // For Mozilla browsers, hide the default appearance
+        // WebkitAppearance: "none", // For WebKit browsers, hide the default appearance
+        width: "100%", // Full-width slider
+        height: "2px", // Height of the track
+        outline: "none", // Remove the default focus outline
+        padding: "0", // Remove default padding
+        marginTop: "10px", // Provide some space above the slider
+        cursor: "pointer", // Change cursor to pointer
+    };
+    function mapRange(value, low1, high1, low2, high2) {
+        return low2 + ((high2 - low2) * (value - low1)) / (high1 - low1);
+    }
+    function adjustSlider(value) {
+        // Map the linear slider to non-linear values
+        let output;
+        if (value <= 25) {
+            // First 25%
+            output = mapRange(value, 0, 25, 0.000015, 0.0001);
+        } else if (value <= 50) {
+            // Next 25%
+            output = mapRange(value, 25, 50, 0.0001, 0.001);
+        } else if (value <= 75) {
+            // Next 25%
+            output = mapRange(value, 50, 75, 0.001, 0.1);
+        } else {
+            // Last 25%
+            output = mapRange(value, 75, 100, 0.1, 2.0);
+        }
+        return output.toFixed(6);
+    }
+    useEffect(() => {
+        // Function to update tooltip position
+        const updateTooltipPosition = () => {
+            const slider = sliderRef.current;
+            const tooltip = tooltipRef.current;
+            if (slider && tooltip) {
+                const percent = (value - slider.min) / (slider.max - slider.min);
+                const thumbOffset = percent * (slider.clientWidth - 16); // Approximate thumb width
+                tooltip.style.left = `${thumbOffset + 40}px`;
+            }
+        };
+        updateTooltipPosition();
+    }, [value, tooltip]);
+    useEffect(() => {
+        setCalculatedFee(adjustSlider(fee));
+    }, [fee]);
+
+    useEffect(() => {
+        console.log("GGGGGGGGGGGGGGG", memos);
+    }, [memos]);
+
+    const options = ["No Direct Ripple", "Partial Payment", "Limit Quality"].map((language) => {
+        return <div key={language}>{language}</div>;
+    }) as NonEmptyArray<ReactElement & { key: string }>;
+
+    const onAddMemo = () => {
+        setMemos((pre) => [...pre, { id: memoId, text: "", format: "", type: "" }]);
+        setMemoId((pre) => pre + 1);
+    };
+    const onTextChange = (event, memo) => {
+        memo.text = event.target.value;
+        setMemos((pre) => [...pre.map((m) => (m.id === memo.id ? memo : m))]);
+    };
+    const onFormatChange = (event, memo) => {
+        memo.format = event.target.value;
+        setMemos((pre) => [...pre.map((m) => (m.id === memo.id ? memo : m))]);
+    };
+    const onTypeChange = (event, memo) => {
+        memo.type = event.target.value;
+        setMemos((pre) => [...pre.map((m) => (m.id === memo.id ? memo : m))]);
     };
     return (
         <>
@@ -432,6 +598,7 @@ const Xrp = (props) => {
                     setShow((pre) => !pre);
                 }}
             ></div>
+            {showQRScanner && <QRCodeScanner setScannedData={setScannedData} setShowQRScanner={setShowQRScanner} />}
             {show && (
                 <div className="mx_Dialog mx_xrp_model">
                     <AccessibleButton
@@ -467,7 +634,15 @@ const Xrp = (props) => {
                                         <CustomSelect
                                             options={destinations}
                                             onChange={(value) => setDestination(value)}
+                                            destinationPre={destination}
                                         />
+                                        <span
+                                            className="qrscan"
+                                            onClick={() => {
+                                                setShowQRScanner(!showQRScanner);
+                                                setWhichOne(1);
+                                            }}
+                                        ></span>
                                     </div>
                                     <div>
                                         <label htmlFor="recieverTag">Destination Tag : </label>
@@ -485,7 +660,7 @@ const Xrp = (props) => {
                                         />
                                     </div>
                                     <div>
-                                        <label htmlFor="recieverAddresses">Currency : </label>
+                                        <label htmlFor="recieverAddresses">Amount : </label>
                                         <select
                                             className="select_input2"
                                             name="recieverAddresses"
@@ -498,32 +673,251 @@ const Xrp = (props) => {
                                                 </option>
                                             ))}
                                         </select>
-                                        <label htmlFor="recieverTag" style={{ marginLeft: "20px" }}>
-                                            Holdings :{" "}
-                                        </label>
-                                        <input
-                                            className="mx_Field"
-                                            type="text"
-                                            style={{ width: "120px" }}
-                                            id="recieverTag"
-                                            disabled
-                                            value={
+                                        <span className="amount">
+                                            Available:{" "}
+                                            {
                                                 props?.txnInfo?.userHoldings.filter(
                                                     (holding) => holding.currency === currency,
                                                 )?.[0]?.value
                                             }
-                                        />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="xrpAmount">{`Amount of ${currency} :`} </label>
+                                        </span>
                                         <input
                                             type="number"
                                             id="xrpAmount"
-                                            style={{ marginLeft: "5px" }}
+                                            className="select_input3"
                                             value={amount}
                                             onChange={(e) => setAmount(Number(e.target.value))}
                                         />
                                     </div>
+                                    <div></div>
+                                    <div>
+                                        <AccessibleTooltipButton
+                                            kind="icon"
+                                            className={classNames("mx_DeviceExpandDetailsButton", {
+                                                mx_DeviceExpandDetailsButton_expanded: expanded,
+                                            })}
+                                            onClick={() => setExpanded(!expanded)}
+                                        >
+                                            <CaretIcon className="mx_DeviceExpandDetailsButton_icon" />
+                                        </AccessibleTooltipButton>
+                                        <p
+                                            style={{ width: "90%", cursor: "pointer" }}
+                                            onClick={() => setExpanded(!expanded)}
+                                        >
+                                            {expanded ? "Show less" : "Show more"}
+                                        </p>
+                                    </div>
+                                    {expanded && (
+                                        <>
+                                            <div>
+                                                <label htmlFor="recieverAddresses">Send Max : </label>
+                                                <select
+                                                    className="select_input2"
+                                                    name="recieverAddresses"
+                                                    id="recieverAddresses"
+                                                    onChange={(e) => setMaxCoin(e.target.value)}
+                                                >
+                                                    {tokens.map((token, i) => (
+                                                        <option key={i} value={token}>
+                                                            {token}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <input
+                                                    type="number"
+                                                    id="xrpAmount"
+                                                    className="select_input3"
+                                                    value={maxNumber}
+                                                    onChange={(e) => setMaxNumber(Number(e.target.value))}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="senderMin">Deliver Min : </label>
+                                                <select
+                                                    className="select_input2"
+                                                    name="recieverAddresses"
+                                                    id="senderMin"
+                                                    onChange={(e) => setMinCoin(e.target.value)}
+                                                >
+                                                    {tokens.map((token, i) => (
+                                                        <option key={i} value={token}>
+                                                            {token}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <input
+                                                    type="number"
+                                                    id="xrpAmount"
+                                                    className="select_input3"
+                                                    value={minNumber}
+                                                    onChange={(e) => setMinNumber(Number(e.target.value))}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="senderTag">Source Tag : </label>
+                                                <input
+                                                    className="mx_Field"
+                                                    type="text"
+                                                    style={{ width: "310px" }}
+                                                    id="senderTag"
+                                                    disabled
+                                                    value={props.txnInfo.senderId}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="invoice">Invoice ID : </label>
+                                                <input
+                                                    className="mx_Field"
+                                                    type="text"
+                                                    style={{ width: "310px" }}
+                                                    id="invoice"
+                                                    value={invoice}
+                                                    onChange={(e) => setInvoice(e.target.value)}
+                                                />
+                                                <span
+                                                    className="qrscan2"
+                                                    onClick={() => {
+                                                        setShowQRScanner(!showQRScanner);
+                                                        setWhichOne(2);
+                                                    }}
+                                                ></span>
+                                            </div>
+                                            <div>
+                                                <label htmlFor="Fee">Fee : </label>
+                                                <input
+                                                    className="mx_Field"
+                                                    type="range"
+                                                    ref={sliderRef}
+                                                    onChange={(e) => {
+                                                        setValue(Number(e.target.value));
+                                                        setFee(Number(e.target.value));
+                                                    }}
+                                                    style={{
+                                                        ...styles, // Adding the background for Mozilla using a template string for dynamic value
+                                                        background: getMozBackground(value),
+                                                        width: "250px",
+                                                        marginLeft: "5px",
+                                                        flexGrow: 4,
+                                                    }}
+                                                    id="Fee"
+                                                    min={0}
+                                                    max={100}
+                                                    value={fee}
+                                                    onMouseOver={() => setTooltip(true)}
+                                                    onMouseLeave={() => setTooltip(false)}
+                                                />
+                                                {tooltip && (
+                                                    <div
+                                                        ref={tooltipRef}
+                                                        className="tooltip"
+                                                        style={{ position: "absolute", left: "30px" }}
+                                                    >
+                                                        {calculatedFee}
+                                                    </div>
+                                                )}
+                                                <input
+                                                    className="mx_Field"
+                                                    type="text"
+                                                    style={{ width: "70px" }}
+                                                    id="feeAmount"
+                                                    value={calculatedFee}
+                                                    disabled
+                                                />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="flags">Flags : </label>
+                                                <Dropdown
+                                                    id="flags"
+                                                    className={"mx_GeneralUserSettingsTab_section_languageInput flags"}
+                                                    onOptionChange={setFlags}
+                                                    onSearchChange={setFlags}
+                                                    searchEnabled={true}
+                                                    value={flags}
+                                                    label={_t("Flags Dropdown")}
+                                                >
+                                                    {options}
+                                                </Dropdown>
+                                            </div>
+                                            <div style={{ alignItems: "baseline" }}>
+                                                <label htmlFor="memos">Memos : </label>
+                                                <div className="memos">
+                                                    {memos.map((memo) => (
+                                                        <>
+                                                            <div className="lastInput">
+                                                                <textarea
+                                                                    style={{ width: "100%", height: "75px" }}
+                                                                    className="textarea123"
+                                                                    onChange={(e) => {
+                                                                        onTextChange(e, memo);
+                                                                    }}
+                                                                    value={memo.text}
+                                                                ></textarea>
+                                                            </div>
+                                                            <div className="lastInput">
+                                                                <label htmlFor="format" className="labelfomat">
+                                                                    Format{" "}
+                                                                </label>
+                                                                <input
+                                                                    className="inputoflast"
+                                                                    style={{ width: "100%" }}
+                                                                    onChange={(e) => {
+                                                                        onFormatChange(e, memo);
+                                                                    }}
+                                                                    value={memo.format}
+                                                                ></input>
+                                                            </div>
+                                                            <div className="lastInput">
+                                                                <label htmlFor="type" className="labelfomat">
+                                                                    Type{" "}
+                                                                </label>
+                                                                <input
+                                                                    style={{ flexGrow: 1 }}
+                                                                    id="type"
+                                                                    onChange={(e) => {
+                                                                        onTypeChange(e, memo);
+                                                                    }}
+                                                                    className="inputoflast"
+                                                                    value={memo.type}
+                                                                ></input>
+                                                            </div>
+                                                            <div style={{ width: "100%" }}>
+                                                                <button
+                                                                    style={{
+                                                                        color: "#ff8989",
+                                                                        border: "1px solid #ff8989",
+                                                                        float: "right",
+                                                                        padding: "5px",
+                                                                        borderRadius: "0px",
+                                                                    }}
+                                                                    onClick={() => {
+                                                                        setMemos((pre) =>
+                                                                            pre.filter((m) => m.id !== memo.id),
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Remove
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    ))}
+                                                    <div style={{ width: "100%", height: "40px", display: "flex" }}>
+                                                        <button
+                                                            style={{
+                                                                float: "left",
+                                                                padding: "5px",
+                                                                borderRadius: "0px",
+                                                                color: "grey",
+                                                                border: "2px solid #d1d1d1",
+                                                            }}
+                                                            onClick={onAddMemo}
+                                                        >
+                                                            + Add Memo
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                     <button style={{ marginTop: "10px" }} onClick={makeTxn}>
                                         {`Send ${currency}`}
                                     </button>
@@ -749,7 +1143,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                 });
                 tranctionInfo["userHoldings"] = holdings;
                 tranctionInfo["sender"] = address1;
-
+                tranctionInfo["senderId"] = this.props.room.myUserId;
                 tranctionInfo["recievers"] = address2.newAddresses.filter((reciever) => {
                     return reciever.userId !== this.props.room.myUserId;
                 });
