@@ -752,7 +752,12 @@ const Xrp = (props) => {
                                                 <Select
                                                     mode="multiple"
                                                     className="inputCorrect"
-                                                    style={{ flexGrow: 1, height: "40px" }}
+                                                    style={{
+                                                        flexGrow: 1,
+                                                        height: "40px",
+                                                        marginLeft: "5px",
+                                                        marginRight: "10px",
+                                                    }}
                                                     placeholder="Select multiple options"
                                                     onChange={handleChange}
                                                 >
