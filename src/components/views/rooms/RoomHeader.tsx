@@ -18,9 +18,8 @@ limitations under the License.
 import React, { FC, useState, useMemo, useCallback, useEffect, useRef } from "react";
 import classNames from "classnames";
 import { set, throttle } from "lodash";
-import { NonEmptyArray } from "../../../@types/common";
-import { ReactElement } from "react";
-import Dropdown from "../elements/Dropdown";
+import { Select } from "antd";
+const { Option } = Select;
 import { Icon as CaretIcon } from "../../../../res/img/feather-customised/dropdown-arrow.svg";
 import QRCode from "../elements/QRCode";
 import Autocompleter, { IProviderCompletions } from "../../../autocomplete/Autocompleter";
@@ -430,21 +429,15 @@ const Xrp = (props) => {
     const [tokens, setTokens] = useState([]);
     const [expanded, setExpanded] = useState(false);
     const [fee, setFee] = useState(0);
-    const [memo, setMemo] = useState("");
-    const [flags, setFlags] = useState("");
-    const [invoice, setInvoice] = useState("");
+    const [flags, setFlags] = useState([]);
     const [calculatedFee, setCalculatedFee] = useState(0);
     const [destination, setDestination] = useState<string>("");
     const [tooltip, setTooltip] = useState(false);
-    const [maxCoin, setMaxCoin] = useState("");
     const [showQRScanner, setShowQRScanner] = useState(false);
     const [whichOne, setWhichOne] = useState(0);
     const [scannedData, setScannedData] = useState("");
-    const [minCoin, setMinCoin] = useState("");
     const [memos, setMemos] = useState([]);
     const [memoId, setMemoId] = useState(0);
-    const [maxNumber, setMaxNumber] = useState(0);
-    const [minNumber, setMinNumber] = useState(0);
     const [value, setValue] = useState(0);
     const sliderRef = useRef(null); // Reference to the slider element
     const tooltipRef = useRef(null);
@@ -455,14 +448,12 @@ const Xrp = (props) => {
             destinations.push(reciever);
         });
     }
+    function handleChange(value) {
+        setFlags(value);
+    }
     useEffect(() => {
         if (whichOne === 1) {
-            alert("This is one");
             setDestination(scannedData);
-        }
-        if (whichOne === 2) {
-            alert("This is two");
-            setInvoice(scannedData);
         }
     }, [scannedData]);
     useEffect(() => {
@@ -483,11 +474,8 @@ const Xrp = (props) => {
                 address: destination,
                 currency,
                 memos,
-                invoice,
                 fee: Number(calculatedFee) * 1000000,
                 flags,
-                SendMax: maxNumber * 1000000,
-                DeliverMin: minNumber * 1000000,
                 sender: props.txnInfo.sender.address,
                 DestinationTag:
                     props?.txnInfo?.recievers.filter((reciever) => reciever.wallet === destination)?.[0]?.userId ||
@@ -567,10 +555,7 @@ const Xrp = (props) => {
         console.log("GGGGGGGGGGGGGGG", memos);
     }, [memos]);
 
-    const options = ["No Direct Ripple", "Partial Payment", "Limit Quality"].map((language) => {
-        return <div key={language}>{language}</div>;
-    }) as NonEmptyArray<ReactElement & { key: string }>;
-
+    const options = ["No Direct Ripple", "Partial Payment", "Limit Quality"];
     const onAddMemo = () => {
         setMemos((pre) => [...pre, { id: memoId, text: "", format: "", type: "" }]);
         setMemoId((pre) => pre + 1);
@@ -710,50 +695,6 @@ const Xrp = (props) => {
                                     {expanded && (
                                         <>
                                             <div>
-                                                <label htmlFor="recieverAddresses">Send Max : </label>
-                                                <select
-                                                    className="select_input2"
-                                                    name="recieverAddresses"
-                                                    id="recieverAddresses"
-                                                    onChange={(e) => setMaxCoin(e.target.value)}
-                                                >
-                                                    {tokens.map((token, i) => (
-                                                        <option key={i} value={token}>
-                                                            {token}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <input
-                                                    type="number"
-                                                    id="xrpAmount"
-                                                    className="select_input3"
-                                                    value={maxNumber}
-                                                    onChange={(e) => setMaxNumber(Number(e.target.value))}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label htmlFor="senderMin">Deliver Min : </label>
-                                                <select
-                                                    className="select_input2"
-                                                    name="recieverAddresses"
-                                                    id="senderMin"
-                                                    onChange={(e) => setMinCoin(e.target.value)}
-                                                >
-                                                    {tokens.map((token, i) => (
-                                                        <option key={i} value={token}>
-                                                            {token}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <input
-                                                    type="number"
-                                                    id="xrpAmount"
-                                                    className="select_input3"
-                                                    value={minNumber}
-                                                    onChange={(e) => setMinNumber(Number(e.target.value))}
-                                                />
-                                            </div>
-                                            <div>
                                                 <label htmlFor="senderTag">Source Tag : </label>
                                                 <input
                                                     className="mx_Field"
@@ -763,24 +704,6 @@ const Xrp = (props) => {
                                                     disabled
                                                     value={props.txnInfo.senderId}
                                                 />
-                                            </div>
-                                            <div>
-                                                <label htmlFor="invoice">Invoice ID : </label>
-                                                <input
-                                                    className="mx_Field"
-                                                    type="text"
-                                                    style={{ width: "310px" }}
-                                                    id="invoice"
-                                                    value={invoice}
-                                                    onChange={(e) => setInvoice(e.target.value)}
-                                                />
-                                                <span
-                                                    className="qrscan2"
-                                                    onClick={() => {
-                                                        setShowQRScanner(!showQRScanner);
-                                                        setWhichOne(2);
-                                                    }}
-                                                ></span>
                                             </div>
                                             <div>
                                                 <label htmlFor="Fee">Fee : </label>
@@ -824,19 +747,21 @@ const Xrp = (props) => {
                                                     disabled
                                                 />
                                             </div>
-                                            <div>
+                                            <div id="inputCorrect">
                                                 <label htmlFor="flags">Flags : </label>
-                                                <Dropdown
-                                                    id="flags"
-                                                    className={"mx_GeneralUserSettingsTab_section_languageInput flags"}
-                                                    onOptionChange={setFlags}
-                                                    onSearchChange={setFlags}
-                                                    searchEnabled={true}
-                                                    value={flags}
-                                                    label={_t("Flags Dropdown")}
+                                                <Select
+                                                    mode="multiple"
+                                                    className="inputCorrect"
+                                                    style={{ flexGrow: 1, height: "40px" }}
+                                                    placeholder="Select multiple options"
+                                                    onChange={handleChange}
                                                 >
-                                                    {options}
-                                                </Dropdown>
+                                                    {options.map((option, i) => (
+                                                        <Option key={i} value={option}>
+                                                            {option}
+                                                        </Option>
+                                                    ))}
+                                                </Select>
                                             </div>
                                             <div style={{ alignItems: "baseline" }}>
                                                 <label htmlFor="memos">Memos : </label>
