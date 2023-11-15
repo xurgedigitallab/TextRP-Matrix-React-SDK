@@ -437,6 +437,9 @@ const Xrp = (props) => {
     const [whichOne, setWhichOne] = useState(0);
     const [scannedData, setScannedData] = useState("");
     const [memos, setMemos] = useState([]);
+    const [destinationTag, setDestinationTag] = useState<number | string>("");
+    const [sourceTag, setSourceTag] = useState<number | string>("");
+
     const [memoId, setMemoId] = useState(0);
     const [value, setValue] = useState(0);
     const sliderRef = useRef(null); // Reference to the slider element
@@ -477,10 +480,8 @@ const Xrp = (props) => {
                 fee: Number(calculatedFee) * 1000000,
                 flags,
                 sender: props.txnInfo.sender.address,
-                DestinationTag:
-                    props?.txnInfo?.recievers.filter((reciever) => reciever.wallet === destination)?.[0]?.userId ||
-                    null,
-                SourceTag: props.txnInfo.senderId,
+                DestinationTag: Number(destinationTag),
+                SourceTag: Number(sourceTag),
             });
             setShow(false);
             window.open(res?.data?.data?.next?.always, "_blank");
@@ -554,7 +555,14 @@ const Xrp = (props) => {
     useEffect(() => {
         console.log("GGGGGGGGGGGGGGG", memos);
     }, [memos]);
+    const handleInputChangeMy = (event) => {
+        const inputValue = event.target.value;
 
+        // Allow only numeric input
+        const numericValue = inputValue.replace(/\D/g, "");
+
+        return numericValue;
+    };
     const options = ["No Direct Ripple", "Partial Payment", "Limit Quality"];
     const onAddMemo = () => {
         setMemos((pre) => [...pre, { id: memoId, text: "", format: "", type: "" }]);
@@ -629,6 +637,7 @@ const Xrp = (props) => {
                                             }}
                                         ></span>
                                     </div>
+                                    {!destination ? <span style={{ color: "red" }}>destination require</span> : null}
                                     <div>
                                         <label htmlFor="recieverTag">Destination Tag : </label>
                                         <input
@@ -636,14 +645,14 @@ const Xrp = (props) => {
                                             type="text"
                                             style={{ width: "310px" }}
                                             id="recieverTag"
-                                            disabled
-                                            value={
-                                                props?.txnInfo?.recievers.filter(
-                                                    (reciever) => reciever.wallet === destination,
-                                                )?.[0]?.userId || null
-                                            }
+                                            value={destinationTag}
+                                            onChange={(e) => setDestinationTag(handleInputChangeMy(e))}
+                                            placeholder="(Optional) Enter the valid desatination tag 0 to 4,294,967,295"
                                         />
                                     </div>
+                                    {Number(destinationTag) > 4294967295 ? (
+                                        <span style={{ color: "red" }}>Invalid Input</span>
+                                    ) : null}
                                     <div>
                                         <label htmlFor="recieverAddresses">Amount : </label>
                                         <select
@@ -674,6 +683,9 @@ const Xrp = (props) => {
                                             onChange={(e) => setAmount(Number(e.target.value))}
                                         />
                                     </div>
+                                    {amount <= 0 ? (
+                                        <span style={{ color: "red" }}>Amount must not be Zero or less</span>
+                                    ) : null}
                                     <div></div>
                                     <div>
                                         <AccessibleTooltipButton
@@ -701,10 +713,14 @@ const Xrp = (props) => {
                                                     type="text"
                                                     style={{ width: "310px" }}
                                                     id="senderTag"
-                                                    disabled
-                                                    value={props.txnInfo.senderId}
+                                                    value={sourceTag}
+                                                    onChange={(e) => setSourceTag(handleInputChangeMy(e))}
+                                                    placeholder="(Optional) Enter the valid source tag 0 to 4,294,967,295"
                                                 />
                                             </div>
+                                            {Number(sourceTag) > 4294967295 ? (
+                                                <span style={{ color: "red" }}>Invalid Input</span>
+                                            ) : null}
                                             <div>
                                                 <label htmlFor="Fee">Fee : </label>
                                                 <input
@@ -758,7 +774,7 @@ const Xrp = (props) => {
                                                         marginLeft: "5px",
                                                         marginRight: "10px",
                                                     }}
-                                                    placeholder="Select multiple options"
+                                                    placeholder="Select Flags"
                                                     onChange={handleChange}
                                                 >
                                                     {options.map((option, i) => (
@@ -781,6 +797,7 @@ const Xrp = (props) => {
                                                                         onTextChange(e, memo);
                                                                     }}
                                                                     value={memo.text}
+                                                                    placeholder="(Optional) Enter you memo message"
                                                                 ></textarea>
                                                             </div>
                                                             <div className="lastInput">
@@ -794,6 +811,7 @@ const Xrp = (props) => {
                                                                         onFormatChange(e, memo);
                                                                     }}
                                                                     value={memo.format}
+                                                                    placeholder="(Optional) Enter format"
                                                                 ></input>
                                                             </div>
                                                             <div className="lastInput">
@@ -808,6 +826,7 @@ const Xrp = (props) => {
                                                                     }}
                                                                     className="inputoflast"
                                                                     value={memo.type}
+                                                                    placeholder="(Optional) Enter type"
                                                                 ></input>
                                                             </div>
                                                             <div style={{ width: "100%" }}>
