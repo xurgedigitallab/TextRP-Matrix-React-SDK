@@ -563,7 +563,7 @@ export class Algorithm extends EventEmitter {
 
     private getTagsOfJoinedRoom(room: Room): TagID[] {
         let tags = Object.keys(room.tags || {});
-        if (room.name.includes("bot")) {
+        if (room.name.includes("Twitter bridge bot")|| room.name.includes("Discord bridge bot")||room.name.includes("Twilio Puppet Bridge")) {
             tags = [DefaultTagID.Bot];
         }               
         if (tags.length === 0) {
@@ -571,7 +571,7 @@ export class Algorithm extends EventEmitter {
             if (DMRoomMap.shared().getUserIdForRoomId(room.roomId)) {
                 tags = [DefaultTagID.DM];
             }
-        }
+        }``
 
         return tags;
     }

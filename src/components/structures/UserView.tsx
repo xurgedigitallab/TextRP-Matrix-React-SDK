@@ -26,6 +26,7 @@ import { _t } from "../../languageHandler";
 import ErrorDialog from "../views/dialogs/ErrorDialog";
 import MainSplit from "./MainSplit";
 import RightPanel from "./RightPanel";
+import { Visibility } from "matrix-js-sdk";
 import Spinner from "../views/elements/Spinner";
 import ResizeNotifier from "../../utils/ResizeNotifier";
 import { RightPanelPhases } from "../../stores/right-panel/RightPanelStorePhases";
@@ -56,7 +57,7 @@ export default class UserView extends React.Component<IProps, IState> {
         }
         const cli = MatrixClientPeg.get();
         cli.createRoom({
-            visibility: "private",
+            visibility: Visibility.Private,
             topic: "inviting_random",
             invite: [SdkConfig.get("xrpl_bridge_bot"), this.props.userId],
         }).then((e)=>console.log("YYYOYOYOYOYOYOOYOY7", e));
