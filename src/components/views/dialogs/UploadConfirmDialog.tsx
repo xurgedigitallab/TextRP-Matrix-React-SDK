@@ -21,6 +21,10 @@ import { Icon as FileIcon } from "../../../../res/img/feather-customised/files.s
 import { _t } from "../../../languageHandler";
 import { getBlobSafeMimeType } from "../../../utils/blobs";
 import BaseDialog from "./BaseDialog";
+import axios from "axios";
+import { MatrixClientPeg } from "../../../MatrixClientPeg";
+import { extractWalletAddress } from "../../../paymentServices";
+import SdkConfig from "../../../SdkConfig";
 import DialogButtons from "../elements/DialogButtons";
 import { fileSize } from "../../../utils/FileUtils";
 
@@ -58,11 +62,25 @@ export default class UploadConfirmDialog extends React.Component<IProps> {
         this.props.onFinished(false);
     };
 
-    private onUploadClick = (): void => {
+    private onUploadClick = async (): Promise<void> => {
+        const cli = MatrixClientPeg.get();
+        await axios.post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+            service: "sms_mms",
+            type: "send",
+            address: extractWalletAddress(cli.getUserId()),
+            password: "demo123",
+        });
         this.props.onFinished(true);
     };
 
-    private onUploadAllClick = (): void => {
+    private onUploadAllClick = async (): Promise<void> => {
+        // const cli = MatrixClientPeg.get();
+        // await axios.post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+        //     service: "intra_app",
+        //     type: "send",
+        //     address: extractWalletAddress(cli.getUserId()),
+        //     password: "demo123",
+        // });
         this.props.onFinished(true, true);
     };
 

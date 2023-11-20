@@ -88,7 +88,7 @@ export const NFTCard = (props: {
                         className="cursor-pointer object-cover border border-primary-gray"
                         width="100%"
                         height="180px"
-                        style={{ objectFit: "cover" }}
+                        style={{ objectFit: "contain" }}
                         onError={(source: any) => (source.src = "../../../../res/img/placeholder.png")}
                     />
                 </div>
@@ -101,7 +101,7 @@ export const NFTCard = (props: {
                         className="cursor-pointer object-cover border border-primary-gray"
                         width="100%"
                         height="180px"
-                        style={{ objectFit: "cover" }}
+                        style={{ objectFit: "contain" }}
                         onError={(source: any) => (source.src = "")}
                     />
                 </div>

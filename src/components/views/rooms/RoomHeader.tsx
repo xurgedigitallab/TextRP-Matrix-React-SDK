@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FC, useState, useMemo, useCallback, useEffect, useRef } from "react";
+import React, { FC, useState, useMemo, useCallback, useEffect, useRef, useContext } from "react";
 import classNames from "classnames";
 import { set, throttle } from "lodash";
 import { Select } from "antd";
@@ -551,10 +551,6 @@ const Xrp = (props) => {
     useEffect(() => {
         setCalculatedFee(adjustSlider(fee));
     }, [fee]);
-
-    useEffect(() => {
-        console.log("GGGGGGGGGGGGGGG", memos);
-    }, [memos]);
     const handleInputChangeMy = (event) => {
         const inputValue = event.target.value;
 
@@ -907,6 +903,20 @@ const Xrp = (props) => {
         </>
     );
 };
+const CreditBalance = ({ userId }) => {
+    const [userData, setUserData] = useState<any>({});
+    const context = useContext(RoomContext);
+    useEffect(() => {
+        const getCredit = async () => {
+            const { data: userInfo } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                address: userId,
+            });
+            setUserData(userInfo);
+        };
+        getCredit();
+    }, []);
+    return <span>{userData?.user?.credit?.balance ? userData.user.credit.balance : null}</span>;
+};
 interface CallLayoutSelectorProps {
     call: ElementCall;
 }
@@ -1109,7 +1119,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                         this.setState({ members: completions });
                     });
             };
-            getAddress();
+            getAddress();            
         }
     }
 
@@ -1168,6 +1178,9 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
     private renderButtons(isVideoRoom: boolean): React.ReactNode {
         const startButtons: JSX.Element[] = [];
+        if (this.props.room.myUserId) {
+            startButtons.push(<CreditBalance userId={this.props.room.myUserId} />);
+        }
         if (Object.keys(this.state.txnInfo).length) {
             startButtons.push(
                 <Xrp
@@ -1343,7 +1356,6 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                 />
             );
         }
-
         const icon = this.props.viewingCall ? (
             <div className="mx_RoomHeader_icon mx_RoomHeader_icon_video" />
         ) : this.props.e2eStatus ? (
@@ -1407,7 +1419,8 @@ export default class RoomHeader extends React.Component<IProps, IState> {
         const betaPill = isVideoRoom ? (
             <BetaPill onClick={viewLabs} tooltipTitle={_t("Video rooms are a beta feature")} />
         ) : null;
-
+        console.log("HHHHHUSDDSXersdxcgx", this.props.room);
+        
         return (
             <header className="mx_RoomHeader light-panel">
                 <div
