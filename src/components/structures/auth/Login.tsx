@@ -418,9 +418,7 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         // const order = ["m.login.password", "m.login.sso"];
         const order = ["m.login.sso"];
 
-        const flows = filterBoolean(order.map((type) => this.state.flows?.find((flow) => flow.type === type)));
-        console.log("HHHHHHHHHHHHHHHHH",flows);
-        
+        const flows = filterBoolean(order.map((type) => this.state.flows?.find((flow) => flow.type === type)));        
         return (
             <React.Fragment>
                 {flows.map((flow) => {

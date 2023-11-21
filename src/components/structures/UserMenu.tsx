@@ -122,7 +122,6 @@ export default class UserMenu extends React.Component<IProps, IState> {
     }
 
     private async fetchDetails(): Promise<void> {
-        console.log("::::::::::::$$$$$$$$$$$$$$$ ", process.env.REACT_APP_BACKEND_URL);
         try {
             const details = UserIdentifierCustomisations.getDisplayUserIdentifier(
                 MatrixClientPeg.get().getSafeUserId(),
