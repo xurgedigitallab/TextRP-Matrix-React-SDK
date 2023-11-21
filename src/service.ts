@@ -22,7 +22,7 @@ const getAllEnabledNfts = async () => {
     }
     return {};
 }
-export const getAllFeatures = async () =>{
+export const getAllFeatures = async ():Promise<any> =>{
    try{
     const features = await axios.get(`${SdkConfig.get('backend_url')}/get-all-feature`);
     return features;
