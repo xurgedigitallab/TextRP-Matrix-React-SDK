@@ -325,9 +325,7 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
         const action = getKeyBindingsManager().getMessageComposerAction(event);
         switch (action) {
             case KeyBindingAction.SendMessage:
-                const topic = this.props.room.currentState.getStateEvents(EventType.RoomTopic, "")?.getContent()?.topic;
-                console.log("HHHHHHHHHHHH", topic);
-                
+                const topic = this.props.room.currentState.getStateEvents(EventType.RoomTopic, "")?.getContent()?.topic;                
                 let noMicroTxn = this.props.room.timeline
                     .map((event: MatrixEvent) => {
                         return event.event.type;
