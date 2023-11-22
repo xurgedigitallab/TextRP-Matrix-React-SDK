@@ -905,7 +905,6 @@ const Xrp = (props) => {
 };
 const CreditBalance = ({ userId }) => {
     const [userData, setUserData] = useState<any>({});
-    const context = useContext(RoomContext);
     useEffect(() => {
         const getCredit = async () => {
             const { data: userInfo } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
@@ -913,9 +912,15 @@ const CreditBalance = ({ userId }) => {
             });
             setUserData(userInfo);
         };
-        getCredit();
+        const intervalId = setInterval(() => {
+            getCredit();
+            // This function will be executed at the specified interval
+          }, 3000); // Interval is in milliseconds (1000ms = 1 second)
+      
+          // Clear the interval when the component unmounts
+          return () => clearInterval(intervalId);
     }, []);
-    return <span>{userData?.user?.credit?.balance ? userData.user.credit.balance : null}</span>;
+    return <span style={{marginInline: "5px"}}>{userData?.user?.credit?.balance ? userData.user.credit.balance : null}</span>;
 };
 interface CallLayoutSelectorProps {
     call: ElementCall;
@@ -1418,9 +1423,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
             });
         const betaPill = isVideoRoom ? (
             <BetaPill onClick={viewLabs} tooltipTitle={_t("Video rooms are a beta feature")} />
-        ) : null;
-        console.log("HHHHHUSDDSXersdxcgx", this.props.room);
-        
+        ) : null;        
         return (
             <header className="mx_RoomHeader light-panel">
                 <div
