@@ -16,6 +16,8 @@ limitations under the License.
 
 import React, { createRef, ReactNode } from "react";
 import classNames from "classnames";
+import Modal from "../../../Modal";
+import ErrorDialog from "../dialogs/ErrorDialog";
 import { IEventRelation, MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { Room } from "matrix-js-sdk/src/models/room";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
@@ -341,12 +343,24 @@ export class MessageComposer extends React.Component<IProps, IState> {
                 )?.[0],
             );
         }
-       await axios.post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
-            service: "intra_app",
-            type: "send",
-            address: extractWalletAddress(this.props.room.myUserId),
-            password: "demo123",
-        });
+        let toSent = true;
+        await axios
+            .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+                service: "intra_app",
+                type: "send",
+                address: extractWalletAddress(this.props.room.myUserId),
+                password: "demo123",
+            })
+            .catch((e) => {
+                Modal.createDialog(ErrorDialog, {
+                    title: _t("Credit insufficient"),
+                    description: `${e.response.data}`,
+                });
+                toSent = false;                
+            });
+        if (!toSent) {
+            return;
+        }
         if (this.state.haveRecording && this.voiceRecordingButton.current) {
             // There shouldn't be any text message to send when a voice recording is active, so
             // just send out the voice recording.

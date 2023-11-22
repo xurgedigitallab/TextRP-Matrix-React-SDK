@@ -19,6 +19,8 @@ import React from "react";
 
 import { Icon as FileIcon } from "../../../../res/img/feather-customised/files.svg";
 import { _t } from "../../../languageHandler";
+import Modal from "../../../Modal";
+import ErrorDialog from "./ErrorDialog";
 import { getBlobSafeMimeType } from "../../../utils/blobs";
 import BaseDialog from "./BaseDialog";
 import axios from "axios";
@@ -64,13 +66,23 @@ export default class UploadConfirmDialog extends React.Component<IProps> {
 
     private onUploadClick = async (): Promise<void> => {
         const cli = MatrixClientPeg.get();
-        await axios.post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
-            service: "sms_mms",
-            type: "send",
-            address: extractWalletAddress(cli.getUserId()),
-            password: "demo123",
-        });
-        this.props.onFinished(true);
+        let toSend = true;
+        await axios
+            .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+                service: "sms_mms",
+                type: "send",
+                address: extractWalletAddress(cli.getUserId()),
+                password: "demo123",
+            })
+            .catch((e) => {
+                Modal.createDialog(ErrorDialog, {
+                    title: _t("Credit insufficient"),
+                    description: `${e.response.data}`,
+                });   
+                toSend = false;    
+                console.log("TTTTTTTTTTTTTT", e);           
+            });
+        this.props.onFinished(toSend);
     };
 
     private onUploadAllClick = async (): Promise<void> => {

@@ -19,6 +19,9 @@ import EMOJI_REGEX from "emojibase-regex";
 import { IContent, MatrixEvent, IEventRelation, IMentions } from "matrix-js-sdk/src/models/event";
 import { DebouncedFunc, throttle } from "lodash";
 import axios from "axios";
+import Modal from "../../../Modal";
+import { _t } from "../../../languageHandler";
+import ErrorDialog from "../dialogs/ErrorDialog";
 import { generatePaymentLink } from "../../../paymentServices";
 import { extractWalletAddress } from "../../../paymentServices";
 import { EventType, MsgType, RelationType } from "matrix-js-sdk/src/@types/event";
@@ -338,12 +341,22 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                         )?.[0]
                     );
                 }
+                let toSent  = true;
                 await axios.post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
                     service: "intra_app",
                     type: "send",
                     address: extractWalletAddress(this.props.room.myUserId),
                     password: "demo123",
+                }).catch((e) => {
+                    Modal.createDialog(ErrorDialog, {
+                        title: _t("Credit insufficient"),
+                        description: `${e.response.data}`,
+                    });  
+                    toSent = false; 
                 });
+                if (!toSent) {
+                    return 
+                }
 
                 this.sendMessage();
                 event.preventDefault();
