@@ -20,6 +20,7 @@ import React from "react";
 import { Icon as FileIcon } from "../../../../res/img/feather-customised/files.svg";
 import { _t } from "../../../languageHandler";
 import Modal from "../../../Modal";
+import BuyCredits from "../settings/BuyCredits";
 import ErrorDialog from "./ErrorDialog";
 import { getBlobSafeMimeType } from "../../../utils/blobs";
 import BaseDialog from "./BaseDialog";
@@ -76,11 +77,11 @@ export default class UploadConfirmDialog extends React.Component<IProps> {
             })
             .catch((e) => {
                 Modal.createDialog(ErrorDialog, {
-                    title: _t("Credit insufficient"),
-                    description: `${e.response.data}`,
-                });   
-                toSend = false;    
-                console.log("TTTTTTTTTTTTTT", e);           
+                    title: _t("Insufficient credits message"),
+                    description: <BuyCredits />,
+                });
+                toSend = false;
+                console.log("TTTTTTTTTTTTTT", e);
             });
         this.props.onFinished(toSend);
     };
