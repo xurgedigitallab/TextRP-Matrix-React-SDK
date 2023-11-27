@@ -17,7 +17,7 @@ limitations under the License.
 import React, { createRef, ReactNode } from "react";
 import classNames from "classnames";
 import Modal from "../../../Modal";
-import BuyCredits from "../settings/BuyCredits";
+import BuyCredits2 from "../settings/BuyCredits2";
 import ErrorDialog from "../dialogs/ErrorDialog";
 import { IEventRelation, MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { Room } from "matrix-js-sdk/src/models/room";
@@ -355,7 +355,7 @@ export class MessageComposer extends React.Component<IProps, IState> {
             .catch((e) => {
                 Modal.createDialog(ErrorDialog, {
                     title: _t("Insufficient credits message"),
-                    description: <BuyCredits />,
+                    description: <BuyCredits2 />,
                 });
                 toSent = false;                
             });

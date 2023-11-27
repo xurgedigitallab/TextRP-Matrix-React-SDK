@@ -19,7 +19,7 @@ import EMOJI_REGEX from "emojibase-regex";
 import { IContent, MatrixEvent, IEventRelation, IMentions } from "matrix-js-sdk/src/models/event";
 import { DebouncedFunc, throttle } from "lodash";
 import axios from "axios";
-import BuyCredits from "../settings/BuyCredits";
+import BuyCredits2 from "../settings/BuyCredits2";
 import Modal from "../../../Modal";
 import { _t } from "../../../languageHandler";
 import ErrorDialog from "../dialogs/ErrorDialog";
@@ -349,7 +349,7 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                 }).catch((e) => {
                     Modal.createDialog(ErrorDialog, {
                         title: _t("Insufficient credits message"),
-                        description: <BuyCredits />,
+                        description: <BuyCredits2 />,
                     }); 
                     toSent = false; 
                 });
