@@ -487,7 +487,7 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
             ];
             let twillio = [
                 {
-                    name: "Twilioß Puppet Bridge",
+                    name: "Twilio Puppet Bridge",
                     userId: "@_twiliopuppet_bot:synapse.textrp.io",
                     getMxcAvatarUrl: "mxc://maunium.net/HVHcnusJkQcpVcsVGZRELLCn",
                 },
