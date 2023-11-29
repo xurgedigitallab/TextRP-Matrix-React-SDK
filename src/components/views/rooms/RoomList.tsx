@@ -18,6 +18,8 @@ import { EventType, RoomType } from "matrix-js-sdk/src/@types/event";
 import { Room } from "matrix-js-sdk/src/models/room";
 import React, { ComponentType, createRef, ReactComponentElement, SyntheticEvent } from "react";
 import { startDm } from "../../../utils/dm/startDm";
+import { TWILLIO , TWITTER, DISCORD } from "../../../FeaturesConstant";
+import { isComponentEnabled } from "../../../service";
 import { IState as IRovingTabIndexState, RovingTabIndexProvider } from "../../../accessibility/RovingTabIndex";
 import MatrixClientContext from "../../../contexts/MatrixClientContext";
 import { shouldShowComponent } from "../../../customisations/helpers/UIComponents";
@@ -497,13 +499,18 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
                     getMxcAvatarUrl: "mxc://maunium.net/nIdEykemnwdisvHbpxflpDlC",
                 },
             ];
-            if (!rooms.map((room) => room.name).includes("Twitter bridge bot")) {
+            const isDiscord =  await isComponentEnabled(DISCORD);
+            const isTwitter =  await isComponentEnabled(TWITTER);
+            const isTwillio =  await isComponentEnabled(TWILLIO);
+            console.log("YYYYYYYYYYYYYYY", isDiscord, isTwillio, isTwitter);
+            
+            if (!rooms.map((room) => room.name).includes("Twitter bridge bot") && isTwitter) {
                 await startDm(cli, twitter, false);
             }
-            if (!rooms.map((room) => room.name).includes("Discord bridge bot")) {
+            if (!rooms.map((room) => room.name).includes("Discord bridge bot") && isDiscord) {
                 await startDm(cli, discord, false);
             }
-            if (!rooms.map((room) => room.name).includes("Twilio Puppet Bridge")) {
+            if (!rooms.map((room) => room.name).includes("Twilio Puppet Bridge") && isTwillio) {
                 await startDm(cli, twillio, false);
             }
         };
