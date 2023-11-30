@@ -80,6 +80,9 @@ interface IProps {
     showSkeleton?: boolean;
     alwaysVisible?: boolean;
     forceExpanded?: boolean;
+    isTwitter: boolean;
+    isDiscord: boolean;
+    isTwillio: boolean;
     resizeNotifier: ResizeNotifier;
     extraTiles?: ReactComponentElement<typeof ExtraTile>[] | null;
     onListCollapse?: (isExpanded: boolean) => void;
@@ -522,7 +525,6 @@ export default class RoomSublist extends React.Component<IProps, IState> {
         }
 
         const tiles: React.ReactElement[] = [];
-
         if (this.state.rooms) {
             let visibleRooms = this.state.rooms;
             if (!this.props.forceExpanded) {
@@ -530,15 +532,83 @@ export default class RoomSublist extends React.Component<IProps, IState> {
             }
 
             for (const room of visibleRooms) {
-                tiles.push(
-                    <RoomTile
-                        room={room}
-                        key={`room-${room.roomId}`}
-                        showMessagePreview={this.layout.showPreviews}
-                        isMinimized={this.props.isMinimized}
-                        tag={this.props.tagId}
-                    />,
-                );
+                if (room.name === "Discord bridge bot") {
+                    tiles.push(
+                        this.props.isDiscord ? (
+                            <RoomTile
+                                room={room}
+                                key={`room-${room.roomId}`}
+                                showMessagePreview={this.layout.showPreviews}
+                                isMinimized={this.props.isMinimized}
+                                tag={this.props.tagId}
+                            />
+                        ) : (
+                            <div style={{ opacity: 0.4, pointerEvents: "none" }}>
+                                <RoomTile
+                                    room={room}
+                                    key={`room-${room.roomId}`}
+                                    showMessagePreview={this.layout.showPreviews}
+                                    isMinimized={this.props.isMinimized}
+                                    tag={this.props.tagId}
+                                />
+                            </div>
+                        ),
+                    );
+                } else if (room.name === "Twitter bridge bot") {
+                    tiles.push(
+                        this.props.isTwitter ? (
+                            <RoomTile
+                                room={room}
+                                key={`room-${room.roomId}`}
+                                showMessagePreview={this.layout.showPreviews}
+                                isMinimized={this.props.isMinimized}
+                                tag={this.props.tagId}
+                            />
+                        ) : (
+                            <div style={{ opacity: 0.4, pointerEvents: "none" }}>
+                                <RoomTile
+                                    room={room}
+                                    key={`room-${room.roomId}`}
+                                    showMessagePreview={this.layout.showPreviews}
+                                    isMinimized={this.props.isMinimized}
+                                    tag={this.props.tagId}
+                                />
+                            </div>
+                        ),
+                    );
+                } else if (room.name === "Twilio Puppet Bridge") {
+                    tiles.push(
+                        this.props.isTwillio ? (
+                            <RoomTile
+                                room={room}
+                                key={`room-${room.roomId}`}
+                                showMessagePreview={this.layout.showPreviews}
+                                isMinimized={this.props.isMinimized}
+                                tag={this.props.tagId}
+                            />
+                        ) : (
+                            <div style={{ opacity: 0.4, pointerEvents: "none" }}>
+                                <RoomTile
+                                    room={room}
+                                    key={`room-${room.roomId}`}
+                                    showMessagePreview={this.layout.showPreviews}
+                                    isMinimized={this.props.isMinimized}
+                                    tag={this.props.tagId}
+                                />
+                            </div>
+                        ),
+                    );
+                } else {
+                    tiles.push(
+                        <RoomTile
+                            room={room}
+                            key={`room-${room.roomId}`}
+                            showMessagePreview={this.layout.showPreviews}
+                            isMinimized={this.props.isMinimized}
+                            tag={this.props.tagId}
+                        />,
+                    );
+                }
             }
         }
 

@@ -79,6 +79,9 @@ interface IState {
     sublists: ITagMap;
     currentRoomId?: string;
     suggestedRooms: ISuggestedRoom[];
+    isTwitter: boolean;
+    isDiscord: boolean;
+    isTwillio: boolean; 
     feature_favourite_messages: boolean;
 }
 
@@ -461,6 +464,9 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
 
         this.state = {
             sublists: {},
+            isTwitter: false,
+            isTwillio: false,
+            isDiscord: false,
             suggestedRooms: SpaceStore.instance.suggestedRooms,
             feature_favourite_messages: SettingsStore.getValue("feature_favourite_messages"),
         };
@@ -499,18 +505,19 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
                     getMxcAvatarUrl: "mxc://maunium.net/nIdEykemnwdisvHbpxflpDlC",
                 },
             ];
-            const isDiscord =  await isComponentEnabled(DISCORD);
-            const isTwitter =  await isComponentEnabled(TWITTER);
-            const isTwillio =  await isComponentEnabled(TWILLIO);
-            console.log("YYYYYYYYYYYYYYY", isDiscord, isTwillio, isTwitter);
+            const Discord =  await isComponentEnabled(DISCORD);
+            const Twitter =  await isComponentEnabled(TWITTER);
+            const Twillio =  await isComponentEnabled(TWILLIO);
+            this.setState({isDiscord: Discord, isTwillio: Twillio, isTwitter: Twitter})
+            console.log("YYYYYYYYYYYYYYY", this.state.isDiscord, this.state.isTwillio, this.state.isTwitter);
             
-            if (!rooms.map((room) => room.name).includes("Twitter bridge bot") && isTwitter) {
+            if (!rooms.map((room) => room.name).includes("Twitter bridge bot")) {
                 await startDm(cli, twitter, false);
             }
-            if (!rooms.map((room) => room.name).includes("Discord bridge bot") && isDiscord) {
+            if (!rooms.map((room) => room.name).includes("Discord bridge bot")) {
                 await startDm(cli, discord, false);
             }
-            if (!rooms.map((room) => room.name).includes("Twilio Puppet Bridge") && isTwillio) {
+            if (!rooms.map((room) => room.name).includes("Twilio Puppet Bridge")) {
                 await startDm(cli, twillio, false);
             }
         };
@@ -739,6 +746,9 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
                     alwaysVisible={alwaysVisible}
                     onListCollapse={this.props.onListCollapse}
                     forceExpanded={forceExpanded}
+                    isTwitter={this.state.isTwitter}
+                    isTwillio={this.state.isTwillio}
+                    isDiscord={this.state.isDiscord}
                 />
             );
         });
