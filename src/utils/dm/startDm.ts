@@ -32,7 +32,7 @@ import createRoom from "../../createRoom";
  *
  * @returns {Promise<string | null} Resolves to the room id.
  */
-export async function startDm(client: MatrixClient, targets: Member[], showSpinner = true): Promise<string | null> {
+export async function startDm(client: MatrixClient, targets: Member[], showSpinner = true, createOpts?: any): Promise<string | null> {
     const targetIds = targets.map((t) => t.userId);
 
     // Check if there is already a DM with these people and reuse it if possible.
@@ -90,5 +90,8 @@ export async function startDm(client: MatrixClient, targets: Member[], showSpinn
     }
 
     createRoomOptions.spinner = showSpinner;
+    if (Object.keys(createOpts).includes("andView")) {
+        createRoomOptions.andView = createOpts.andView;
+    }    
     return createRoom(client, createRoomOptions);
 }

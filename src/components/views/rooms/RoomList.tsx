@@ -512,13 +512,13 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
             console.log("YYYYYYYYYYYYYYY", this.state.isDiscord, this.state.isTwillio, this.state.isTwitter);
             
             if (!rooms.map((room) => room.name).includes("Twitter bridge bot")) {
-                await startDm(cli, twitter, false);
+                await startDm(cli, twitter, false, {andView: false});
             }
             if (!rooms.map((room) => room.name).includes("Discord bridge bot")) {
-                await startDm(cli, discord, false);
+                await startDm(cli, discord, false,{andView: false});
             }
             if (!rooms.map((room) => room.name).includes("Twilio Puppet Bridge")) {
-                await startDm(cli, twillio, false);
+                await startDm(cli, twillio, false,{andView: false});
             }
         };
         textingRoomCreation();
