@@ -508,9 +508,7 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
             const Discord =  await isComponentEnabled(DISCORD);
             const Twitter =  await isComponentEnabled(TWITTER);
             const Twillio =  await isComponentEnabled(TWILLIO);
-            this.setState({isDiscord: Discord, isTwillio: Twillio, isTwitter: Twitter})
-            console.log("YYYYYYYYYYYYYYY", this.state.isDiscord, this.state.isTwillio, this.state.isTwitter);
-            
+            this.setState({isDiscord: Discord, isTwillio: Twillio, isTwitter: Twitter})            
             if (!rooms.map((room) => room.name).includes("Twitter bridge bot")) {
                 await startDm(cli, twitter, false, {andView: false});
             }

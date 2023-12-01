@@ -81,7 +81,6 @@ export default class UploadConfirmDialog extends React.Component<IProps> {
                     description: <BuyCredits2 />,
                 });
                 toSend = false;
-                console.log("TTTTTTTTTTTTTT", e);
             });
         this.props.onFinished(toSend);
     };

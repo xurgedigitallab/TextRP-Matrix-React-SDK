@@ -17,6 +17,9 @@ limitations under the License.
 import { WebSearch as WebSearchEvent } from "@matrix-org/analytics-events/types/typescript/WebSearch";
 import classNames from "classnames";
 import { capitalize, result, sum } from "lodash";
+import { ToastContainer, toast } from "react-toastify";
+import { TWITTER, TWILLIO, DISCORD } from "../../../../FeaturesConstant";
+import { isComponentEnabled } from "../../../../service";
 import { IHierarchyRoom } from "matrix-js-sdk/src/@types/spaces";
 import { IPublicRoomsChunkRoom, MatrixClient, RoomMember, RoomType } from "matrix-js-sdk/src/matrix";
 import { Room } from "matrix-js-sdk/src/models/room";
@@ -286,6 +289,10 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
     const cli = MatrixClientPeg.get();
     const rovingContext = useContext(RovingTabIndexContext);
     const [query, _setQuery] = useState(initialText);
+    const [isTwitter, setIsTwitter] = useState(false);
+    const [isTwillio, setIsTwillio] = useState(false);
+    const [isDiscord, setIsDiscord] = useState(false);
+    const [isFetched, setIsfetched] = useState(false);
     const [recentSearches, clearRecentSearches] = useRecentSearches();
     const [filter, setFilterInternal] = useState<Filter | null>(initialFilter);
     const setFilter = useCallback((filter: Filter | null) => {
@@ -481,12 +488,55 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
         // we only want to reset the focus whenever the results or filters change
         // eslint-disable-next-line
     }, [results, filter]);
-
+    useEffect(() => {
+        const enableFeature = async () => {
+            const isTwitter = await isComponentEnabled(TWITTER);
+            const isDiscord = await isComponentEnabled(DISCORD);
+            const isTwillio = await isComponentEnabled(TWILLIO);
+            setIsDiscord(isDiscord);
+            setIsTwillio(isTwillio);
+            setIsTwitter(isTwitter);
+            setIsfetched(true);
+        };
+        enableFeature();
+    }, []);
     const viewRoom = (
         room: { roomId: string; roomAlias?: string; autoJoin?: boolean; shouldPeek?: boolean; viaServers?: string[] },
         persist = false,
         viaKeyboard = false,
-    ): void => {
+    ): Promise<void> => {
+        const cli = MatrixClientPeg.get();
+        const presentRoom = cli.getRoom(room.roomId);
+        if (
+            presentRoom &&
+            presentRoom.summaryHeroes &&
+            presentRoom.summaryHeroes.length === 1 &&
+            presentRoom.summaryHeroes[0] === "@twitterbot:synapse.textrp.io" &&
+            !isTwitter
+        ) {
+            toast.error(`you don't have ${TWITTER} feature enabled`);
+            return;
+        }
+        if (
+            presentRoom &&
+            presentRoom.summaryHeroes &&
+            presentRoom.summaryHeroes.length === 1 &&
+            presentRoom.summaryHeroes[0] === "@discordbot:synapse.textrp.io" &&
+            !isDiscord
+        ) {
+            toast.error(`you don't have ${DISCORD} feature enabled`);
+            return;
+        }
+        if (
+            presentRoom &&
+            presentRoom.summaryHeroes &&
+            presentRoom.summaryHeroes.length === 1 &&
+            presentRoom.summaryHeroes[0] === "@_twiliopuppet_bot:synapse.textrp.io" &&
+            !isTwillio
+        ) {
+            toast.error(`you don't have ${TWILLIO} feature enabled`);
+            return;
+        }
         if (persist) {
             const recents = new Set(SettingsStore.getValue("SpotlightSearch.recentSearches", null).reverse());
             // remove & add the room to put it at the end
@@ -1178,7 +1228,6 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
 
     const onKeyDown = (ev: React.KeyboardEvent): void => {
         const action = getKeyBindingsManager().getAccessibilityAction(ev);
-
         switch (action) {
             case KeyBindingAction.Backspace:
                 if (!query && filter !== null) {
@@ -1197,80 +1246,84 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
     const activeDescendant = rovingContext.state.activeRef?.current?.id;
     return (
         <>
-            <div id="mx_SpotlightDialog_keyboardPrompt">
-                {_t(
-                    "Use <arrows/> to scroll",
-                    {},
-                    {
-                        arrows: () => (
-                            <>
-                                <kbd>↓</kbd>
-                                <kbd>↑</kbd>
-                                {!filter !== null && !query && <kbd>←</kbd>}
-                                {!filter !== null && !query && <kbd>→</kbd>}
-                            </>
-                        ),
-                    },
-                )}
-            </div>
-
-            <BaseDialog
-                className="mx_SpotlightDialog"
-                onFinished={onFinished}
-                hasCancel={false}
-                onKeyDown={onDialogKeyDown}
-                screenName="UnifiedSearch"
-                aria-label={_t("Search Dialog")}
-            >
-                <div className="mx_SpotlightDialog_searchBox mx_textinput">
-                    {filter !== null && (
-                        <div
-                            className={classNames("mx_SpotlightDialog_filter", {
-                                mx_SpotlightDialog_filterPeople: filter === Filter.People,
-                                mx_SpotlightDialog_filterPublicRooms: filter === Filter.PublicRooms,
-                            })}
-                        >
-                            <span>{filterToLabel(filter)}</span>
-                            <AccessibleButton
-                                tabIndex={-1}
-                                alt={_t("Remove search filter for %(filter)s", {
-                                    filter: filterToLabel(filter),
-                                })}
-                                className="mx_SpotlightDialog_filter--close"
-                                onClick={() => setFilter(null)}
-                            />
-                        </div>
+            <div>
+                <div id="mx_SpotlightDialog_keyboardPrompt">
+                    {_t(
+                        "Use <arrows/> to scroll",
+                        {},
+                        {
+                            arrows: () => (
+                                <>
+                                    <kbd>↓</kbd>
+                                    <kbd>↑</kbd>
+                                    {!filter !== null && !query && <kbd>←</kbd>}
+                                    {!filter !== null && !query && <kbd>→</kbd>}
+                                </>
+                            ),
+                        },
                     )}
-                    <input
-                        ref={inputRef}
-                        autoFocus
-                        type="text"
-                        autoComplete="off"
-                        autoCapitalize="off"
-                        autoCorrect="off"
-                        spellCheck="false"
-                        placeholder={_t("Search")}
-                        value={query}
-                        onChange={setQuery}
-                        onKeyDown={onKeyDown}
-                        aria-owns="mx_SpotlightDialog_content"
-                        aria-activedescendant={activeDescendant}
-                        aria-label={_t("Search")}
-                        aria-describedby="mx_SpotlightDialog_keyboardPrompt"
-                    />
-                    {(publicRoomsLoading || peopleLoading || profileLoading) && <Spinner w={24} h={24} />}
                 </div>
 
-                <div
-                    ref={scrollContainerRef}
-                    id="mx_SpotlightDialog_content"
-                    role="listbox"
-                    aria-activedescendant={activeDescendant}
-                    aria-describedby="mx_SpotlightDialog_keyboardPrompt"
+                <BaseDialog
+                    className="mx_SpotlightDialog"
+                    onFinished={onFinished}
+                    hasCancel={false}
+                    onKeyDown={onDialogKeyDown}
+                    screenName="UnifiedSearch"
+                    aria-label={_t("Search Dialog")}
                 >
-                    {content}
-                </div>
-            </BaseDialog>
+                    {isFetched?<div>
+                        <div className="mx_SpotlightDialog_searchBox mx_textinput">
+                            {filter !== null && (
+                                <div
+                                    className={classNames("mx_SpotlightDialog_filter", {
+                                        mx_SpotlightDialog_filterPeople: filter === Filter.People,
+                                        mx_SpotlightDialog_filterPublicRooms: filter === Filter.PublicRooms,
+                                    })}
+                                >
+                                    <span>{filterToLabel(filter)}</span>
+                                    <AccessibleButton
+                                        tabIndex={-1}
+                                        alt={_t("Remove search filter for %(filter)s", {
+                                            filter: filterToLabel(filter),
+                                        })}
+                                        className="mx_SpotlightDialog_filter--close"
+                                        onClick={() => setFilter(null)}
+                                    />
+                                </div>
+                            )}
+                            <input
+                                ref={inputRef}
+                                autoFocus
+                                type="text"
+                                autoComplete="off"
+                                autoCapitalize="off"
+                                autoCorrect="off"
+                                spellCheck="false"
+                                placeholder={_t("Search")}
+                                value={query}
+                                onChange={setQuery}
+                                onKeyDown={onKeyDown}
+                                aria-owns="mx_SpotlightDialog_content"
+                                aria-activedescendant={activeDescendant}
+                                aria-label={_t("Search")}
+                                aria-describedby="mx_SpotlightDialog_keyboardPrompt"
+                            />
+                            {(publicRoomsLoading || peopleLoading || profileLoading) && <Spinner w={24} h={24} />}
+                            <ToastContainer />
+                        </div>
+                        <div
+                            ref={scrollContainerRef}
+                            id="mx_SpotlightDialog_content"
+                            role="listbox"
+                            aria-activedescendant={activeDescendant}
+                            aria-describedby="mx_SpotlightDialog_keyboardPrompt"
+                        >
+                            {content}
+                        </div>
+                    </div>: <Spinner w={24} h={24}/>}
+                </BaseDialog>
+            </div>
         </>
     );
 };

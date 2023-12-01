@@ -22,6 +22,8 @@ import { MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixError } from "matrix-js-sdk/src/matrix";
 import { ToastContainer, toast } from "react-toastify";
+import { TWITTER, TWILLIO, DISCORD } from "../../../FeaturesConstant";
+import { isComponentEnabled } from "../../../service";
 import axios from "axios";
 
 import { Icon as InfoIcon } from "../../../../res/img/element-icons/info.svg";
@@ -83,7 +85,6 @@ import AskInviteAnywayDialog, { UnknownProfiles } from "./AskInviteAnywayDialog"
 import { SdkContextClass } from "../../../contexts/SDKContext";
 import { UserProfilesStore } from "../../../stores/UserProfilesStore";
 import "react-toastify/dist/ReactToastify.css";
-
 // we have a number of types defined from the Matrix spec which can't reasonably be altered here.
 /* eslint-disable camelcase */
 
@@ -513,7 +514,7 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
         return !showAnyInviteErrors(result.states, room, result.inviter, userMap);
     }
 
-    private convertFilter(): Member[] {
+    private convertFilter(): Member[] | any {
         // Check to see if there's anything to convert first
         if (!this.state.filterText || !this.state.filterText.includes("@")) return this.state.targets || [];
 
@@ -626,9 +627,23 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
      * If so show the "invite anyway?" dialog. Otherwise directly create the DM local room.
      */
     private checkProfileAndStartDm = async (): Promise<void> => {
-        this.setBusy(true);
         const targets = this.convertFilter();
-
+        const isTwitter = await isComponentEnabled(TWITTER);
+        const isDiscord = await isComponentEnabled(DISCORD);
+        const isTwillio = await isComponentEnabled(TWILLIO);
+        if (targets && targets[0]._userId === "@twitterbot:synapse.textrp.io" && !isTwitter){
+            toast.error(`you don't have ${TWITTER} feature enabled`);
+            return;
+        }
+        if (targets && targets[0]._userId === "@discordbot:synapse.textrp.io" && !isDiscord){
+            toast.error(`you don't have ${DISCORD} feature enabled`);
+            return;
+        }
+        if (targets && targets[0]._userId === "@_twiliopuppet_bot:synapse.textrp.io" && !isTwillio){
+            toast.error(`you don't have ${TWILLIO} feature enabled`);
+            return;
+        }
+        this.setBusy(true);
         if (SettingsStore.getValue("promptBeforeInviteUnknownUsers")) {
             const unknownProfileUsers = await extractTargetUnknownProfiles(targets, this.profilesStore);
 
@@ -643,14 +658,11 @@ export default class InviteDialog extends React.PureComponent<Props, IInviteDial
 
     private startDm = async (): Promise<void> => {
         this.setBusy(true);
-
         try {
             const cli = MatrixClientPeg.get();
             const targets = this.convertFilter();
-
             const isAllowed: any = await this.canAccessFeature(targets[0]);
             console.log("is allowed", isAllowed);
-
             if ((!isAllowed.featureExist && !isAllowed.isBot) || (isAllowed.featureExist && isAllowed.isBot)) {
                 await startDmOnFirstMessage(cli, targets);
             } else {
