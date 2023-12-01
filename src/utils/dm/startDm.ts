@@ -90,7 +90,7 @@ export async function startDm(client: MatrixClient, targets: Member[], showSpinn
     }
 
     createRoomOptions.spinner = showSpinner;
-    if (Object.keys(createOpts).includes("andView")) {
+    if (createOpts && Object.keys(createOpts).includes("andView")) {
         createRoomOptions.andView = createOpts.andView;
     }    
     return createRoom(client, createRoomOptions);
