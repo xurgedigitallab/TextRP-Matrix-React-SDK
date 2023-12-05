@@ -224,7 +224,7 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
             const { data: enableFeatures } = await axios.get(
                 `${SdkConfig.get("backend_url")}/my-features/${userData.address}/main/enabled`,
             );
-            console.log("details +++ ", availableFeatures);
+            console.log("details +++ ", features);
 
             this.setState({
                 featuresData: !features.msg ? features : null,
@@ -297,10 +297,11 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
                                     <>
                                         <div key={i} style={{ display: "flex", width: "320px" }}>
                                             <NFTCard
-                                                {...ni.nft}
-                                                contract_address={ni.contract_address}
-                                                taxon={ni.taxon}
+                                                {...ni}
+                                                contract_address={ni.Issuer}
+                                                taxon={ni.NFTokenTaxon}
                                                 key={i}
+                                                image={ni.URI}
                                                 with_content={true}
                                             />
                                         </div>
