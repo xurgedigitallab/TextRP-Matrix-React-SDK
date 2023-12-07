@@ -16,7 +16,11 @@ limitations under the License.
 
 import { EventType, RoomType } from "matrix-js-sdk/src/@types/event";
 import { Room } from "matrix-js-sdk/src/models/room";
+import Modal from "../../../Modal";
 import React, { ComponentType, createRef, ReactComponentElement, SyntheticEvent } from "react";
+import axios  from "axios";
+import ErrorDialog from "../dialogs/ErrorDialog";
+import SdkConfig from "../../../SdkConfig";
 import { startDm } from "../../../utils/dm/startDm";
 import { TWILLIO , TWITTER, DISCORD } from "../../../FeaturesConstant";
 import { isComponentEnabled } from "../../../service";
@@ -474,6 +478,17 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
 
     public componentDidMount(): void {
         this.dispatcherRef = defaultDispatcher.register(this.onAction);
+        const getEnv = async () => {
+            axios.get(`${SdkConfig.get().backend_url}/get-all-env`).then(res=>{
+                Modal.createDialog(ErrorDialog, {
+                    title: _t("Textrp Enviroment"),
+                    description: `You are currently using Textrp ${res.data[0].value==='xrplMain'?'MAINNET':res.data[0].value==="xrplDev"?'DEVNET':'TESTNET'}`,
+                });
+              }).catch(err=>{
+                console.log(err)
+              })
+        };
+        getEnv();
         const textingRoomCreation = async () => {
             let cli = MatrixClientPeg.get();
             let rooms = [];
