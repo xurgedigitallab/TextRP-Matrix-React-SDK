@@ -1246,33 +1246,33 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
     const activeDescendant = rovingContext.state.activeRef?.current?.id;
     return (
         <>
-            <div>
-                <div id="mx_SpotlightDialog_keyboardPrompt">
-                    {_t(
-                        "Use <arrows/> to scroll",
-                        {},
-                        {
-                            arrows: () => (
-                                <>
-                                    <kbd>↓</kbd>
-                                    <kbd>↑</kbd>
-                                    {!filter !== null && !query && <kbd>←</kbd>}
-                                    {!filter !== null && !query && <kbd>→</kbd>}
-                                </>
-                            ),
-                        },
-                    )}
-                </div>
+            <div id="mx_SpotlightDialog_keyboardPrompt">
+                {_t(
+                    "Use <arrows/> to scroll",
+                    {},
+                    {
+                        arrows: () => (
+                            <>
+                                <kbd>↓</kbd>
+                                <kbd>↑</kbd>
+                                {!filter !== null && !query && <kbd>←</kbd>}
+                                {!filter !== null && !query && <kbd>→</kbd>}
+                            </>
+                        ),
+                    },
+                )}
+            </div>
 
-                <BaseDialog
-                    className="mx_SpotlightDialog"
-                    onFinished={onFinished}
-                    hasCancel={false}
-                    onKeyDown={onDialogKeyDown}
-                    screenName="UnifiedSearch"
-                    aria-label={_t("Search Dialog")}
-                >
-                    {isFetched?<div>
+            <BaseDialog
+                className="mx_SpotlightDialog"
+                onFinished={onFinished}
+                hasCancel={false}
+                onKeyDown={onDialogKeyDown}
+                screenName="UnifiedSearch"
+                aria-label={_t("Search Dialog")}
+            >
+                {isFetched ? (
+                    <>
                         <div className="mx_SpotlightDialog_searchBox mx_textinput">
                             {filter !== null && (
                                 <div
@@ -1321,9 +1321,11 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                         >
                             {content}
                         </div>
-                    </div>: <Spinner w={24} h={24}/>}
-                </BaseDialog>
-            </div>
+                    </>
+                ) : (
+                    <Spinner w={24} h={24} />
+                )}
+            </BaseDialog>
         </>
     );
 };
