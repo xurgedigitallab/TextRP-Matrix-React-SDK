@@ -56,12 +56,11 @@ export const NFTCard = (props: {
     twitter: boolean;
     twilio: boolean;
     dark_mode: boolean;
-    feature: string[]|string;
+    feature: string[] | string;
     taxon: string;
     with_content?: boolean;
+    anchor?: boolean;
 }): ReactElement => {
-    console.log("NFTCard props", props);
-
     return (
         <div
             style={{
@@ -76,8 +75,10 @@ export const NFTCard = (props: {
             }}
         >
             {props.image ? (
-                <div>
-                    <img
+                props.anchor ? (
+                    <div>
+                      <a href={`${props.image}`} target="blank">
+                        <img
                         src={
                             props.image.includes("ipfs://")
                                 ? `https://ipfs.io/ipfs/${props.image.split("://")[1]}`
@@ -91,7 +92,26 @@ export const NFTCard = (props: {
                         style={{ objectFit: "contain" }}
                         onError={(source: any) => (source.src = "../../../../res/img/placeholder.png")}
                     />
-                </div>
+                      </a>
+                    </div>
+                ) : (
+                    <div>
+                        <img
+                            src={
+                                props.image.includes("ipfs://")
+                                    ? `https://ipfs.io/ipfs/${props.image.split("://")[1]}`
+                                    : props.image
+                            }
+                            // src="../../../../res/img/placeholder.png"
+                            alt=""
+                            className="cursor-pointer object-cover border border-primary-gray"
+                            width="100%"
+                            height="180px"
+                            style={{ objectFit: "contain" }}
+                            onError={(source: any) => (source.src = "../../../../res/img/placeholder.png")}
+                        />
+                    </div>
+                )
             ) : (
                 <div>
                     <img
@@ -124,34 +144,38 @@ export const NFTCard = (props: {
                                 }}
                             >
                                 <b>Feature Available : </b>{" "}
-                                { Array.isArray(props.feature)?props.feature.map((items, index) => {
-                                    console.log(items);
-                                    return (
-                                        <span
-                                            style={{
-                                                backgroundColor: "var(--accent)",
-                                                borderRadius: "3px",
-                                                color: "white",
-                                                paddingInline: "5px",
-                                                paddingBlock: "1px",
-                                                marginLeft: "5px",
-                                            }}
-                                        >
-                                            {items}
-                                        </span>
-                                    );
-                                }): <span
-                                style={{
-                                    backgroundColor: "var(--accent)",
-                                    borderRadius: "3px",
-                                    color: "white",
-                                    paddingInline: "5px",
-                                    paddingBlock: "1px",
-                                    marginLeft: "5px",
-                                }}
-                            >
-                                {props.feature}
-                            </span>}{" "}
+                                {Array.isArray(props.feature) ? (
+                                    props.feature.map((items, index) => {
+                                        console.log(items);
+                                        return (
+                                            <span
+                                                style={{
+                                                    backgroundColor: "var(--accent)",
+                                                    borderRadius: "3px",
+                                                    color: "white",
+                                                    paddingInline: "5px",
+                                                    paddingBlock: "1px",
+                                                    marginLeft: "5px",
+                                                }}
+                                            >
+                                                {items}
+                                            </span>
+                                        );
+                                    })
+                                ) : (
+                                    <span
+                                        style={{
+                                            backgroundColor: "var(--accent)",
+                                            borderRadius: "3px",
+                                            color: "white",
+                                            paddingInline: "5px",
+                                            paddingBlock: "1px",
+                                            marginLeft: "5px",
+                                        }}
+                                    >
+                                        {props.feature}
+                                    </span>
+                                )}{" "}
                                 <br />{" "}
                             </div>
                         )}
@@ -272,7 +296,7 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
                                     this.state.enabledFeatures?.nfts.map((ni: any, i: number) => (
                                         <>
                                             <div key={i} style={{ display: "flex", width: "320px" }}>
-                                                <NFTCard {...ni} key={i} with_content={true} />
+                                                <NFTCard {...ni} key={i} with_content={true} anchor={false} />
                                             </div>
                                         </>
                                     ))}
@@ -284,7 +308,7 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
                                 {this.state.availableFeatures?.nfts.map((ni: any, i: number) => (
                                     <>
                                         <div key={i} style={{ display: "flex", width: "320px" }}>
-                                            <NFTCard {...ni} key={i} with_content={true} />
+                                            <NFTCard {...ni} key={i} with_content={true} anchor={true} />
                                         </div>
                                     </>
                                 ))}
@@ -303,6 +327,7 @@ export default class MyFeatures extends React.PureComponent<IProps, IState> {
                                                 key={i}
                                                 image={ni.URI}
                                                 with_content={true}
+                                                anchor={false}
                                             />
                                         </div>
                                     </>
