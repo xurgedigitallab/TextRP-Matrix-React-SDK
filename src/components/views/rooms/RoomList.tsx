@@ -18,11 +18,12 @@ import { EventType, RoomType } from "matrix-js-sdk/src/@types/event";
 import { Room } from "matrix-js-sdk/src/models/room";
 import Modal from "../../../Modal";
 import React, { ComponentType, createRef, ReactComponentElement, SyntheticEvent } from "react";
-import axios  from "axios";
+import axios from "axios";
 import ErrorDialog from "../dialogs/ErrorDialog";
 import SdkConfig from "../../../SdkConfig";
+import { extractWalletAddress } from "../../../paymentServices";
 import { startDm } from "../../../utils/dm/startDm";
-import { TWILLIO , TWITTER, DISCORD } from "../../../FeaturesConstant";
+import { TWILLIO, TWITTER, DISCORD } from "../../../FeaturesConstant";
 import { isComponentEnabled } from "../../../service";
 import { IState as IRovingTabIndexState, RovingTabIndexProvider } from "../../../accessibility/RovingTabIndex";
 import MatrixClientContext from "../../../contexts/MatrixClientContext";
@@ -85,7 +86,8 @@ interface IState {
     suggestedRooms: ISuggestedRoom[];
     isTwitter: boolean;
     isDiscord: boolean;
-    isTwillio: boolean; 
+    isTwillio: boolean;
+    env: string;
     feature_favourite_messages: boolean;
 }
 
@@ -471,6 +473,7 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
             isTwitter: false,
             isTwillio: false,
             isDiscord: false,
+            env: "",
             suggestedRooms: SpaceStore.instance.suggestedRooms,
             feature_favourite_messages: SettingsStore.getValue("feature_favourite_messages"),
         };
@@ -478,15 +481,41 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
 
     public componentDidMount(): void {
         this.dispatcherRef = defaultDispatcher.register(this.onAction);
+        const userId = MatrixClientPeg.get().getUserId();
+
         const getEnv = async () => {
-            axios.get(`${SdkConfig.get().backend_url}/get-all-env`).then(res=>{
-                Modal.createDialog(ErrorDialog, {
-                    title: _t("Textrp Enviroment"),
-                    description: `You are currently using Textrp ${res.data[0].value==='xrplMain'?'MAINNET':res.data[0].value==="xrplDev"?'DEVNET':'TESTNET'}`,
+            axios
+                .get(`${SdkConfig.get().backend_url}/get-all-env`)
+                .then((res) => {
+                    this.setState({
+                        env:
+                            res.data[0].value === "xrplMain"
+                                ? "MAINNET"
+                                : res.data[0].value === "xrplDev"
+                                ? "DEVNET"
+                                : "TESTNET",
+                    });
+                    axios
+                        .get(`${SdkConfig.get("backend_url")}/verify-address/${extractWalletAddress(userId)}`)
+                        .then((response) =>
+                            Modal.createDialog(ErrorDialog, {
+                                title: _t("Textrp Enviroment"),
+                                description: (
+                                    <>
+                                        <div>{`You are currently using Textrp ${this.state.env}`}</div>
+                                        <div>
+                                            {response.data.active
+                                                ? `Your wallet address ${extractWalletAddress(userId)} is active on ${this.state.env}`
+                                                : `Your wallet address ${extractWalletAddress(userId)} is not active on ${this.state.env}`}
+                                        </div>
+                                    </>
+                                ),
+                            }),
+                        );
+                })
+                .catch((err) => {
+                    console.log(err);
                 });
-              }).catch(err=>{
-                console.log(err)
-              })
         };
         getEnv();
         const textingRoomCreation = async () => {
@@ -520,18 +549,18 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
                     getMxcAvatarUrl: "mxc://maunium.net/nIdEykemnwdisvHbpxflpDlC",
                 },
             ];
-            const Discord =  await isComponentEnabled(DISCORD);
-            const Twitter =  await isComponentEnabled(TWITTER);
-            const Twillio =  await isComponentEnabled(TWILLIO);
-            this.setState({isDiscord: Discord, isTwillio: Twillio, isTwitter: Twitter})            
+            const Discord = await isComponentEnabled(DISCORD);
+            const Twitter = await isComponentEnabled(TWITTER);
+            const Twillio = await isComponentEnabled(TWILLIO);
+            this.setState({ isDiscord: Discord, isTwillio: Twillio, isTwitter: Twitter });
             if (!rooms.map((room) => room.name).includes("Twitter bridge bot")) {
-                await startDm(cli, twitter, false, {andView: false});
+                await startDm(cli, twitter, false, { andView: false });
             }
             if (!rooms.map((room) => room.name).includes("Discord bridge bot")) {
-                await startDm(cli, discord, false,{andView: false});
+                await startDm(cli, discord, false, { andView: false });
             }
             if (!rooms.map((room) => room.name).includes("Twilio Puppet Bridge")) {
-                await startDm(cli, twillio, false,{andView: false});
+                await startDm(cli, twillio, false, { andView: false });
             }
         };
         textingRoomCreation();
