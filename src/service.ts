@@ -24,7 +24,7 @@ const getAllEnabledNfts = async () => {
 }
 export const getAllFeatures = async ():Promise<any> =>{
    try{
-    const features = await axios.get(`${SdkConfig.get('backend_url')}/get-all-feature`);
+    const features = await axios.get(`${SdkConfig.get('backend_url')}/always-enabled-feature`);
     return features;
    }  catch (e) {
     console.error(e);
@@ -51,7 +51,7 @@ export const isComponentEnabled = async(title:string)=>{
                 }
             })
         }        
-        return userHaveNft && adminEnable;
+        return userHaveNft || adminEnable;
     }catch(e){
         console.error(e);
     }
