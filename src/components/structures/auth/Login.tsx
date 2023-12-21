@@ -18,7 +18,7 @@ import React, { ReactNode } from "react";
 import classNames from "classnames";
 import { logger } from "matrix-js-sdk/src/logger";
 import { ISSOFlow, LoginFlow, SSOAction } from "matrix-js-sdk/src/@types/auth";
-
+import Env from "../Env";
 import { _t, _td, UserFriendlyError } from "../../../languageHandler";
 import Login from "../../../Login";
 import { messageForConnectionError, messageForLoginError } from "../../../utils/ErrorUtils";
@@ -538,6 +538,7 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                     /> */}
                     {this.renderLoginComponentForFlows()}
                     {footer}
+                    <Env/>
                 </AuthBody>
             </AuthPage>
         );

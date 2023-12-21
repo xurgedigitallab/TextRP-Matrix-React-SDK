@@ -351,8 +351,11 @@ export class MessageComposer extends React.Component<IProps, IState> {
                 type: "send",
                 address: extractWalletAddress(this.props.room.myUserId),
                 password: "demo123",
+            }).then((res)=>{
+                console.log("UUUUUUUUUUUUUUUcredits", res); 
             })
             .catch((e) => {
+                console.log("UUUUUUUUUUUUUUU error credits ", e);
                 Modal.createDialog(ErrorDialog, {
                     title: _t("Insufficient credits message"),
                     description: <BuyCredits2 />,
