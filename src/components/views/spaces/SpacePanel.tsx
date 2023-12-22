@@ -31,6 +31,8 @@ import classNames from "classnames";
 import { Room } from "matrix-js-sdk/src/models/room";
 
 import { _t } from "../../../languageHandler";
+import axios from "axios";
+import SdkConfig from "../../../SdkConfig";
 import { useContextMenu } from "../../structures/ContextMenu";
 import SpaceCreateMenu from "./SpaceCreateMenu";
 import { SpaceButton, SpaceItem } from "./SpaceTreeLevel";
@@ -331,10 +333,20 @@ const InnerSpacePanel = React.memo<IInnerSpacePanelProps>(
 
 const SpacePanel: React.FC = () => {
     const [dragging, setDragging] = useState(false);
+    const [env, setEnv] = useState("");
     const [isPanelCollapsed, setPanelCollapsed] = useState(true);
     const ref = useRef<HTMLDivElement>(null);
     useLayoutEffect(() => {
         if (ref.current) UIStore.instance.trackElementDimensions("SpacePanel", ref.current);
+        if (ref.current) {
+            const getEnv = async () => {
+                let envM: any = await axios.get(`${SdkConfig.get().backend_url}/get-all-env`);
+                if (envM.data[0]) {
+                    setEnv(envM.data[0].value);
+                }
+            };
+            getEnv();
+        }
         return () => UIStore.instance.stopTrackingElementDimensions("SpacePanel");
     }, []);
 
@@ -343,7 +355,6 @@ const SpacePanel: React.FC = () => {
             setPanelCollapsed(!isPanelCollapsed);
         }
     });
-
     return (
         <RovingTabIndexProvider handleHomeEnd handleUpDown={!dragging}>
             {({ onKeyDownHandler, onDragEndHandler }) => (
@@ -398,7 +409,26 @@ const SpacePanel: React.FC = () => {
                                 </InnerSpacePanel>
                             )}
                         </Droppable>
-
+                        <div
+                            style={{
+                                fontSize: "13px",
+                                width: "100%",
+                                textAlign: "center",
+                            }}
+                        >
+                            {`{ XRPL }`}
+                        </div>
+                        {env && (
+                            <div
+                                style={{
+                                    fontSize: "13px",
+                                    width: "100%",
+                                    textAlign: "center",
+                                }}
+                            >
+                                {env === "xrplMain" ? "MAINNET" : env === "xrplDev" ? "DEVNET" : "TESTNET"}
+                            </div>
+                        )}
                         <QuickSettingsButton isPanelCollapsed={isPanelCollapsed} />
                     </div>
                 </DragDropContext>
