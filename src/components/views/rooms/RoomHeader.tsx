@@ -43,7 +43,7 @@ import E2EIcon from "./E2EIcon";
 import DecoratedRoomAvatar from "../avatars/DecoratedRoomAvatar";
 import AccessibleButton, { ButtonEvent } from "../elements/AccessibleButton";
 import AccessibleTooltipButton from "../elements/AccessibleTooltipButton";
-import { LOGIN, WHATSAPP } from "../../../FeaturesConstant";
+import { WHATSAPP, VIDEO_CALL, VOICE_CALL } from "../../../FeaturesConstant";
 import { QrReader } from "react-qr-reader"; // make sure the library import is correct
 import RoomTopic from "../elements/RoomTopic";
 import { isComponentEnabled } from "../../../service";
@@ -99,6 +99,7 @@ interface VoiceCallButtonProps {
  * widgets.
  */
 const VoiceCallButton: FC<VoiceCallButtonProps> = ({ room, busy, setBusy, behavior }) => {
+    const [enabled, setEnabled] = useState(false);
     const { onClick, tooltip, disabled } = useMemo(() => {
         if (behavior instanceof DisabledWithReason) {
             return {
@@ -119,15 +120,22 @@ const VoiceCallButton: FC<VoiceCallButtonProps> = ({ room, busy, setBusy, behavi
             };
         }
     }, [behavior, room, setBusy]);
-
+    
+    useEffect(() => {
+        const getResult = async () => {
+            let result = await isComponentEnabled(VOICE_CALL);
+            setEnabled(result);
+        };
+        getResult();
+    }, []);
     return (
         <AccessibleTooltipButton
             className="mx_RoomHeader_button mx_RoomHeader_voiceCallButton"
             onClick={onClick}
             title={_t("Voice call")}
-            tooltip={tooltip ?? _t("Voice call")}
+            tooltip={!enabled? "You don't have Voice Memo nft":tooltip ?? _t("Voice call")}
             alignment={Alignment.Bottom}
-            disabled={disabled || busy}
+            disabled={disabled || busy || !enabled}
         />
     );
 };
@@ -191,7 +199,7 @@ const VideoCallButton: FC<VideoCallButtonProps> = ({ room, busy, setBusy, behavi
     }, [setBusy, room]);
     useEffect(() => {
         const getResult = async () => {
-            let result = await isComponentEnabled(WHATSAPP);
+            let result = await isComponentEnabled(VIDEO_CALL);
             setEnabled(result);
         };
         getResult();
@@ -283,9 +291,9 @@ const VideoCallButton: FC<VideoCallButtonProps> = ({ room, busy, setBusy, behavi
                 className="mx_RoomHeader_button mx_RoomHeader_videoCallButton"
                 onClick={onClick}
                 title={_t("Video call")}
-                tooltip={tooltip ?? _t("Video call")}
+                tooltip={!enabled? "You don't have Video Chat nft":tooltip ?? _t("Video call")}
                 alignment={Alignment.Bottom}
-                disabled={disabled || busy}
+                disabled={disabled || busy || !enabled}
             />
             {menu}
         </>
@@ -915,12 +923,16 @@ const CreditBalance = ({ userId }) => {
         const intervalId = setInterval(() => {
             getCredit();
             // This function will be executed at the specified interval
-          }, 3000); // Interval is in milliseconds (1000ms = 1 second)
-      
-          // Clear the interval when the component unmounts
-          return () => clearInterval(intervalId);
+        }, 3000); // Interval is in milliseconds (1000ms = 1 second)
+
+        // Clear the interval when the component unmounts
+        return () => clearInterval(intervalId);
     }, []);
-    return <span style={{marginInline: "5px"}}>{userData?.user?.credit?.balance ? userData.user.credit.balance : null}</span>;
+    return (
+        <span style={{ marginInline: "5px" }}>
+            {userData?.user?.credit?.balance ? userData.user.credit.balance : null}
+        </span>
+    );
 };
 interface CallLayoutSelectorProps {
     call: ElementCall;
@@ -1124,7 +1136,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                         this.setState({ members: completions });
                     });
             };
-            getAddress();            
+            getAddress();
         }
     }
 
@@ -1423,7 +1435,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
             });
         const betaPill = isVideoRoom ? (
             <BetaPill onClick={viewLabs} tooltipTitle={_t("Video rooms are a beta feature")} />
-        ) : null;        
+        ) : null;
         return (
             <header className="mx_RoomHeader light-panel">
                 <div
