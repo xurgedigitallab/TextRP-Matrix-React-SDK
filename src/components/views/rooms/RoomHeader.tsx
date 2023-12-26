@@ -83,6 +83,7 @@ import { Alignment } from "../elements/Tooltip";
 import RoomCallBanner from "../beacon/RoomCallBanner";
 import { shouldShowComponent } from "../../../customisations/helpers/UIComponents";
 import { UIComponent } from "../../../settings/UIFeature";
+import { getTopic } from "../../../hooks/room/useTopic";
 class DisabledWithReason {
     public constructor(public readonly reason: string) {}
 }
@@ -120,7 +121,7 @@ const VoiceCallButton: FC<VoiceCallButtonProps> = ({ room, busy, setBusy, behavi
             };
         }
     }, [behavior, room, setBusy]);
-    
+
     useEffect(() => {
         const getResult = async () => {
             let result = await isComponentEnabled(VOICE_CALL);
@@ -133,7 +134,7 @@ const VoiceCallButton: FC<VoiceCallButtonProps> = ({ room, busy, setBusy, behavi
             className="mx_RoomHeader_button mx_RoomHeader_voiceCallButton"
             onClick={onClick}
             title={_t("Voice call")}
-            tooltip={!enabled? "You don't have Voice Memo nft":tooltip ?? _t("Voice call")}
+            tooltip={!enabled ? "You don't have Voice Memo nft" : tooltip ?? _t("Voice call")}
             alignment={Alignment.Bottom}
             disabled={disabled || busy || !enabled}
         />
@@ -291,7 +292,7 @@ const VideoCallButton: FC<VideoCallButtonProps> = ({ room, busy, setBusy, behavi
                 className="mx_RoomHeader_button mx_RoomHeader_videoCallButton"
                 onClick={onClick}
                 title={_t("Video call")}
-                tooltip={!enabled? "You don't have Video Chat nft":tooltip ?? _t("Video call")}
+                tooltip={!enabled ? "You don't have Video Chat nft" : tooltip ?? _t("Video call")}
                 alignment={Alignment.Bottom}
                 disabled={disabled || busy || !enabled}
             />
@@ -445,9 +446,11 @@ const Xrp = (props) => {
     const [whichOne, setWhichOne] = useState(0);
     const [scannedData, setScannedData] = useState("");
     const [memos, setMemos] = useState([]);
+    const [env, setEnv] = useState("");
     const [destinationTag, setDestinationTag] = useState<number | string>("");
     const [sourceTag, setSourceTag] = useState<number | string>("");
-
+    const [gotWalletInfo, setGotWalletInfo] = useState(false);
+    const [gotWalletInfoEnv, setGotWalletInfoEnv] = useState<string| any>("");
     const [memoId, setMemoId] = useState(0);
     const [value, setValue] = useState(0);
     const sliderRef = useRef(null); // Reference to the slider element
@@ -462,6 +465,36 @@ const Xrp = (props) => {
     function handleChange(value) {
         setFlags(value);
     }
+    useEffect(() => {
+        const getEnv = async () => {
+            await axios
+                .get(`${SdkConfig.get().backend_url}/get-all-env`)
+                .then((res) =>
+                    setEnv(
+                        res.data[0].value === "xrplMain"
+                            ? "mainnet"
+                            : res.data[0].value === "xrplDev"
+                            ? "devnet"
+                            : "testnet",
+                    ),
+                );
+        };
+        getEnv();
+        // verify-address
+    }, []);
+    useEffect(() => {
+        if (props?.userWallet && !gotWalletInfo) {
+            setGotWalletInfo(true);
+            const walletStatus = async () => {
+                await axios
+                    .get(`${SdkConfig.get().backend_url}/verify-address-allEnv/${props?.userWallet.address}`)
+                    .then((res) => {
+                        setGotWalletInfoEnv(res.data);
+                    });
+            };            
+            walletStatus();
+        }
+    }, [props]);    
     useEffect(() => {
         if (whichOne === 1) {
             setDestination(scannedData);
@@ -586,7 +619,7 @@ const Xrp = (props) => {
     };
     return (
         <>
-            <div
+            {/* <div
                 className="mx_RoomHeader_button_xrp"
                 onClick={() => {
                     if (props.appShown && props.toggleFun) {
@@ -594,7 +627,24 @@ const Xrp = (props) => {
                     }
                     setShow((pre) => !pre);
                 }}
-            ></div>
+            ></div> */}
+            <AccessibleTooltipButton
+                className="mx_RoomHeader_button_xrp"
+                onClick={() => {
+                    if (props.appShown && props.toggleFun) {
+                        props.toggleFun();
+                    }
+                    setShow((pre) => !pre);
+                }}
+                title={_t("XRP Widget")}
+                tooltip={
+                    !Object.keys(props.txnInfo).length
+                        ? `Your wallet address active is on ${gotWalletInfoEnv?.main?.active? 'mainnet ,': ''} ${gotWalletInfoEnv?.test?.active? 'testnet ,': ''} ${gotWalletInfoEnv?.dev?.active? 'devnet ,': ''} and this is xrpl ${env}`
+                        : _t("XRP Widget")
+                }
+                alignment={Alignment.Bottom}
+                disabled={!Object.keys(props.txnInfo).length}
+            />
             {showQRScanner && <QRCodeScanner setScannedData={setScannedData} setShowQRScanner={setShowQRScanner} />}
             {show && (
                 <div className="mx_Dialog mx_xrp_model">
@@ -1048,6 +1098,7 @@ interface IState {
     rightPanelOpen: boolean;
     txnInfo: object;
     members: IProviderCompletions[];
+    userWallet: string;
 }
 export interface IMemeber {
     completionId: string;
@@ -1072,6 +1123,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
             rightPanelOpen: RightPanelStore.instance.isOpen,
             txnInfo: {},
             members: [],
+            userWallet: ``,
         };
     }
 
@@ -1104,6 +1156,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                 const { data: address1 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
                     address: this.props.room.myUserId,
                 });
+                this.setState({ userWallet: address1 });
                 const { data: address2 } = await axios.post(`${SdkConfig.get("backend_url")}/all-address`, {
                     addresses: members,
                 });
@@ -1198,16 +1251,17 @@ export default class RoomHeader extends React.Component<IProps, IState> {
         if (this.props.room.myUserId) {
             startButtons.push(<CreditBalance userId={this.props.room.myUserId} />);
         }
-        if (Object.keys(this.state.txnInfo).length) {
-            startButtons.push(
-                <Xrp
-                    txnInfo={this.state.txnInfo}
-                    toggleFun={this.props.onAppsClick}
-                    appShown={this.props.appsShown}
-                    buttonShown={!this.props.viewingCall && this.props.onAppsClick}
-                />,
-            );
-        }
+        console.log("HHHHHHHHHHHHHHH", this.state.txnInfo);
+
+        startButtons.push(
+            <Xrp
+                txnInfo={this.state.txnInfo}
+                userWallet={this.state.userWallet}
+                toggleFun={this.props.onAppsClick}
+                appShown={this.props.appsShown}
+                buttonShown={!this.props.viewingCall && this.props.onAppsClick}
+            />,
+        );
         if (!this.props.viewingCall && this.props.inRoom && !this.context.tombstone) {
             startButtons.push(<CallButtons key="calls" room={this.props.room} />);
         }

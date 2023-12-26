@@ -481,43 +481,6 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
 
     public componentDidMount(): void {
         this.dispatcherRef = defaultDispatcher.register(this.onAction);
-        const userId = MatrixClientPeg.get().getUserId();
-
-        const getEnv = async () => {
-            axios
-                .get(`${SdkConfig.get().backend_url}/get-all-env`)
-                .then((res) => {
-                    this.setState({
-                        env:
-                            res.data[0].value === "xrplMain"
-                                ? "MAINNET"
-                                : res.data[0].value === "xrplDev"
-                                ? "DEVNET"
-                                : "TESTNET",
-                    });
-                    axios
-                        .get(`${SdkConfig.get("backend_url")}/verify-address/${extractWalletAddress(userId)}`)
-                        .then((response) =>
-                            Modal.createDialog(ErrorDialog, {
-                                title: _t("Textrp Enviroment"),
-                                description: (
-                                    <>
-                                        <div>{`You are currently using Textrp ${this.state.env}`}</div>
-                                        <div>
-                                            {response.data.active
-                                                ? `Your wallet address ${extractWalletAddress(userId)} is active on ${this.state.env}`
-                                                : `Your wallet address ${extractWalletAddress(userId)} is not active on ${this.state.env}`}
-                                        </div>
-                                    </>
-                                ),
-                            }),
-                        );
-                })
-                .catch((err) => {
-                    console.log(err);
-                });
-        };
-        getEnv();
         const textingRoomCreation = async () => {
             let cli = MatrixClientPeg.get();
             let rooms = [];
@@ -528,21 +491,21 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
                 let room = cli.getRoom(roomId);
                 rooms.push(room);
             }
-            let twitter = [
+            let twitter:any = [
                 {
                     name: "Twitter bridge bot",
                     userId: "@twitterbot:synapse.textrp.io",
                     getMxcAvatarUrl: "mxc://maunium.net/HVHcnusJkQcpVcsVGZRELLCn",
                 },
             ];
-            let twillio = [
+            let twillio:any = [
                 {
                     name: "Twilio Puppet Bridge",
                     userId: "@_twiliopuppet_bot:synapse.textrp.io",
                     getMxcAvatarUrl: "mxc://maunium.net/HVHcnusJkQcpVcsVGZRELLCn",
                 },
             ];
-            let discord = [
+            let discord:any = [
                 {
                     name: "Discord bridge bot",
                     userId: "@discordbot:synapse.textrp.io",
