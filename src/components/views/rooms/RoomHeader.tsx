@@ -637,9 +637,10 @@ const Xrp = (props) => {
                     setShow((pre) => !pre);
                 }}
                 title={_t("XRP Widget")}
+                //  Testnet. 
                 tooltip={
                     !Object.keys(props.txnInfo).length
-                        ? `Your wallet address active is on ${gotWalletInfoEnv?.main?.active? 'mainnet ,': ''} ${gotWalletInfoEnv?.test?.active? 'testnet ,': ''} ${gotWalletInfoEnv?.dev?.active? 'devnet ,': ''} and this is xrpl ${env}`
+                        ? `Your wallet address is currently active on the ${gotWalletInfoEnv?.main?.active? 'mainnet ,': ''} ${gotWalletInfoEnv?.test?.active? 'testnet ,': ''} ${gotWalletInfoEnv?.dev?.active? 'devnet ,': ''}. Please note that this is the XRPL Mainnet environment.`
                         : _t("XRP Widget")
                 }
                 alignment={Alignment.Bottom}
