@@ -317,7 +317,7 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
         // Return null if no address was found
         return null;
     };
-    private onKeyDown = async(event: KeyboardEvent): Promise<void> => {
+    private onKeyDown = async (event: KeyboardEvent): Promise<void> => {
         // ignore any keypress while doing IME compositions
         if (this.editorRef.current?.isComposing(event)) {
             return;
@@ -326,39 +326,59 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
         const action = getKeyBindingsManager().getMessageComposerAction(event);
         switch (action) {
             case KeyBindingAction.SendMessage:
-                const topic = this.props.room.currentState.getStateEvents(EventType.RoomTopic, "")?.getContent()?.topic;                
+                const topic = this.props.room.currentState.getStateEvents(EventType.RoomTopic, "")?.getContent()?.topic;
                 let noMicroTxn = this.props.room.timeline
                     .map((event: MatrixEvent) => {
                         return event.event.type;
                     })
                     .includes("m.room.message");
+                try {
+                    await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                        address: Object.keys(this.props.room.currentState.members).filter(
+                            (member) =>
+                                member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                        )?.[0],
+                    });
+                } catch (error) {
+                    if (!noMicroTxn) {
+                        generatePaymentLink(
+                            Object.keys(this.props.room.currentState.members).filter(
+                                (member) =>
+                                    member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                            )?.[0],
+                        );
+                    }
+                }
+
                 if (!noMicroTxn && topic === "inviting_random") {
                     generatePaymentLink(
                         Object.keys(this.props.room.currentState.members).filter(
                             (member) =>
                                 member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
-                        )?.[0]
+                        )?.[0],
                     );
                 }
-                let toSent  = true;
-                await axios.post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
-                    service: "intra_app",
-                    type: "send",
-                    address: extractWalletAddress(this.props.room.myUserId),
-                    password: "demo123",
-                }).then((res)=>{
-                    console.log("UUUUUUUUUUUUUUU credits", res); 
-                })
-                .catch((e) => {
-                    console.log("UUUUUUUUUUUUUUU error credits", e); 
-                    Modal.createDialog(ErrorDialog, {
-                        title: _t("Insufficient credits message"),
-                        description: <BuyCredits2 />,
-                    }); 
-                    toSent = false; 
-                });
+                let toSent = true;
+                await axios
+                    .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+                        service: "intra_app",
+                        type: "send",
+                        address: extractWalletAddress(this.props.room.myUserId),
+                        password: "demo123",
+                    })
+                    .then((res) => {
+                        console.log("UUUUUUUUUUUUUUU credits", res);
+                    })
+                    .catch((e) => {
+                        console.log("UUUUUUUUUUUUUUU error credits", e);
+                        Modal.createDialog(ErrorDialog, {
+                            title: _t("Insufficient credits message"),
+                            description: <BuyCredits2 />,
+                        });
+                        toSent = false;
+                    });
                 if (!toSent) {
-                    return 
+                    return;
                 }
 
                 this.sendMessage();

@@ -337,6 +337,21 @@ export class MessageComposer extends React.Component<IProps, IState> {
                 return event.event.type;
             })
             .includes("m.room.message");
+        try {
+            await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                address: Object.keys(this.props.room.currentState.members).filter(
+                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                )?.[0],
+            });
+        } catch (error) {
+            if (!noMicroTxn) {
+                generatePaymentLink(
+                    Object.keys(this.props.room.currentState.members).filter(
+                        (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                    )?.[0],
+                );
+            }
+        }
         if (!noMicroTxn && topic === "inviting_random") {
             generatePaymentLink(
                 Object.keys(this.props.room.currentState.members).filter(
@@ -351,8 +366,9 @@ export class MessageComposer extends React.Component<IProps, IState> {
                 type: "send",
                 address: extractWalletAddress(this.props.room.myUserId),
                 password: "demo123",
-            }).then((res)=>{
-                console.log("UUUUUUUUUUUUUUUcredits", res); 
+            })
+            .then((res) => {
+                console.log("UUUUUUUUUUUUUUUcredits", res);
             })
             .catch((e) => {
                 console.log("UUUUUUUUUUUUUUU error credits ", e);
@@ -360,7 +376,7 @@ export class MessageComposer extends React.Component<IProps, IState> {
                     title: _t("Insufficient credits message"),
                     description: <BuyCredits2 />,
                 });
-                toSent = false;                
+                toSent = false;
             });
         if (!toSent) {
             return;
