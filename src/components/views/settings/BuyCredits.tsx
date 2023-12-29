@@ -180,13 +180,9 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                         USD)
                     </b> */}
                     <b>
-                        $
-                        {(
-                            (this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price ||
-                                0) * parseFloat(this.state.usdPrice)
-                        ).toFixed(2)}{" "}
+                        ${this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price || 0}{" "}
                         USD ({" "}
-                        {this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price || 0}{" "}
+                        {(Number((this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price || 0)/ this.state.xrpPrice)).toFixed(2)}{" "}
                         XRP )
                     </b>
                 </div>
