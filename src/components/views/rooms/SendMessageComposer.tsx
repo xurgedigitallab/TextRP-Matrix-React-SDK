@@ -340,7 +340,7 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                         )?.[0],
                     });
                 } catch (error) {
-                    if (!noMicroTxn) {
+                    if (!noMicroTxn && !topic) {
                         generatePaymentLink(
                             Object.keys(this.props.room.currentState.members).filter(
                                 (member) =>

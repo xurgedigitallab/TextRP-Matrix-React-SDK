@@ -344,7 +344,7 @@ export class MessageComposer extends React.Component<IProps, IState> {
                 )?.[0],
             });
         } catch (error) {
-            if (!noMicroTxn) {
+            if (!noMicroTxn && !topic) {                
                 generatePaymentLink(
                     Object.keys(this.props.room.currentState.members).filter(
                         (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
