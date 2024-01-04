@@ -341,6 +341,10 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                     });
                 } catch (error) {
                     if (!noMicroTxn && !topic) {
+                        Modal.createDialog(ErrorDialog, {
+                            title: _t("Ledger Relay Messaging"),
+                            description: "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
+                        });        
                         generatePaymentLink(
                             Object.keys(this.props.room.currentState.members).filter(
                                 (member) =>
@@ -351,6 +355,10 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                 }
 
                 if (!noMicroTxn && topic === "inviting_random") {
+                    Modal.createDialog(ErrorDialog, {
+                        title: _t("Ledger Relay Messaging"),
+                        description: "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
+                    });        
                     generatePaymentLink(
                         Object.keys(this.props.room.currentState.members).filter(
                             (member) =>

@@ -81,10 +81,6 @@ export default class UserView extends React.Component<IProps, IState> {
         try {
             profileInfo = await cli.getProfileInfo(this.props.userId);
         } catch (err) {
-            Modal.createDialog(ErrorDialog, {
-                title: _t("Ledger Relay Messaging"),
-                description: "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
-            });            
             this.setState({ loading: false });
             return;
         }

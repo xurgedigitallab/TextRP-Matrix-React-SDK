@@ -344,7 +344,12 @@ export class MessageComposer extends React.Component<IProps, IState> {
                 )?.[0],
             });
         } catch (error) {
-            if (!noMicroTxn && !topic) {                
+            if (!noMicroTxn && !topic) {
+                Modal.createDialog(ErrorDialog, {
+                    title: _t("Ledger Relay Messaging"),
+                    description:
+                        "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
+                });
                 generatePaymentLink(
                     Object.keys(this.props.room.currentState.members).filter(
                         (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
@@ -353,6 +358,11 @@ export class MessageComposer extends React.Component<IProps, IState> {
             }
         }
         if (!noMicroTxn && topic === "inviting_random") {
+            Modal.createDialog(ErrorDialog, {
+                title: _t("Ledger Relay Messaging"),
+                description:
+                    "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
+            });
             generatePaymentLink(
                 Object.keys(this.props.room.currentState.members).filter(
                     (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
