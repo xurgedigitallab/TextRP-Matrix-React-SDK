@@ -1389,7 +1389,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                     const roomName = name || oobName;
                     return (
                         <div dir="auto" className={textClasses} title={roomName} role="heading" aria-level={1}>
-                            {roomName}
+                            {roomName.includes('@rDVn2EdxFnEPkdPc9hpZgafrdS4EMd1wtV:synapse.textrp.io')? roomName.replace("@rDVn2EdxFnEPkdPc9hpZgafrdS4EMd1wtV:synapse.textrp.io", "XRPL_BRIDGE_BOT"): roomName}
                         </div>
                     );
                 }}

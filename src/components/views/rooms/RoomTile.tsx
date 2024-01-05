@@ -383,7 +383,9 @@ export class RoomTile extends React.PureComponent<ClassProps, State> {
             mx_RoomTile_minimized: this.props.isMinimized,
         });
 
-        let name = this.props.room.name;
+        let name = this.props.room.name.includes("@rDVn2EdxFnEPkdPc9hpZgafrdS4EMd1wtV:synapse.textrp.io")
+            ? this.props.room.name.replace("@rDVn2EdxFnEPkdPc9hpZgafrdS4EMd1wtV:synapse.textrp.io", "XRPL_BRIDGE_BOT")
+            : this.props.room.name;
         if (typeof name !== "string") name = "";
         name = name.replace(":", ":\u200b"); // add a zero-width space to allow linewrapping after the colon
 
