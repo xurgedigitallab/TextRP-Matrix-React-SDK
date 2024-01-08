@@ -21,9 +21,8 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import SdkConfig from "../../SdkConfig";
 import { MatrixClientPeg } from "../../MatrixClientPeg";
-import Modal from "../../Modal";
 import { _t } from "../../languageHandler";
-import ErrorDialog from "../views/dialogs/ErrorDialog";
+import axios from "axios";
 import MainSplit from "./MainSplit";
 import RightPanel from "./RightPanel";
 import { Visibility } from "matrix-js-sdk";
@@ -50,19 +49,23 @@ export default class UserView extends React.Component<IProps, IState> {
         };
     }
 
-
     public componentDidMount(): void {
         if (this.props.userId) {
             this.loadProfileInfo();
         }
         const cli = MatrixClientPeg.get();
-        cli.createRoom({
-            visibility: Visibility.Private,
-            topic: "inviting_random",
-            invite: [SdkConfig.get("xrpl_bridge_bot"), this.props.userId],
-        }).then((e)=>console.log("YYYOYOYOYOYOYOOYOY7", e));
-        
-
+        const createRoomm = async () => {
+            await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                address: this.props.userId,
+            }).catch(()=>{
+                cli.createRoom({
+                    visibility: Visibility.Private,
+                    topic: "inviting_random",
+                    invite: [SdkConfig.get("xrpl_bridge_bot"), this.props.userId],
+                });
+            });
+        };
+        createRoomm();
     }
 
     public componentDidUpdate(prevProps: IProps): void {

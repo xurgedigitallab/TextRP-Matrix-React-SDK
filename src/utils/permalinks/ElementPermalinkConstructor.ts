@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import PermalinkConstructor, { PermalinkParts } from "./PermalinkConstructor";
-
+import { extractWalletAddress } from "../../paymentServices";
 /**
  * Generates permalinks that self-reference the running webapp
  */
@@ -40,7 +40,7 @@ export default class ElementPermalinkConstructor extends PermalinkConstructor {
     }
 
     public forUser(userId: string): string {
-        return `${this.elementUrl}/#/user/${userId}`;
+        return `${this.elementUrl}/#/user/${extractWalletAddress(userId)}`;
     }
 
     public forEntity(entityId: string): string {

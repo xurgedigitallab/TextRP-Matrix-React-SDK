@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import PermalinkConstructor, { PermalinkParts } from "./PermalinkConstructor";
-
+import { extractWalletAddress } from "../../paymentServices";
 export const host = "app.textrp.io";
 export const baseUrl = `https://${host}`;
 export const baseUrlPattern = `^(?:https?://)?${host.replace(".", "\\.")}/#/(.*)`;
@@ -37,7 +37,7 @@ export default class MatrixToPermalinkConstructor extends PermalinkConstructor {
     }
 
     public forUser(userId: string): string {        
-        return `${baseUrl}/#/user/${userId}`;
+        return `${baseUrl}/#/user/${extractWalletAddress(userId)}`;
     }
 
     public forEntity(entityId: string): string {

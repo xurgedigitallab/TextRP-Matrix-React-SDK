@@ -670,6 +670,7 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
                 break;
             case "view_user_info":
                 this.viewUser(payload.userId, payload.subAction);
+                
                 break;
             case "MatrixActions.RoomState.events": {
                 const event = (payload as IRoomStateEventsActionPayload).event;
@@ -1857,7 +1858,10 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
 
             dis.dispatch(payload);
         } else if (screen.indexOf("user/") === 0) {
-            const userId = screen.substring(5);
+            let userId = screen.substring(5);
+            if (!userId.includes("@")) {
+                userId = `@${userId}:synapse.textrp.io`;
+            }
             dis.dispatch({
                 action: "view_user_info",
                 userId: userId,
