@@ -1859,8 +1859,8 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
             dis.dispatch(payload);
         } else if (screen.indexOf("user/") === 0) {
             let userId = screen.substring(5);
-            if (!userId.includes("@")) {
-                userId = `@${userId}:synapse.textrp.io`;
+            if (!userId.includes(":synapse.textrp.io")) {
+                userId = `${userId}:synapse.textrp.io`;
             }
             dis.dispatch({
                 action: "view_user_info",

@@ -37,7 +37,7 @@ export default class MatrixToPermalinkConstructor extends PermalinkConstructor {
     }
 
     public forUser(userId: string): string {        
-        return `${baseUrl}/#/user/${extractWalletAddress(userId)}`;
+        return `${baseUrl}/#/user/@${extractWalletAddress(userId)}`;
     }
 
     public forEntity(entityId: string): string {

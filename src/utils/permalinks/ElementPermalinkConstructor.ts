@@ -40,7 +40,7 @@ export default class ElementPermalinkConstructor extends PermalinkConstructor {
     }
 
     public forUser(userId: string): string {
-        return `${this.elementUrl}/#/user/${extractWalletAddress(userId)}`;
+        return `${this.elementUrl}/#/user/@${extractWalletAddress(userId)}`;
     }
 
     public forEntity(entityId: string): string {
