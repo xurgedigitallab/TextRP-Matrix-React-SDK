@@ -1252,8 +1252,6 @@ export default class RoomHeader extends React.Component<IProps, IState> {
         if (this.props.room.myUserId) {
             startButtons.push(<CreditBalance userId={this.props.room.myUserId} />);
         }
-        console.log("HHHHHHHHHHHHHHH", this.state.txnInfo);
-
         startButtons.push(
             <Xrp
                 txnInfo={this.state.txnInfo}

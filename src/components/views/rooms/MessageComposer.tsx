@@ -370,18 +370,31 @@ export class MessageComposer extends React.Component<IProps, IState> {
             );
         }
         let toSent = true;
+        let service = "intra_app";
+        let type = "send";
+        const members = Object.keys(this.props.room.currentState.members);
+        if (members.length === 2) {
+            if (members.includes("@twitterbot:synapse.textrp.io")) {
+                service = "twitter";
+                type = "send";
+            }
+            if (members.includes("@discordbot:synapse.textrp.io")) {
+                service = "discord";
+                type = "send";
+            }   
+            if (members.includes('@_twiliopuppet_bot:synapse.textrp.io')) {
+                service = "twilio";
+                type = "send";
+            }   
+        }
         await axios
             .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
-                service: "intra_app",
-                type: "send",
+                service: service,
+                type: type,
                 address: extractWalletAddress(this.props.room.myUserId),
                 password: "demo123",
             })
-            .then((res) => {
-                console.log("UUUUUUUUUUUUUUUcredits", res);
-            })
-            .catch((e) => {
-                console.log("UUUUUUUUUUUUUUU error credits ", e);
+            .catch(() => {
                 Modal.createDialog(ErrorDialog, {
                     title: _t("Insufficient credits message"),
                     description: <BuyCredits2 />,
