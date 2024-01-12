@@ -637,7 +637,6 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
     private renderSuggestedRooms(): ReactComponentElement<typeof ExtraTile>[] {
         return this.state.suggestedRooms.map((room) => {
             let name = room.name || room.canonical_alias || room.aliases?.[0] || _t("Empty room");
-            name = name.includes('@rDVn2EdxFnEPkdPc9hpZgafrdS4EMd1wtV:synapse.textrp.io')? name.replace("@rDVn2EdxFnEPkdPc9hpZgafrdS4EMd1wtV:synapse.textrp.io", "XRPL_BRIDGE_BOT"): name
             const avatar = (
                 <RoomAvatar
                     oobData={{

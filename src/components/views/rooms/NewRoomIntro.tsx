@@ -246,7 +246,7 @@ const NewRoomIntro: React.FC = () => {
             <React.Fragment>
                 {avatar}
 
-                <h2>{room.name.includes('@rDVn2EdxFnEPkdPc9hpZgafrdS4EMd1wtV:synapse.textrp.io')? room.name.replace("@rDVn2EdxFnEPkdPc9hpZgafrdS4EMd1wtV:synapse.textrp.io", "XRPL_BRIDGE_BOT"): room.name}</h2>
+                <h2>{room.name}</h2>
 
                 <p>
                     {createdText}{" "}
@@ -254,7 +254,7 @@ const NewRoomIntro: React.FC = () => {
                         "This is the start of <roomName/>.",
                         {},
                         {
-                            roomName: () => <b>{room.name.includes('@rDVn2EdxFnEPkdPc9hpZgafrdS4EMd1wtV:synapse.textrp.io')? room.name.replace("@rDVn2EdxFnEPkdPc9hpZgafrdS4EMd1wtV:synapse.textrp.io", "XRPL_BRIDGE_BOT"): room.name}</b>,
+                            roomName: () => <b>{room.name}</b>,
                         },
                     )}
                 </p>
