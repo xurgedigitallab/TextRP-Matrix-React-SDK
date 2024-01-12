@@ -37,7 +37,7 @@ export const generatePaymentLink = async (userId: string) => {
                 message: xummStatus.data.kycApproved
                     ? "🔒 Secure Message Alert! 🌟 You have a verified message waiting for you on TextRP from a KYC-verified sender. Rest assured, your security is our top priority. View your message safely by logging in at app.textrp.io."
                     : `🔒 Secure Message Alert! 🚀 You have a new message on TextRP. While the sender hasn't been KYC-verified, we ensure your login and viewing experience remains safe. Access your message at app.textrp.io.`,
-                amount: "0.01",
+                amount: "0.000001",
             },
             {
                 headers: {

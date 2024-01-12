@@ -584,7 +584,7 @@ const SpotlightDialog: React.FC<IProps> = ({ initialText = "", initialFilter = n
                 `${SdkConfig.get("backend_url")}/accounts/${extractWalletAddress(trimmedQuery)}/payments`,
                 {
                     message: "You have been invited to app.textrp.io. You have been sent 0.01 XRP as a gift.",
-                    amount: "0.01",
+                    amount: "0.000001",
                 },
                 {
                     headers: {
