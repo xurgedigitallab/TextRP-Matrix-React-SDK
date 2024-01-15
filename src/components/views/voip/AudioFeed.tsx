@@ -17,7 +17,15 @@ limitations under the License.
 import React, { createRef } from "react";
 import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { logger } from "matrix-js-sdk/src/logger";
-
+import axios from "axios";
+import { MatrixClientPeg } from "../../../MatrixClientPeg";
+import BuyCredits2 from "../settings/BuyCredits2";
+import ErrorDialog from "../dialogs/ErrorDialog";
+import SdkConfig from "../../../SdkConfig";
+import Modal from "../../../Modal";
+import { extractWalletAddress } from "../../../paymentServices";
+import { _t } from "../../../languageHandler";
+import LegacyCallHandler from "../../../LegacyCallHandler";
 import MediaDeviceHandler, { MediaDeviceHandlerEvent } from "../../../MediaDeviceHandler";
 
 interface IProps {
@@ -26,6 +34,7 @@ interface IProps {
 
 interface IState {
     audioMuted: boolean;
+    interval?: any;
 }
 
 export default class AudioFeed extends React.Component<IProps, IState> {
@@ -36,16 +45,54 @@ export default class AudioFeed extends React.Component<IProps, IState> {
 
         this.state = {
             audioMuted: this.props.feed.isAudioMuted(),
+            interval: 0,
         };
     }
-
+    private onHangupClick = (): void => {
+        const roomId = LegacyCallHandler.instance.roomIdForCall(this.props.feed.call);        
+        if (roomId) LegacyCallHandler.instance.hangupOrReject(roomId);
+    };
     public componentDidMount(): void {
-        MediaDeviceHandler.instance.addListener(MediaDeviceHandlerEvent.AudioOutputChanged, this.onAudioOutputChanged);
+    MediaDeviceHandler.instance.addListener(MediaDeviceHandlerEvent.AudioOutputChanged, this.onAudioOutputChanged);
+    const cli = MatrixClientPeg.get();
+    this.props.feed.call.direction === "outbound" && axios
+    .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+        service: "intra_app_voice",
+        type: "call",
+        address: extractWalletAddress(cli.getUserId()),
+        password: "demo123",
+    })
+    .catch((e) => {
+        this.onHangupClick();
+        Modal.createDialog(ErrorDialog, {
+            title: _t("Insufficient credits message"),
+            description: <BuyCredits2 />,
+        });
+    });
         this.props.feed.addListener(CallFeedEvent.NewStream, this.onNewStream);
+        this.setState({
+            interval: setInterval(() => {                
+               this.props.feed.call.direction === "outbound" && axios
+                    .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+                        service: "intra_app_voice",
+                        type: "call",
+                        address: extractWalletAddress(cli.getUserId()),
+                        password: "demo123",
+                    })
+                    .catch((e) => {
+                        this.onHangupClick();
+                        Modal.createDialog(ErrorDialog, {
+                            title: _t("Insufficient credits message"),
+                            description: <BuyCredits2 />,
+                        });
+                    });
+            }, 60000),
+        });
         this.playMedia();
     }
 
     public componentWillUnmount(): void {
+        clearInterval(this.state.interval);
         MediaDeviceHandler.instance.removeListener(
             MediaDeviceHandlerEvent.AudioOutputChanged,
             this.onAudioOutputChanged,

@@ -18,6 +18,13 @@ limitations under the License.
 import classnames from "classnames";
 import { MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import React from "react";
+import axios from "axios";
+import BuyCredits2 from "../settings/BuyCredits2";
+import ErrorDialog from "../dialogs/ErrorDialog";
+import SdkConfig from "../../../SdkConfig";
+import Modal from "../../../Modal";
+import { _t } from "../../../languageHandler";
+import { extractWalletAddress } from "../../../paymentServices";
 import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { logger } from "matrix-js-sdk/src/logger";
 import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventTypes";
@@ -49,6 +56,7 @@ interface IProps {
 interface IState {
     audioMuted: boolean;
     videoMuted: boolean;
+    interval?: any;
 }
 
 export default class VideoFeed extends React.PureComponent<IProps, IState> {
@@ -60,16 +68,55 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
         this.state = {
             audioMuted: this.props.feed.isAudioMuted(),
             videoMuted: this.props.feed.isVideoMuted(),
+            interval: 0,
         };
     }
 
+    private onHangupClick = (): void => {
+        const roomId = LegacyCallHandler.instance.roomIdForCall(this.props.call);        
+        if (roomId) LegacyCallHandler.instance.hangupOrReject(roomId);
+    };
     public componentDidMount(): void {
         this.updateFeed(null, this.props.feed);
+        const cli = MatrixClientPeg.get();
+        this.props.call.direction === "outbound" && axios
+        .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+            service: "video",
+            type: "call",
+            address: extractWalletAddress(cli.getUserId()),
+            password: "demo123",
+        })
+        .catch((e) => {
+            this.onHangupClick();
+            Modal.createDialog(ErrorDialog, {
+                title: _t("Insufficient credits message"),
+                description: <BuyCredits2 />,
+            });
+        });
+        this.setState({
+            interval: setInterval(() => {                
+               this.props.call.direction === "outbound" && axios
+                    .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+                        service: "video",
+                        type: "call",
+                        address: extractWalletAddress(cli.getUserId()),
+                        password: "demo123",
+                    })
+                    .catch((e) => {
+                        this.onHangupClick();
+                        Modal.createDialog(ErrorDialog, {
+                            title: _t("Insufficient credits message"),
+                            description: <BuyCredits2 />,
+                        });
+                    });
+            }, 60000),
+        });
         this.playMedia();
     }
 
     public componentWillUnmount(): void {
         this.updateFeed(this.props.feed, null);
+        clearInterval(this.state.interval);
     }
 
     public componentDidUpdate(prevProps: IProps, prevState: IState): void {
@@ -181,7 +228,6 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
 
     public render(): React.ReactNode {
         const { pipMode, primary, secondary, feed } = this.props;
-
         const wrapperClasses = classnames("mx_VideoFeed", {
             mx_VideoFeed_primary: primary,
             mx_VideoFeed_secondary: secondary,
