@@ -51,6 +51,7 @@ interface IState {
 export const NFTCard = (props: {
     contract_address: string;
     image?: string;
+    url?: string;
     name: string;
     discord: boolean;
     twitter: boolean;
@@ -77,7 +78,7 @@ export const NFTCard = (props: {
             {props.image ? (
                 props.anchor ? (
                     <div>
-                      <a href={`${props.image}`} target="blank">
+                      <a href={`${props.url}`} target="blank">
                         <img
                         src={
                             props.image.includes("ipfs://")
