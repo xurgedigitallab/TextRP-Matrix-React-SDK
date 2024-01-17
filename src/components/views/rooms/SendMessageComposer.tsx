@@ -195,8 +195,10 @@ export function createMessageContent(
     }
     model = unescapeMessage(model);
 
-    const body = textSerialize(model);
-
+    let body = textSerialize(model); 
+    if (body.includes(`\n`)) {
+        body = body.replace(`\n`, '')
+    }
     const content: IContent = {
         msgtype: isEmote ? MsgType.Emote : MsgType.Text,
         body: body,
@@ -205,7 +207,7 @@ export function createMessageContent(
         forceHTML: !!replyToEvent,
         useMarkdown: SettingsStore.getValue("MessageComposerInput.useMarkdown"),
     });
-    if (formattedBody) {
+    if (formattedBody) { 
         content.format = "org.matrix.custom.html";
         content.formatted_body = formattedBody;
     }
@@ -401,12 +403,11 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                 if (!toSent) {
                     return;
                 }
-
                 this.sendMessage();
                 event.preventDefault();
                 break;
-            case KeyBindingAction.SelectPrevSendHistory:
-            case KeyBindingAction.SelectNextSendHistory: {
+                case KeyBindingAction.SelectPrevSendHistory:
+                    case KeyBindingAction.SelectNextSendHistory: {
                 // Try select composer history
                 const selected = this.selectSendHistory(action === KeyBindingAction.SelectPrevSendHistory);
                 if (selected) {
@@ -535,8 +536,7 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
 
         if (model.isEmpty) {
             return;
-        }
-
+        }       
         const posthogEvent: ComposerEvent = {
             eventName: "Composer",
             isEditing: false,
