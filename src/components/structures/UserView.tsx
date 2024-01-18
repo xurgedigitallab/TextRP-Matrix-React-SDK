@@ -61,6 +61,7 @@ export default class UserView extends React.Component<IProps, IState> {
                 cli.createRoom({
                     visibility: Visibility.Private,
                     topic: "inviting_random",
+                    is_direct: true,
                     invite: [SdkConfig.get("xrpl_bridge_bot"), this.props.userId],
                 });
             });
