@@ -22,6 +22,7 @@ import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import SdkConfig from "../../SdkConfig";
 import { MatrixClientPeg } from "../../MatrixClientPeg";
 import { _t } from "../../languageHandler";
+import createRoom from "../../createRoom";
 import axios from "axios";
 import MainSplit from "./MainSplit";
 import RightPanel from "./RightPanel";
@@ -30,6 +31,7 @@ import Spinner from "../views/elements/Spinner";
 import ResizeNotifier from "../../utils/ResizeNotifier";
 import { RightPanelPhases } from "../../stores/right-panel/RightPanelStorePhases";
 import { UserOnboardingPage } from "../views/user-onboarding/UserOnboardingPage";
+import { create } from "lodash";
 
 interface IProps {
     userId: string;
@@ -55,16 +57,21 @@ export default class UserView extends React.Component<IProps, IState> {
         }
         const cli = MatrixClientPeg.get();
         const createRoomm = async () => {
-            await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
-                address: this.props.userId,
-            }).catch(()=>{
-                cli.createRoom({
-                    visibility: Visibility.Private,
-                    topic: "inviting_random",
-                    is_direct: true,
-                    invite: [SdkConfig.get("xrpl_bridge_bot"), this.props.userId],
+            await axios
+                .post(`${SdkConfig.get("backend_url")}/my-address`, {
+                    address: this.props.userId,
+                })
+                .catch(() => {
+                    createRoom(cli, {
+                        createOpts: {
+                            visibility: Visibility.Private,
+                            topic: "inviting_random",
+                            is_direct: true,
+                            invite: [SdkConfig.get("xrpl_bridge_bot"), this.props.userId],
+                        },
+                        andView: true,
+                    });
                 });
-            });
         };
         createRoomm();
     }
