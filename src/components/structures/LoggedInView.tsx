@@ -667,6 +667,14 @@ class LoggedInView extends React.Component<IProps, IState> {
             return <AudioFeedArrayForLegacyCall call={call} key={call.callId} />;
         });
 
+        function closePanel() {
+            const panel = document.getElementById('mobile_Panel');
+            const closeBtn = document.getElementById('LeftPanel_closeBtn');
+            panel.style.width = '0px';
+            panel.style.maxWidth = '0px';
+            closeBtn.style.display = 'none';
+        }
+
         return (
             <MatrixClientContext.Provider value={this._matrixClient}>
                 <div
@@ -677,6 +685,28 @@ class LoggedInView extends React.Component<IProps, IState> {
                 >
                     <ToastContainer />
                     <div className={bodyClasses}>
+
+                        <div id="LeftPanel_closeBtn" className="LeftPanel_closeBtn" onClick={closePanel}>&times;</div>
+                        <div id="mobile_Panel" className="mx_LeftPanel_outerWrapper">
+                            <LeftPanelLiveShareWarning isMinimized={this.props.collapseLhs || false} />
+                            <nav className="mx_LeftPanel_wrapper">
+                                <BackdropPanel blurMultiplier={0.5} backgroundImage={this.state.backgroundImage} />
+                                <SpacePanel />
+                                <BackdropPanel backgroundImage={this.state.backgroundImage} />
+                                <div
+                                    className="mx_LeftPanel_wrapper--user"
+                                    ref={this._resizeContainer}
+                                    data-collapsed={this.props.collapseLhs ? true : undefined}
+                                >
+                                    <LeftPanel
+                                        pageType={this.props.page_type as PageTypes}
+                                        isMinimized={false}
+                                        resizeNotifier={this.props.resizeNotifier}
+                                    />
+                                </div>
+                            </nav>
+                        </div>
+
                         <div className="mx_LeftPanel_outerWrapper">
                             <LeftPanelLiveShareWarning isMinimized={this.props.collapseLhs || false} />
                             <nav className="mx_LeftPanel_wrapper">
