@@ -1491,12 +1491,22 @@ export default class RoomHeader extends React.Component<IProps, IState> {
         const betaPill = isVideoRoom ? (
             <BetaPill onClick={viewLabs} tooltipTitle={_t("Video rooms are a beta feature")} />
         ) : null;
+
+        function openPanel() {
+            const panel = document.getElementById('mobile_Panel');
+            const closeBtn = document.getElementById('LeftPanel_closeBtn');
+            panel.style.width = '80vw';
+            panel.style.maxWidth = '80vw';
+            closeBtn.style.display = 'block';
+        }
+
         return (
             <header className="mx_RoomHeader light-panel">
                 <div
                     className="mx_RoomHeader_wrapper"
                     aria-owns={this.state.rightPanelOpen ? "mx_RightPanel" : undefined}
                 >
+                    <div className="LeftPanel_openBtn" onClick={openPanel}>&#9776;</div>
                     <div className="mx_RoomHeader_avatar">{roomAvatar}</div>
                     {icon}
                     {name}

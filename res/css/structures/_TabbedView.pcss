@@ -153,3 +153,21 @@ limitations under the License.
     overflow: auto;
     min-height: 0; /* firefox */
 }
+
+
+//Responsive design
+@media (max-width: 1024px){
+    .mx_TabbedView_tabLabel_text{
+        display: none;
+    }
+    .mx_TabbedView_tabsOnLeft .mx_TabbedView_maskedIcon{
+        margin-right: 0px;
+    }
+    .mx_TabbedView_tabsOnLeft .mx_TabbedView_tabPanel {
+        margin-left: 45px !important;
+    }
+    .mx_TabbedView_tabsOnLeft .mx_TabbedView_tabLabels{
+        width: auto;
+        max-width: auto;
+    }
+}

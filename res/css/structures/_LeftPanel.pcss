@@ -248,3 +248,43 @@ limitations under the License.
         }
     }
 }
+
+//
+
+.LeftPanel_closeBtn{
+    display: none;
+}
+#mobile_Panel{
+    display: none;
+}
+
+
+//Responsive design
+@media (max-width: 1024px){
+    .mx_LeftPanel_outerWrapper{
+        display: none;
+    }
+
+    #mobile_Panel{
+        /* border: 2px solid red; */
+        display: flex !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        max-width: 80vw;
+        width: 80vw;
+        height: 100vh;
+        transition: all 0.3s ease;
+    }
+
+    .LeftPanel_closeBtn{
+        display: block;
+        position: absolute;
+        font-size: 35px;
+        top: 50px;
+        background-color: transparent !important;
+        right: 15px;
+        z-index: 10;
+    }
+}
