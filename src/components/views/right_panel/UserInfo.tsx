@@ -331,7 +331,7 @@ const MessageButton = ({ member }: { member: Member }): JSX.Element => {
 
     return (
         <AccessibleButton
-            kind="link"
+            kind="primary"
             onClick={async () => {
                 if (busy) return;
                 setBusy(true);
@@ -341,7 +341,7 @@ const MessageButton = ({ member }: { member: Member }): JSX.Element => {
             className="mx_UserInfo_field"
             disabled={busy}
         >
-            {_t("Message")}
+            {_t("Message User")}
         </AccessibleButton>
     );
 };
