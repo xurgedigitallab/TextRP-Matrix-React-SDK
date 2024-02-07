@@ -15,6 +15,7 @@
  */
 
 import { Room } from "matrix-js-sdk/src/models/room";
+import { extractWalletAddress } from "../../paymentServices";
 import {
     ClientWidgetApi,
     IModalWidgetOpenRequest,
@@ -224,9 +225,33 @@ export class StopGapWidget extends EventEmitter {
             deviceId: this.client.getDeviceId() ?? undefined,
         };
         const templated = this.mockWidget.getCompleteUrl(Object.assign(defaults, fromCustomisation), opts?.asPopout);
-
-        const parsed = new URL(templated);
-
+        const client = MatrixClientPeg.get();
+        const roomInfo = client.getRoom(this.roomId);
+        const userInfo = {
+            userId: roomInfo.myUserId,
+            walletAddress: extractWalletAddress(roomInfo.myUserId),
+            displayName: roomInfo.getMember(roomInfo.myUserId)?.name,
+        };
+        const roomMembers = roomInfo.getJoinedMembers();
+        const memebersInfo = [];
+        roomMembers.forEach((member) => {
+            if (member.userId !== userInfo.userId) {
+                memebersInfo.push({
+                    userId: member.userId,
+                    walletAddress: extractWalletAddress(member.userId),
+                    displayName: member.name,
+                });
+            }
+        });
+        console.log("userInfo", userInfo, memebersInfo);
+        
+        let parsed = new URL(templated);
+        if (parsed.search.includes("?url=https%3A%2F%2Ftextrpdemo.s3.eu-central-1.amazonaws.com%2Findex.html")) {
+            parsed.search=  parsed.search.replace(
+                "?url=https%3A%2F%2Ftextrpdemo.s3.eu-central-1.amazonaws.com%2Findex.html",
+                `?url=https%3A%2F%2Ftextrpdemo.s3.eu-central-1.amazonaws.com%2Findex.html?userInfo=${JSON.stringify(userInfo)}%26memebersInfo=${JSON.stringify(memebersInfo)}`,
+            );
+        }
         // Add in some legacy support sprinkles (for non-popout widgets)
         // TODO: Replace these with proper widget params
         // See https://github.com/matrix-org/matrix-doc/pull/1958/files#r405714833
