@@ -331,7 +331,6 @@ export class MessageComposer extends React.Component<IProps, IState> {
         return true;
     };
     private sendMessage = async (): Promise<void> => {
-        const topic = this.props.room.currentState.getStateEvents(EventType.RoomTopic, "")?.getContent()?.topic;
         let noMicroTxn = this.props.room.timeline
             .map((event: MatrixEvent) => {
                 return event.event.type;
@@ -344,7 +343,20 @@ export class MessageComposer extends React.Component<IProps, IState> {
                 )?.[0],
             });
         } catch (error) {
-            if (!noMicroTxn && !topic) {
+            console.log(
+                "HHHHHHHHHHHh2",
+                Object.keys(this.props.room.currentState.members).filter(
+                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                )?.[0],
+                noMicroTxn,
+            );
+
+            if (
+                !noMicroTxn &&
+                Object.keys(this.props.room.currentState.members).filter(
+                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                )?.[0]
+            ) {
                 Modal.createDialog(ErrorDialog, {
                     title: _t("Ledger Relay Messaging"),
                     description:
@@ -356,18 +368,6 @@ export class MessageComposer extends React.Component<IProps, IState> {
                     )?.[0],
                 );
             }
-        }
-        if (!noMicroTxn && topic === "inviting_random") {
-            Modal.createDialog(ErrorDialog, {
-                title: _t("Ledger Relay Messaging"),
-                description:
-                    "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
-            });
-            generatePaymentLink(
-                Object.keys(this.props.room.currentState.members).filter(
-                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
-                )?.[0],
-            );
         }
         let toSent = true;
         let service = "intra_app";
@@ -381,11 +381,11 @@ export class MessageComposer extends React.Component<IProps, IState> {
             if (members.includes("@discordbot:synapse.textrp.io")) {
                 service = "discord";
                 type = "send";
-            }   
-            if (members.includes('@_twiliopuppet_bot:synapse.textrp.io')) {
+            }
+            if (members.includes("@_twiliopuppet_bot:synapse.textrp.io")) {
                 service = "twilio";
                 type = "send";
-            }   
+            }
         }
         await axios
             .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {

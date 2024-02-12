@@ -195,9 +195,9 @@ export function createMessageContent(
     }
     model = unescapeMessage(model);
 
-    let body = textSerialize(model); 
+    let body = textSerialize(model);
     if (body.includes(`\n`)) {
-        body = body.replace(`\n`, '')
+        body = body.replace(`\n`, "");
     }
     const content: IContent = {
         msgtype: isEmote ? MsgType.Emote : MsgType.Text,
@@ -207,7 +207,7 @@ export function createMessageContent(
         forceHTML: !!replyToEvent,
         useMarkdown: SettingsStore.getValue("MessageComposerInput.useMarkdown"),
     });
-    if (formattedBody) { 
+    if (formattedBody) {
         content.format = "org.matrix.custom.html";
         content.formatted_body = formattedBody;
     }
@@ -328,7 +328,6 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
         const action = getKeyBindingsManager().getMessageComposerAction(event);
         switch (action) {
             case KeyBindingAction.SendMessage:
-                const topic = this.props.room.currentState.getStateEvents(EventType.RoomTopic, "")?.getContent()?.topic;
                 let noMicroTxn = this.props.room.timeline
                     .map((event: MatrixEvent) => {
                         return event.event.type;
@@ -342,11 +341,26 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                         )?.[0],
                     });
                 } catch (error) {
-                    if (!noMicroTxn && !topic) {
+                    console.log(
+                        "HHHHHHHHHHHh1",
+                        Object.keys(this.props.room.currentState.members).filter(
+                            (member) =>
+                                member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                        )?.[0],
+                        noMicroTxn,
+                    );
+                    if (
+                        !noMicroTxn &&
+                        Object.keys(this.props.room.currentState.members).filter(
+                            (member) =>
+                                member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                        )?.[0]
+                    ) {
                         Modal.createDialog(ErrorDialog, {
                             title: _t("Ledger Relay Messaging"),
-                            description: "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
-                        });        
+                            description:
+                                "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
+                        });
                         generatePaymentLink(
                             Object.keys(this.props.room.currentState.members).filter(
                                 (member) =>
@@ -355,22 +369,9 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                         );
                     }
                 }
-
-                if (!noMicroTxn && topic === "inviting_random") {
-                    Modal.createDialog(ErrorDialog, {
-                        title: _t("Ledger Relay Messaging"),
-                        description: "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
-                    });        
-                    generatePaymentLink(
-                        Object.keys(this.props.room.currentState.members).filter(
-                            (member) =>
-                                member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
-                        )?.[0],
-                    );
-                }
                 let toSent = true;
                 let service = "intra_app";
-                let type = "send"; 
+                let type = "send";
                 const members = Object.keys(this.props.room.currentState.members);
                 if (members.length === 2) {
                     if (members.includes("@twitterbot:synapse.textrp.io")) {
@@ -380,11 +381,11 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                     if (members.includes("@discordbot:synapse.textrp.io")) {
                         service = "discord";
                         type = "send";
-                    }   
-                    if (members.includes('@_twiliopuppet_bot:synapse.textrp.io')) {
+                    }
+                    if (members.includes("@_twiliopuppet_bot:synapse.textrp.io")) {
                         service = "twilio";
                         type = "send";
-                    }   
+                    }
                 }
                 await axios
                     .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
@@ -406,8 +407,8 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                 this.sendMessage();
                 event.preventDefault();
                 break;
-                case KeyBindingAction.SelectPrevSendHistory:
-                    case KeyBindingAction.SelectNextSendHistory: {
+            case KeyBindingAction.SelectPrevSendHistory:
+            case KeyBindingAction.SelectNextSendHistory: {
                 // Try select composer history
                 const selected = this.selectSendHistory(action === KeyBindingAction.SelectPrevSendHistory);
                 if (selected) {
@@ -536,7 +537,7 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
 
         if (model.isEmpty) {
             return;
-        }       
+        }
         const posthogEvent: ComposerEvent = {
             eventName: "Composer",
             isEditing: false,
