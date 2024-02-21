@@ -339,14 +339,14 @@ export class MessageComposer extends React.Component<IProps, IState> {
         try {
             await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
                 address: Object.keys(this.props.room.currentState.members).filter(
-                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId && !member.includes("@twitter_") && !member.includes("@discord_"),
                 )?.[0],
             });
         } catch (error) {
             console.log(
                 "HHHHHHHHHHHh2",
                 Object.keys(this.props.room.currentState.members).filter(
-                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId && !member.includes("@twitter_") && !member.includes("@discord_"),
                 )?.[0],
                 noMicroTxn,
             );
@@ -354,7 +354,7 @@ export class MessageComposer extends React.Component<IProps, IState> {
             if (
                 !noMicroTxn &&
                 Object.keys(this.props.room.currentState.members).filter(
-                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId && !member.includes("@twitter_") && !member.includes("@discord_"),
                 )?.[0]
             ) {
                 Modal.createDialog(ErrorDialog, {

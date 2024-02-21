@@ -335,25 +335,22 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                     .includes("m.room.message");
                 try {
                     await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
-                        address: Object.keys(this.props.room.currentState.members).filter(
-                            (member) =>
-                                member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                        address:  Object.keys(this.props.room.currentState.members).filter(
+                            (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId && !member.includes("@twitter_") && !member.includes("@discord_"),
                         )?.[0],
                     });
                 } catch (error) {
                     console.log(
                         "HHHHHHHHHHHh1",
                         Object.keys(this.props.room.currentState.members).filter(
-                            (member) =>
-                                member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                            (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId && !member.includes("@twitter_") && !member.includes("@discord_"),
                         )?.[0],
                         noMicroTxn,
                     );
                     if (
                         !noMicroTxn &&
                         Object.keys(this.props.room.currentState.members).filter(
-                            (member) =>
-                                member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                            (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId && !member.includes("@twitter_") && !member.includes("@discord_"),
                         )?.[0]
                     ) {
                         Modal.createDialog(ErrorDialog, {
