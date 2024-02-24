@@ -524,12 +524,12 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         // }        
         return (
             <AuthPage>
-                <AuthHeader disableLanguageSelector={this.props.isSyncing || this.state.busyLoggingIn} />
+                {/* <AuthHeader disableLanguageSelector={this.props.isSyncing || this.state.busyLoggingIn} /> */}
                 <AuthBody>
-                    <h1>
+                    {/* <h1>
                         {_t("Sign in")}
                         {loader}
-                    </h1>
+                    </h1> */}
                     {errorTextSection}
                     {serverDeadSection}
                     {/* <ServerPicker
@@ -537,6 +537,15 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                         onServerConfigChange={this.props.onServerConfigChange}
                     /> */}
                     {this.renderLoginComponentForFlows()}
+                    <div className="mx_SSOButtons" style={{marginTop:"15px"}}>
+                        <div className="mx_AccessibleButton mx_SSOButton">Continue with Solo Dex</div>
+                    </div>
+                    <div className="mx_SSOButtons" style={{marginTop:"15px"}}>
+                        <div className="mx_AccessibleButton mx_SSOButton">Continue with Crossmark</div>
+                    </div>
+                    <div className="mx_SSOButtons" style={{marginTop:"15px"}}>
+                        <div className="mx_AccessibleButton mx_SSOButton">Continue with Gem</div>
+                    </div>
                     {footer}
                     <Env/>
                 </AuthBody>

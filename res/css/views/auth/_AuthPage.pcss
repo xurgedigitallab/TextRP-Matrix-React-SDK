@@ -19,34 +19,41 @@ limitations under the License.
     min-height: 100%;
     display: flex;
     flex-direction: column;
-    background-color: $authpage-bg-color;
+    justify-content: center;
+    align-items: center;
+    /* background-color: $authpage-bg-color; */
+    background: white !important;
     height: 100vh;
     overflow: auto;
 }
 
 .mx_AuthPage_modal {
     display: flex;
-    margin: 100px auto auto;
-    border-radius: 4px;
+    /* margin: 100px auto auto; */
+    border-radius: 16px;
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.33);
     background-color: $authpage-modal-bg-color;
 
-    @media only screen and (max-height: 768px) {
+    /* @media only screen and (max-height: 768px) {
         margin-top: 50px;
     }
 
     @media only screen and (max-width: 480px) {
         margin-top: 0;
-    }
+    } */
 }
 
+.mx_AuthPage_modalBlur{
+    filter: blur(0px) !important;
+    background : white !important;
+}
 
 //Responsive design
-@media (max-width: 1024px){
+/* @media (max-width: 1024px){
     .mx_AuthPage{
         background: #C2ECFF !important;
     }
     .mx_AuthPage_modal{
         margin-top: auto !important;
     }
-}
+} */
