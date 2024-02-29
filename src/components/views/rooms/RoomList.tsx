@@ -16,13 +16,7 @@ limitations under the License.
 
 import { EventType, RoomType } from "matrix-js-sdk/src/@types/event";
 import { Room } from "matrix-js-sdk/src/models/room";
-import Modal from "../../../Modal";
 import React, { ComponentType, createRef, ReactComponentElement, SyntheticEvent } from "react";
-import axios from "axios";
-import ErrorDialog from "../dialogs/ErrorDialog";
-import SdkConfig from "../../../SdkConfig";
-import { extractWalletAddress } from "../../../paymentServices";
-import { startDm } from "../../../utils/dm/startDm";
 import { TWILLIO, TWITTER, DISCORD } from "../../../FeaturesConstant";
 import { isComponentEnabled } from "../../../service";
 import { IState as IRovingTabIndexState, RovingTabIndexProvider } from "../../../accessibility/RovingTabIndex";
@@ -481,52 +475,13 @@ export default class RoomList extends React.PureComponent<IProps, IState> {
 
     public componentDidMount(): void {
         this.dispatcherRef = defaultDispatcher.register(this.onAction);
-        const textingRoomCreation = async () => {
-            let cli = MatrixClientPeg.get();
-            let rooms = [];
-            let joinedRooms = await cli.getJoinedRooms();
-            let roomIds = joinedRooms.joined_rooms;
-            for (let index = 0; index < roomIds.length; index++) {
-                const roomId = roomIds[index];
-                let room = cli.getRoom(roomId);
-                rooms.push(room);
-            }
-            let twitter:any = [
-                {
-                    name: "Twitter bridge bot",
-                    userId: "@twitterbot:synapse.textrp.io",
-                    getMxcAvatarUrl: "mxc://maunium.net/HVHcnusJkQcpVcsVGZRELLCn",
-                },
-            ];
-            let twillio:any = [
-                {
-                    name: "Twilio Puppet Bridge",
-                    userId: "@_twiliopuppet_bot:synapse.textrp.io",
-                    getMxcAvatarUrl: "mxc://maunium.net/HVHcnusJkQcpVcsVGZRELLCn",
-                },
-            ];
-            let discord:any = [
-                {
-                    name: "Discord bridge bot",
-                    userId: "@discordbot:synapse.textrp.io",
-                    getMxcAvatarUrl: "mxc://maunium.net/nIdEykemnwdisvHbpxflpDlC",
-                },
-            ];
+        const textingRoomCreationEnabled = async () => {
             const Discord = await isComponentEnabled(DISCORD);
             const Twitter = await isComponentEnabled(TWITTER);
             const Twillio = await isComponentEnabled(TWILLIO);
             this.setState({ isDiscord: Discord, isTwillio: Twillio, isTwitter: Twitter });
-            if (!rooms.map((room) => room.name).includes("Twitter bridge bot")) {
-                await startDm(cli, twitter, false, { andView: false });
-            }
-            if (!rooms.map((room) => room.name).includes("Discord bridge bot")) {
-                await startDm(cli, discord, false, { andView: false });
-            }
-            if (!rooms.map((room) => room.name).includes("Twilio Puppet Bridge")) {
-                await startDm(cli, twillio, false, { andView: false });
-            }
-        };
-        textingRoomCreation();
+        };        
+        textingRoomCreationEnabled();
         SdkContextClass.instance.roomViewStore.on(UPDATE_EVENT, this.onRoomViewStoreUpdate);
         SpaceStore.instance.on(UPDATE_SUGGESTED_ROOMS, this.updateSuggestedRooms);
         RoomListStore.instance.on(LISTS_UPDATE_EVENT, this.updateLists);

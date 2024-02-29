@@ -19,11 +19,12 @@ import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import classNames from "classnames";
+import { startDm } from "../../utils/dm/startDm";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 import { IUsageLimit } from "matrix-js-sdk/src/@types/partials";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
 import { MatrixError } from "matrix-js-sdk/src/matrix";
-
+import { MatrixClientPeg } from "../../MatrixClientPeg";
 import { isOnlyCtrlOrCmdKeyEvent, Key } from "../../Keyboard";
 import PageTypes from "../../PageTypes";
 import MediaDeviceHandler from "../../MediaDeviceHandler";
@@ -162,7 +163,50 @@ class LoggedInView extends React.Component<IProps, IState> {
     public componentDidMount(): void {
         document.addEventListener("keydown", this.onNativeKeyDown, false);
         LegacyCallHandler.instance.addListener(LegacyCallHandlerEvent.CallState, this.onCallState);
-
+        console.log("TTTTTTTTYYYYYYYYy786");
+        const textingRoomCreation = async () => {
+            let cli = MatrixClientPeg.get();
+            let rooms = [];
+            let joinedRooms = await cli.getJoinedRooms();
+            console.log("TTTTTTTTTTTTTTTT2222", joinedRooms);
+            let roomIds = joinedRooms.joined_rooms;
+            for (let index = 0; index < roomIds.length; index++) {
+                const roomId = roomIds[index];
+                let room = cli.getRoom(roomId);
+                rooms.push(room);
+            }
+            let twitter:any = [
+                {
+                    name: "Twitter bridge bot",
+                    userId: "@twitterbot:synapse.textrp.io",
+                    getMxcAvatarUrl: "mxc://maunium.net/HVHcnusJkQcpVcsVGZRELLCn",
+                },
+            ];
+            let twillio:any = [
+                {
+                    name: "Twilio Puppet Bridge",
+                    userId: "@_twiliopuppet_bot:synapse.textrp.io",
+                    getMxcAvatarUrl: "mxc://maunium.net/HVHcnusJkQcpVcsVGZRELLCn",
+                },
+            ];
+            let discord:any = [
+                {
+                    name: "Discord bridge bot",
+                    userId: "@discordbot:synapse.textrp.io",
+                    getMxcAvatarUrl: "mxc://maunium.net/nIdEykemnwdisvHbpxflpDlC",
+                },
+            ];            
+            if (!rooms.map((room) => room.name).includes("Twitter bridge bot")) {                
+                 await startDm(cli, twitter, false, { andView: false });
+            }
+            if (!rooms.map((room) => room.name).includes("Discord bridge bot")) {
+                await startDm(cli, discord, false, { andView: false });
+            }
+            if (!rooms.map((room) => room.name).includes("Twilio Puppet Bridge")) {
+                await startDm(cli, twillio, false, { andView: false });
+            }
+        };        
+        textingRoomCreation();
         this.updateServerNoticeEvents();
 
         this._matrixClient.on(ClientEvent.AccountData, this.onAccountData);
