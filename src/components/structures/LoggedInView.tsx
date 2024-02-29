@@ -163,12 +163,10 @@ class LoggedInView extends React.Component<IProps, IState> {
     public componentDidMount(): void {
         document.addEventListener("keydown", this.onNativeKeyDown, false);
         LegacyCallHandler.instance.addListener(LegacyCallHandlerEvent.CallState, this.onCallState);
-        console.log("TTTTTTTTYYYYYYYYy786");
         const textingRoomCreation = async () => {
             let cli = MatrixClientPeg.get();
             let rooms = [];
             let joinedRooms = await cli.getJoinedRooms();
-            console.log("TTTTTTTTTTTTTTTT2222", joinedRooms);
             let roomIds = joinedRooms.joined_rooms;
             for (let index = 0; index < roomIds.length; index++) {
                 const roomId = roomIds[index];
