@@ -331,77 +331,77 @@ export class MessageComposer extends React.Component<IProps, IState> {
         return true;
     };
     private sendMessage = async (): Promise<void> => {
-        // let noMicroTxn = this.props.room.timeline
-        //     .map((event: MatrixEvent) => {
-        //         return event.event.type;
-        //     })
-        //     .includes("m.room.message");
-        // if (Object.keys(this.props.room.currentState.members).length <= 3) {
-        //     try {
-        //         await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
-        //             address: Object.keys(this.props.room.currentState.members).filter(
-        //                 (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
-        //             )?.[0],
-        //         });
-        //     } catch (error) {
-        //         if (
-        //             !noMicroTxn &&
-        //             Object.keys(this.props.room.currentState.members).filter(
-        //                 (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
-        //             )
-        //         ) {
-        //             Modal.createDialog(ErrorDialog, {
-        //                 title: _t("Ledger Relay Messaging"),
-        //                 description:
-        //                     "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
-        //             });
-        //             generatePaymentLink(
-        //                 Object.keys(this.props.room.currentState.members).filter(
-        //                     (member) =>
-        //                         member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
-        //                 )?.[0],
-        //             );
-        //         }
-        //     }
-        // }
-        // let toSent = true;
-        // let service = "intra_app";
-        // let type = "send";
-        // let t_count = 0;
-        // let d_count = 0;
-        // Object.keys(this.props.room.currentState.members).forEach((member) => {
-        //     if (member.includes("@twitter_")) {
-        //         t_count++;
-        //     }
-        // });
-        // Object.keys(this.props.room.currentState.members).forEach((member) => {
-        //     if (member.includes("@discord_")) {
-        //         d_count++;
-        //     }
-        // });
-        // if (!t_count && d_count === 1) {
-        //     service = "discord";
-        // }
-        // if (!d_count && t_count === 2) {
-        //     service = "twitter";
-        // }
-        // await axios
-        //     .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
-        //         service: service,
-        //         type: type,
-        //         address: extractWalletAddress(this.props.room.myUserId),
-        //         password: "demo123",
-        //     })
-        //     .catch(() => {
-        //         Modal.createDialog(ErrorDialog, {
-        //             title: _t("Insufficient credits message"),
-        //             description: <BuyCredits2 />,
-        //         });
-        //         toSent = false;
-        //     });
-        // if (!toSent) {
-        //     return;
-        // }
+        let noMicroTxn = this.props.room.timeline
+            .map((event: MatrixEvent) => {
+                return event.event.type;
+            })
+            .includes("m.room.message");
+        if (Object.keys(this.props.room.currentState.members).length <= 3) {
+            try {
+                await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                    address: Object.keys(this.props.room.currentState.members).filter(
+                        (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                    )?.[0],
+                });
+            } catch (error) {
+                if (
+                    !noMicroTxn &&
+                    Object.keys(this.props.room.currentState.members).filter(
+                        (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                    )
+                ) {
+                    Modal.createDialog(ErrorDialog, {
+                        title: _t("Ledger Relay Messaging"),
+                        description:
+                            "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
+                    });
+                    generatePaymentLink(
+                        Object.keys(this.props.room.currentState.members).filter(
+                            (member) =>
+                                member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                        )?.[0],
+                    );
+                }
+            }
+        }
+        let toSent = true;
+        let service = "intra_app";
+        let type = "send";
+        let t_count = 0;
+        let d_count = 0;
+        Object.keys(this.props.room.currentState.members).forEach((member) => {
+            if (member.includes("@twitter_")) {
+                t_count++;
+            }
+        });
+        Object.keys(this.props.room.currentState.members).forEach((member) => {
+            if (member.includes("@discord_")) {
+                d_count++;
+            }
+        });
+        if (!t_count && d_count === 1) {
+            service = "discord";
+        }
+        if (!d_count && t_count === 2) {
+            service = "twitter";
+        }
+        await axios
+            .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+                service: service,
+                type: type,
+                address: extractWalletAddress(this.props.room.myUserId),
+                password: "demo123",
+            })
+            .catch(() => {
+                Modal.createDialog(ErrorDialog, {
+                    title: _t("Insufficient credits message"),
+                    description: <BuyCredits2 />,
+                });
+                toSent = false;
+            });
+        if (!toSent) {
+            return;
+        }
         if (this.state.haveRecording && this.voiceRecordingButton.current) {
             // There shouldn't be any text message to send when a voice recording is active, so
             // just send out the voice recording.
