@@ -336,42 +336,55 @@ export class MessageComposer extends React.Component<IProps, IState> {
                 return event.event.type;
             })
             .includes("m.room.message");
-        try {
-            await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
-                address: Object.keys(this.props.room.currentState.members).filter(
-                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId && !member.includes("@twitter_") && !member.includes("@discord_"),
-                )?.[0],
-            });
-        } catch (error) {
-            console.log(
-                "HHHHHHHHHHHh2",
-                Object.keys(this.props.room.currentState.members).filter(
-                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId && !member.includes("@twitter_") && !member.includes("@discord_"),
-                )?.[0],
-                noMicroTxn,
-            );
-
-            if (
-                !noMicroTxn &&
-                Object.keys(this.props.room.currentState.members).filter(
-                    (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId && !member.includes("@twitter_") && !member.includes("@discord_"),
-                )?.[0]
-            ) {
-                Modal.createDialog(ErrorDialog, {
-                    title: _t("Ledger Relay Messaging"),
-                    description:
-                        "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
-                });
-                generatePaymentLink(
-                    Object.keys(this.props.room.currentState.members).filter(
+        if (Object.keys(this.props.room.currentState.members).length <= 3) {
+            try {
+                await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
+                    address: Object.keys(this.props.room.currentState.members).filter(
                         (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
                     )?.[0],
-                );
+                });
+            } catch (error) {
+                if (
+                    !noMicroTxn &&
+                    Object.keys(this.props.room.currentState.members).filter(
+                        (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                    )
+                ) {
+                    Modal.createDialog(ErrorDialog, {
+                        title: _t("Ledger Relay Messaging"),
+                        description:
+                            "You are about to message an XRP wallet address that isn't yet active on TextRP. LRM will notify the recipient via microtransaction on the XRPL. Your message remains secure.",
+                    });
+                    generatePaymentLink(
+                        Object.keys(this.props.room.currentState.members).filter(
+                            (member) =>
+                                member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
+                        )?.[0],
+                    );
+                }
             }
         }
         let toSent = true;
         let service = "intra_app";
         let type = "send";
+        let t_count = 0;
+        let d_count = 0;
+        Object.keys(this.props.room.currentState.members).forEach((member) => {
+            if (member.includes("@twitter_")) {
+                t_count++;
+            }
+        });
+        Object.keys(this.props.room.currentState.members).forEach((member) => {
+            if (member.includes("@discord_")) {
+                d_count++;
+            }
+        });
+        if (!t_count && d_count === 1) {
+            service = "discord";
+        }
+        if (!d_count && t_count === 2) {
+            service = "twitter";
+        }
         await axios
             .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
                 service: service,
@@ -395,7 +408,6 @@ export class MessageComposer extends React.Component<IProps, IState> {
             await this.voiceRecordingButton.current?.send();
             return;
         }
-
 
         this.messageComposerInput.current?.sendMessage();
 
