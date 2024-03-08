@@ -379,7 +379,7 @@ export class MessageComposer extends React.Component<IProps, IState> {
                 d_count++;
             }
         });
-        if (!t_count && d_count === 1) {
+        if (!t_count && d_count >= 1) {
             service = "discord";
         }
         if (!d_count && t_count === 2) {

@@ -379,12 +379,14 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
                         d_count++;
                     }
                 });
-                if (!t_count && d_count === 1) {
+                if (!t_count && d_count >= 1) {
                     service = "discord";
                 }
                 if (!d_count && t_count === 2) {
                     service = "twitter";
                 }
+                console.log("HHHHHHHHHHHHHH", t_count, d_count, service, type,Object.keys(this.props.room.currentState.members) );
+                
                 await axios
                     .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
                         service: service,
