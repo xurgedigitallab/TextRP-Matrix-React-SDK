@@ -336,6 +336,8 @@ export class MessageComposer extends React.Component<IProps, IState> {
                 return event.event.type;
             })
             .includes("m.room.message");
+        let service = "intra_app";
+
         if (Object.keys(this.props.room.currentState.members).length <= 3) {
             try {
                 await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
@@ -350,6 +352,7 @@ export class MessageComposer extends React.Component<IProps, IState> {
                         (member) => member !== SdkConfig.get("xrpl_bridge_bot") && member !== this.props.room.myUserId,
                     )
                 ) {
+                    service = 'XRPL';
                     Modal.createDialog(ErrorDialog, {
                         title: _t("Ledger Relay Messaging"),
                         description:
@@ -365,7 +368,6 @@ export class MessageComposer extends React.Component<IProps, IState> {
             }
         }
         let toSent = true;
-        let service = "intra_app";
         let type = "send";
         let t_count = 0;
         let d_count = 0;
