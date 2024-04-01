@@ -450,7 +450,7 @@ const Xrp = (props) => {
     const [destinationTag, setDestinationTag] = useState<number | string>("");
     const [sourceTag, setSourceTag] = useState<number | string>("");
     const [gotWalletInfo, setGotWalletInfo] = useState(false);
-    const [gotWalletInfoEnv, setGotWalletInfoEnv] = useState<string| any>("");
+    const [gotWalletInfoEnv, setGotWalletInfoEnv] = useState<string | any>("");
     const [memoId, setMemoId] = useState(0);
     const [value, setValue] = useState(0);
     const sliderRef = useRef(null); // Reference to the slider element
@@ -491,10 +491,10 @@ const Xrp = (props) => {
                     .then((res) => {
                         setGotWalletInfoEnv(res.data);
                     });
-            };            
+            };
             walletStatus();
         }
-    }, [props]);    
+    }, [props]);
     useEffect(() => {
         if (whichOne === 1) {
             setDestination(scannedData);
@@ -637,10 +637,14 @@ const Xrp = (props) => {
                     setShow((pre) => !pre);
                 }}
                 title={_t("XRP Widget")}
-                //  Testnet. 
+                //  Testnet.
                 tooltip={
                     !Object.keys(props.txnInfo).length
-                        ? `Your wallet address is currently active on the ${gotWalletInfoEnv?.main?.active? 'mainnet ,': ''} ${gotWalletInfoEnv?.test?.active? 'testnet ,': ''} ${gotWalletInfoEnv?.dev?.active? 'devnet ,': ''}. Please note that this is the XRPL Mainnet environment.`
+                        ? `Your wallet address is currently active on the ${
+                              gotWalletInfoEnv?.main?.active ? "mainnet ," : ""
+                          } ${gotWalletInfoEnv?.test?.active ? "testnet ," : ""} ${
+                              gotWalletInfoEnv?.dev?.active ? "devnet ," : ""
+                          }. Please note that this is the XRPL Mainnet environment.`
                         : _t("XRP Widget")
                 }
                 alignment={Alignment.Bottom}
@@ -980,9 +984,13 @@ const CreditBalance = ({ userId }) => {
         return () => clearInterval(intervalId);
     }, []);
     return (
-        <span style={{ marginInline: "5px" }}>
-            {userData?.user?.credit?.balance ? userData.user.credit.balance : null}
-        </span>
+        <div style={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center'}}>
+
+<span style={{ marginInline: "5px" , fontSize:'10px'}}>mCredits</span>
+            <span style={{ marginInline: "5px" }}>
+                {userData?.user?.credit?.balance ? userData.user.credit.balance : null}
+            </span>
+        </div>
     );
 };
 interface CallLayoutSelectorProps {
@@ -1491,11 +1499,11 @@ export default class RoomHeader extends React.Component<IProps, IState> {
         ) : null;
 
         function openPanel() {
-            const panel = document.getElementById('mobile_Panel');
-            const closeBtn = document.getElementById('LeftPanel_closeBtn');
-            panel.style.width = '80vw';
-            panel.style.maxWidth = '80vw';
-            closeBtn.style.display = 'block';
+            const panel = document.getElementById("mobile_Panel");
+            const closeBtn = document.getElementById("LeftPanel_closeBtn");
+            panel.style.width = "80vw";
+            panel.style.maxWidth = "80vw";
+            closeBtn.style.display = "block";
         }
 
         return (
@@ -1504,7 +1512,9 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                     className="mx_RoomHeader_wrapper"
                     aria-owns={this.state.rightPanelOpen ? "mx_RightPanel" : undefined}
                 >
-                    <div className="LeftPanel_openBtn" onClick={openPanel}>&#9776;</div>
+                    <div className="LeftPanel_openBtn" onClick={openPanel}>
+                        &#9776;
+                    </div>
                     <div className="mx_RoomHeader_avatar">{roomAvatar}</div>
                     {icon}
                     {name}
