@@ -20,6 +20,7 @@ import classNames from "classnames";
 import { set, throttle } from "lodash";
 import { Select } from "antd";
 const { Option } = Select;
+import BaseDialog from "../dialogs/BaseDialog";
 import { Icon as CaretIcon } from "../../../../res/img/feather-customised/dropdown-arrow.svg";
 import QRCode from "../elements/QRCode";
 import Autocompleter, { IProviderCompletions } from "../../../autocomplete/Autocompleter";
@@ -38,6 +39,7 @@ import { Action } from "../../../dispatcher/actions";
 import { UserTab } from "../dialogs/UserTab";
 import SettingsStore from "../../../settings/SettingsStore";
 import CustomSelect from "./CustomSelect";
+import Modal from "../../../Modal";
 import RoomHeaderButtons from "../right_panel/RoomHeaderButtons";
 import E2EIcon from "./E2EIcon";
 import DecoratedRoomAvatar from "../avatars/DecoratedRoomAvatar";
@@ -430,9 +432,7 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
         );
     }
 };
-
-const Xrp = (props) => {
-    const [show, setShow] = useState(false);
+function XrpP2P({ props, onFinished }: any): JSX.Element {
     const [amount, setAmount] = useState(0);
     const [currency, setCurrency] = useState("XRP");
     const [tokens, setTokens] = useState([]);
@@ -449,8 +449,7 @@ const Xrp = (props) => {
     const [env, setEnv] = useState("");
     const [destinationTag, setDestinationTag] = useState<number | string>("");
     const [sourceTag, setSourceTag] = useState<number | string>("");
-    const [gotWalletInfo, setGotWalletInfo] = useState(false);
-    const [gotWalletInfoEnv, setGotWalletInfoEnv] = useState<string | any>("");
+
     const [memoId, setMemoId] = useState(0);
     const [value, setValue] = useState(0);
     const sliderRef = useRef(null); // Reference to the slider element
@@ -482,19 +481,7 @@ const Xrp = (props) => {
         getEnv();
         // verify-address
     }, []);
-    useEffect(() => {
-        if (props?.userWallet && !gotWalletInfo) {
-            setGotWalletInfo(true);
-            const walletStatus = async () => {
-                await axios
-                    .get(`${SdkConfig.get().backend_url}/verify-address-allEnv/${props?.userWallet.address}`)
-                    .then((res) => {
-                        setGotWalletInfoEnv(res.data);
-                    });
-            };
-            walletStatus();
-        }
-    }, [props]);
+
     useEffect(() => {
         if (whichOne === 1) {
             setDestination(scannedData);
@@ -507,9 +494,6 @@ const Xrp = (props) => {
                 holdings.add(element.currency);
             });
             setTokens([...holdings]);
-        }
-        if (props.appShown && props.buttonShown) {
-            setShow(false);
         }
     }, [props]);
     const makeTxn = async () => {
@@ -524,7 +508,6 @@ const Xrp = (props) => {
                 DestinationTag: Number(destinationTag),
                 SourceTag: Number(sourceTag),
             });
-            setShow(false);
             window.open(res?.data?.data?.next?.always, "_blank");
         } catch (e) {
             console.error("ERROR handleBuyCredits", e);
@@ -618,6 +601,335 @@ const Xrp = (props) => {
         setMemos((pre) => [...pre.map((m) => (m.id === memo.id ? memo : m))]);
     };
     return (
+        < >
+            {" "}
+            {showQRScanner && <QRCodeScanner setScannedData={setScannedData} setShowQRScanner={setShowQRScanner} />}
+            <BaseDialog className="mx_xrp_model" onFinished={onFinished}>
+                <div className="grid grid-cols-2 gap-4 my-8 "style={{marginTop: '15px'}}>
+                    <Tabs>
+                        <TabList>
+                            <Tab>
+                                <img
+                                    src={require("../../../../res/img/element-icons/upload2.svg").default}
+                                    className="mx_xrp_receive"
+                                    alt="send"
+                                />
+                                <span className="shift_little">Send</span>
+                            </Tab>
+                            <Tab>
+                                <img
+                                    src={require("../../../../res/img/element-icons/download.svg").default}
+                                    className="mx_xrp_receive"
+                                    alt="receive"
+                                />
+                                <span className="shift_little">Receive</span>
+                            </Tab>
+                        </TabList>
+
+                        <TabPanel>
+                            <div className="mx_tab_div">
+                                <div>
+                                    <label htmlFor="recieverAddresses">Destination : </label>
+                                    <CustomSelect
+                                        options={destinations}
+                                        onChange={(value) => setDestination(value)}
+                                        destinationPre={destination}
+                                    />
+                                    <span
+                                        className="qrscan"
+                                        onClick={() => {
+                                            setShowQRScanner(!showQRScanner);
+                                            setWhichOne(1);
+                                        }}
+                                    ></span>
+                                </div>
+                                {!destination ? <span style={{ color: "red" }}>destination require</span> : null}
+                                <div>
+                                    <label htmlFor="recieverTag">Destination Tag : </label>
+                                    <input
+                                        className="mx_Field"
+                                        type="text"
+                                        style={{ width: "310px" }}
+                                        id="recieverTag"
+                                        value={destinationTag}
+                                        onChange={(e) => setDestinationTag(handleInputChangeMy(e))}
+                                        placeholder="(Optional) Enter the valid desatination tag 0 to 4,294,967,295"
+                                    />
+                                </div>
+                                {Number(destinationTag) > 4294967295 ? (
+                                    <span style={{ color: "red" }}>Invalid Input</span>
+                                ) : null}
+                                <div>
+                                    <label htmlFor="recieverAddresses">Amount : </label>
+                                    <select
+                                        className="select_input2"
+                                        name="recieverAddresses"
+                                        id="recieverAddresses"
+                                        onChange={(e) => setCurrency(e.target.value)}
+                                    >
+                                        {tokens.map((token, i) => (
+                                            <option key={i} value={token}>
+                                                {token}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="amount">
+                                        Available:{" "}
+                                        {
+                                            props?.txnInfo?.userHoldings.filter(
+                                                (holding) => holding.currency === currency,
+                                            )?.[0]?.value
+                                        }
+                                    </span>
+                                    <input
+                                        type="number"
+                                        id="xrpAmount"
+                                        className="select_input3"
+                                        value={amount}
+                                        onChange={(e) => setAmount(Number(e.target.value))}
+                                    />
+                                </div>
+                                {amount <= 0 ? (
+                                    <span style={{ color: "red" }}>Amount must not be Zero or less</span>
+                                ) : null}
+                                <div></div>
+                                <div>
+                                    <AccessibleTooltipButton
+                                        kind="icon"
+                                        className={classNames("mx_DeviceExpandDetailsButton", {
+                                            mx_DeviceExpandDetailsButton_expanded: expanded,
+                                        })}
+                                        onClick={() => setExpanded(!expanded)}
+                                    >
+                                        <CaretIcon className="mx_DeviceExpandDetailsButton_icon" />
+                                    </AccessibleTooltipButton>
+                                    <p
+                                        style={{ width: "90%", cursor: "pointer" }}
+                                        onClick={() => setExpanded(!expanded)}
+                                    >
+                                        {expanded ? "Show less" : "Show more"}
+                                    </p>
+                                </div>
+                                {expanded && (
+                                    <>
+                                        <div>
+                                            <label htmlFor="senderTag">Source Tag : </label>
+                                            <input
+                                                className="mx_Field"
+                                                type="text"
+                                                style={{ width: "310px" }}
+                                                id="senderTag"
+                                                value={sourceTag}
+                                                onChange={(e) => setSourceTag(handleInputChangeMy(e))}
+                                                placeholder="(Optional) Enter the valid source tag 0 to 4,294,967,295"
+                                            />
+                                        </div>
+                                        {Number(sourceTag) > 4294967295 ? (
+                                            <span style={{ color: "red" }}>Invalid Input</span>
+                                        ) : null}
+                                        <div>
+                                            <label htmlFor="Fee">Fee : </label>
+                                            <input
+                                                className="mx_Field"
+                                                type="range"
+                                                ref={sliderRef}
+                                                onChange={(e) => {
+                                                    setValue(Number(e.target.value));
+                                                    setFee(Number(e.target.value));
+                                                }}
+                                                style={{
+                                                    ...styles, // Adding the background for Mozilla using a template string for dynamic value
+                                                    background: getMozBackground(value),
+                                                    width: "250px",
+                                                    marginLeft: "5px",
+                                                    flexGrow: 4,
+                                                }}
+                                                id="Fee"
+                                                min={0}
+                                                max={100}
+                                                value={fee}
+                                                onMouseOver={() => setTooltip(true)}
+                                                onMouseLeave={() => setTooltip(false)}
+                                            />
+                                            {tooltip && (
+                                                <div
+                                                    ref={tooltipRef}
+                                                    className="tooltip"
+                                                    style={{ position: "absolute", left: "30px" }}
+                                                >
+                                                    {calculatedFee}
+                                                </div>
+                                            )}
+                                            <input
+                                                className="mx_Field"
+                                                type="text"
+                                                style={{ width: "70px" }}
+                                                id="feeAmount"
+                                                value={calculatedFee}
+                                                disabled
+                                            />
+                                        </div>
+                                        <div id="inputCorrect">
+                                            <label htmlFor="flags">Flags : </label>
+                                            <Select
+                                                mode="multiple"
+                                                className="inputCorrect"
+                                                style={{
+                                                    flexGrow: 1,
+                                                    height: "40px",
+                                                    marginLeft: "5px",
+                                                    marginRight: "10px",
+                                                }}
+                                                placeholder="Select Flags"
+                                                onChange={handleChange}
+                                            >
+                                                {options.map((option, i) => (
+                                                    <Option key={i} value={option}>
+                                                        {option}
+                                                    </Option>
+                                                ))}
+                                            </Select>
+                                        </div>
+                                        <div style={{ alignItems: "baseline" }}>
+                                            <label htmlFor="memos">Memos : </label>
+                                            <div className="memos">
+                                                {memos.map((memo) => (
+                                                    <>
+                                                        <div className="lastInput">
+                                                            <textarea
+                                                                style={{ width: "100%", height: "75px" }}
+                                                                className="textarea123"
+                                                                onChange={(e) => {
+                                                                    onTextChange(e, memo);
+                                                                }}
+                                                                value={memo.text}
+                                                                placeholder="(Optional) Enter you memo message"
+                                                            ></textarea>
+                                                        </div>
+                                                        <div className="lastInput">
+                                                            <label htmlFor="format" className="labelfomat">
+                                                                Format{" "}
+                                                            </label>
+                                                            <input
+                                                                className="inputoflast"
+                                                                style={{ width: "100%" }}
+                                                                onChange={(e) => {
+                                                                    onFormatChange(e, memo);
+                                                                }}
+                                                                value={memo.format}
+                                                                placeholder="(Optional) Enter format"
+                                                            ></input>
+                                                        </div>
+                                                        <div className="lastInput">
+                                                            <label htmlFor="type" className="labelfomat">
+                                                                Type{" "}
+                                                            </label>
+                                                            <input
+                                                                style={{ flexGrow: 1 }}
+                                                                id="type"
+                                                                onChange={(e) => {
+                                                                    onTypeChange(e, memo);
+                                                                }}
+                                                                className="inputoflast"
+                                                                value={memo.type}
+                                                                placeholder="(Optional) Enter type"
+                                                            ></input>
+                                                        </div>
+                                                        <div style={{ width: "100%" }}>
+                                                            <button
+                                                                style={{
+                                                                    color: "#ff8989",
+                                                                    border: "1px solid #ff8989",
+                                                                    float: "right",
+                                                                    padding: "5px",
+                                                                    borderRadius: "0px",
+                                                                }}
+                                                                onClick={() => {
+                                                                    setMemos((pre) =>
+                                                                        pre.filter((m) => m.id !== memo.id),
+                                                                    );
+                                                                }}
+                                                            >
+                                                                Remove
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                ))}
+                                                <div style={{ width: "100%", height: "40px", display: "flex" }}>
+                                                    <button
+                                                        style={{
+                                                            float: "left",
+                                                            padding: "5px",
+                                                            borderRadius: "0px",
+                                                            color: "grey",
+                                                            border: "2px solid #d1d1d1",
+                                                        }}
+                                                        onClick={onAddMemo}
+                                                    >
+                                                        + Add Memo
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                                <button style={{ marginTop: "10px" }} onClick={makeTxn}>
+                                    {`Send ${currency}`}
+                                </button>
+                            </div>
+                        </TabPanel>
+                        <TabPanel>
+                            <div className="mx_tab_div2">
+                                <QRCode
+                                    data={[{ data: Buffer.from(props.txnInfo.sender.address ?? ""), mode: "byte" }]}
+                                    className="mx_QRCode"
+                                />
+                                <div style={{ background: "#eeeeee", paddingInline: "9px", borderRadius: "5px" }}>
+                                    <span>{props.txnInfo.sender.address}</span>
+                                    <TooltipOption
+                                        id="mx_SpotlightDialog_button_inviteLink"
+                                        className="mx_SpotlightDialog_inviteLink"
+                                        onClick={() => {
+                                            setInviteLinkCopied(true);
+                                            copyPlaintext(props.txnInfo.sender.address);
+                                        }}
+                                        onHideTooltip={() => setInviteLinkCopied(false)}
+                                        title={inviteLinkCopied ? _t("Copied!") : _t("Copy")}
+                                    >
+                                        <img
+                                            src={require("../../../../res/img/element-icons/copy.svg").default}
+                                            className="mx_xrp_copy"
+                                            alt="send"
+                                        />
+                                    </TooltipOption>
+                                </div>
+                                <span style={{ marginTop: "5px" }}>Scan Or Copy wallet address</span>
+                            </div>
+                        </TabPanel>
+                    </Tabs>
+                </div>
+            </BaseDialog>
+        </>
+    );
+}
+const Xrp = (props) => {
+    const [gotWalletInfo, setGotWalletInfo] = useState(false);
+    const [gotWalletInfoEnv, setGotWalletInfoEnv] = useState<string | any>("");
+    useEffect(() => {
+        if (props?.userWallet && !gotWalletInfo) {
+            setGotWalletInfo(true);
+            const walletStatus = async () => {
+                await axios
+                    .get(`${SdkConfig.get().backend_url}/verify-address-allEnv/${props?.userWallet.address}`)
+                    .then((res) => {
+                        setGotWalletInfoEnv(res.data);
+                    });
+            };
+            walletStatus();
+        }
+    }, [props]);
+
+    return (
         <>
             {/* <div
                 className="mx_RoomHeader_button_xrp"
@@ -634,7 +946,7 @@ const Xrp = (props) => {
                     if (props.appShown && props.toggleFun) {
                         props.toggleFun();
                     }
-                    setShow((pre) => !pre);
+                    Modal.createDialog(XrpP2P, { props: props, onFinished: ()=> console.log("Closed the model") });
                 }}
                 title={_t("XRP Widget")}
                 //  Testnet.
@@ -650,319 +962,6 @@ const Xrp = (props) => {
                 alignment={Alignment.Bottom}
                 disabled={!Object.keys(props.txnInfo).length}
             />
-            {showQRScanner && <QRCodeScanner setScannedData={setScannedData} setShowQRScanner={setShowQRScanner} />}
-            {show && (
-                <div className="mx_Dialog mx_xrp_model">
-                    <AccessibleButton
-                        className="mx_SearchBar_cancel_my"
-                        onClick={() => setShow((pre) => !pre)}
-                        aria-label={_t("Cancel")}
-                    ></AccessibleButton>
-                    <div className="grid grid-cols-2 gap-4 my-8 ">
-                        <Tabs>
-                            <TabList>
-                                <Tab>
-                                    <img
-                                        src={require("../../../../res/img/element-icons/upload2.svg").default}
-                                        className="mx_xrp_receive"
-                                        alt="send"
-                                    />
-                                    <span className="shift_little">Send</span>
-                                </Tab>
-                                <Tab>
-                                    <img
-                                        src={require("../../../../res/img/element-icons/download.svg").default}
-                                        className="mx_xrp_receive"
-                                        alt="receive"
-                                    />
-                                    <span className="shift_little">Receive</span>
-                                </Tab>
-                            </TabList>
-
-                            <TabPanel>
-                                <div className="mx_tab_div">
-                                    <div>
-                                        <label htmlFor="recieverAddresses">Destination : </label>
-                                        <CustomSelect
-                                            options={destinations}
-                                            onChange={(value) => setDestination(value)}
-                                            destinationPre={destination}
-                                        />
-                                        <span
-                                            className="qrscan"
-                                            onClick={() => {
-                                                setShowQRScanner(!showQRScanner);
-                                                setWhichOne(1);
-                                            }}
-                                        ></span>
-                                    </div>
-                                    {!destination ? <span style={{ color: "red" }}>destination require</span> : null}
-                                    <div>
-                                        <label htmlFor="recieverTag">Destination Tag : </label>
-                                        <input
-                                            className="mx_Field"
-                                            type="text"
-                                            style={{ width: "310px" }}
-                                            id="recieverTag"
-                                            value={destinationTag}
-                                            onChange={(e) => setDestinationTag(handleInputChangeMy(e))}
-                                            placeholder="(Optional) Enter the valid desatination tag 0 to 4,294,967,295"
-                                        />
-                                    </div>
-                                    {Number(destinationTag) > 4294967295 ? (
-                                        <span style={{ color: "red" }}>Invalid Input</span>
-                                    ) : null}
-                                    <div>
-                                        <label htmlFor="recieverAddresses">Amount : </label>
-                                        <select
-                                            className="select_input2"
-                                            name="recieverAddresses"
-                                            id="recieverAddresses"
-                                            onChange={(e) => setCurrency(e.target.value)}
-                                        >
-                                            {tokens.map((token, i) => (
-                                                <option key={i} value={token}>
-                                                    {token}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <span className="amount">
-                                            Available:{" "}
-                                            {
-                                                props?.txnInfo?.userHoldings.filter(
-                                                    (holding) => holding.currency === currency,
-                                                )?.[0]?.value
-                                            }
-                                        </span>
-                                        <input
-                                            type="number"
-                                            id="xrpAmount"
-                                            className="select_input3"
-                                            value={amount}
-                                            onChange={(e) => setAmount(Number(e.target.value))}
-                                        />
-                                    </div>
-                                    {amount <= 0 ? (
-                                        <span style={{ color: "red" }}>Amount must not be Zero or less</span>
-                                    ) : null}
-                                    <div></div>
-                                    <div>
-                                        <AccessibleTooltipButton
-                                            kind="icon"
-                                            className={classNames("mx_DeviceExpandDetailsButton", {
-                                                mx_DeviceExpandDetailsButton_expanded: expanded,
-                                            })}
-                                            onClick={() => setExpanded(!expanded)}
-                                        >
-                                            <CaretIcon className="mx_DeviceExpandDetailsButton_icon" />
-                                        </AccessibleTooltipButton>
-                                        <p
-                                            style={{ width: "90%", cursor: "pointer" }}
-                                            onClick={() => setExpanded(!expanded)}
-                                        >
-                                            {expanded ? "Show less" : "Show more"}
-                                        </p>
-                                    </div>
-                                    {expanded && (
-                                        <>
-                                            <div>
-                                                <label htmlFor="senderTag">Source Tag : </label>
-                                                <input
-                                                    className="mx_Field"
-                                                    type="text"
-                                                    style={{ width: "310px" }}
-                                                    id="senderTag"
-                                                    value={sourceTag}
-                                                    onChange={(e) => setSourceTag(handleInputChangeMy(e))}
-                                                    placeholder="(Optional) Enter the valid source tag 0 to 4,294,967,295"
-                                                />
-                                            </div>
-                                            {Number(sourceTag) > 4294967295 ? (
-                                                <span style={{ color: "red" }}>Invalid Input</span>
-                                            ) : null}
-                                            <div>
-                                                <label htmlFor="Fee">Fee : </label>
-                                                <input
-                                                    className="mx_Field"
-                                                    type="range"
-                                                    ref={sliderRef}
-                                                    onChange={(e) => {
-                                                        setValue(Number(e.target.value));
-                                                        setFee(Number(e.target.value));
-                                                    }}
-                                                    style={{
-                                                        ...styles, // Adding the background for Mozilla using a template string for dynamic value
-                                                        background: getMozBackground(value),
-                                                        width: "250px",
-                                                        marginLeft: "5px",
-                                                        flexGrow: 4,
-                                                    }}
-                                                    id="Fee"
-                                                    min={0}
-                                                    max={100}
-                                                    value={fee}
-                                                    onMouseOver={() => setTooltip(true)}
-                                                    onMouseLeave={() => setTooltip(false)}
-                                                />
-                                                {tooltip && (
-                                                    <div
-                                                        ref={tooltipRef}
-                                                        className="tooltip"
-                                                        style={{ position: "absolute", left: "30px" }}
-                                                    >
-                                                        {calculatedFee}
-                                                    </div>
-                                                )}
-                                                <input
-                                                    className="mx_Field"
-                                                    type="text"
-                                                    style={{ width: "70px" }}
-                                                    id="feeAmount"
-                                                    value={calculatedFee}
-                                                    disabled
-                                                />
-                                            </div>
-                                            <div id="inputCorrect">
-                                                <label htmlFor="flags">Flags : </label>
-                                                <Select
-                                                    mode="multiple"
-                                                    className="inputCorrect"
-                                                    style={{
-                                                        flexGrow: 1,
-                                                        height: "40px",
-                                                        marginLeft: "5px",
-                                                        marginRight: "10px",
-                                                    }}
-                                                    placeholder="Select Flags"
-                                                    onChange={handleChange}
-                                                >
-                                                    {options.map((option, i) => (
-                                                        <Option key={i} value={option}>
-                                                            {option}
-                                                        </Option>
-                                                    ))}
-                                                </Select>
-                                            </div>
-                                            <div style={{ alignItems: "baseline" }}>
-                                                <label htmlFor="memos">Memos : </label>
-                                                <div className="memos">
-                                                    {memos.map((memo) => (
-                                                        <>
-                                                            <div className="lastInput">
-                                                                <textarea
-                                                                    style={{ width: "100%", height: "75px" }}
-                                                                    className="textarea123"
-                                                                    onChange={(e) => {
-                                                                        onTextChange(e, memo);
-                                                                    }}
-                                                                    value={memo.text}
-                                                                    placeholder="(Optional) Enter you memo message"
-                                                                ></textarea>
-                                                            </div>
-                                                            <div className="lastInput">
-                                                                <label htmlFor="format" className="labelfomat">
-                                                                    Format{" "}
-                                                                </label>
-                                                                <input
-                                                                    className="inputoflast"
-                                                                    style={{ width: "100%" }}
-                                                                    onChange={(e) => {
-                                                                        onFormatChange(e, memo);
-                                                                    }}
-                                                                    value={memo.format}
-                                                                    placeholder="(Optional) Enter format"
-                                                                ></input>
-                                                            </div>
-                                                            <div className="lastInput">
-                                                                <label htmlFor="type" className="labelfomat">
-                                                                    Type{" "}
-                                                                </label>
-                                                                <input
-                                                                    style={{ flexGrow: 1 }}
-                                                                    id="type"
-                                                                    onChange={(e) => {
-                                                                        onTypeChange(e, memo);
-                                                                    }}
-                                                                    className="inputoflast"
-                                                                    value={memo.type}
-                                                                    placeholder="(Optional) Enter type"
-                                                                ></input>
-                                                            </div>
-                                                            <div style={{ width: "100%" }}>
-                                                                <button
-                                                                    style={{
-                                                                        color: "#ff8989",
-                                                                        border: "1px solid #ff8989",
-                                                                        float: "right",
-                                                                        padding: "5px",
-                                                                        borderRadius: "0px",
-                                                                    }}
-                                                                    onClick={() => {
-                                                                        setMemos((pre) =>
-                                                                            pre.filter((m) => m.id !== memo.id),
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    Remove
-                                                                </button>
-                                                            </div>
-                                                        </>
-                                                    ))}
-                                                    <div style={{ width: "100%", height: "40px", display: "flex" }}>
-                                                        <button
-                                                            style={{
-                                                                float: "left",
-                                                                padding: "5px",
-                                                                borderRadius: "0px",
-                                                                color: "grey",
-                                                                border: "2px solid #d1d1d1",
-                                                            }}
-                                                            onClick={onAddMemo}
-                                                        >
-                                                            + Add Memo
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
-                                    <button style={{ marginTop: "10px" }} onClick={makeTxn}>
-                                        {`Send ${currency}`}
-                                    </button>
-                                </div>
-                            </TabPanel>
-                            <TabPanel>
-                                <div className="mx_tab_div2">
-                                    <QRCode
-                                        data={[{ data: Buffer.from(props.txnInfo.sender.address ?? ""), mode: "byte" }]}
-                                        className="mx_QRCode"
-                                    />
-                                    <div style={{ background: "#eeeeee", paddingInline: "9px", borderRadius: "5px" }}>
-                                        <span>{props.txnInfo.sender.address}</span>
-                                        <TooltipOption
-                                            id="mx_SpotlightDialog_button_inviteLink"
-                                            className="mx_SpotlightDialog_inviteLink"
-                                            onClick={() => {
-                                                setInviteLinkCopied(true);
-                                                copyPlaintext(props.txnInfo.sender.address);
-                                            }}
-                                            onHideTooltip={() => setInviteLinkCopied(false)}
-                                            title={inviteLinkCopied ? _t("Copied!") : _t("Copy")}
-                                        >
-                                            <img
-                                                src={require("../../../../res/img/element-icons/copy.svg").default}
-                                                className="mx_xrp_copy"
-                                                alt="send"
-                                            />
-                                        </TooltipOption>
-                                    </div>
-                                    <span style={{ marginTop: "5px" }}>Scan Or Copy wallet address</span>
-                                </div>
-                            </TabPanel>
-                        </Tabs>
-                    </div>
-                </div>
-            )}
         </>
     );
 };
@@ -984,9 +983,8 @@ const CreditBalance = ({ userId }) => {
         return () => clearInterval(intervalId);
     }, []);
     return (
-        <div style={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center'}}>
-
-<span style={{ marginInline: "5px" , fontSize:'10px'}}>mCredits</span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ marginInline: "5px", fontSize: "10px" }}>mCredits</span>
             <span style={{ marginInline: "5px" }}>
                 {userData?.user?.credit?.balance ? userData.user.credit.balance : null}
             </span>
