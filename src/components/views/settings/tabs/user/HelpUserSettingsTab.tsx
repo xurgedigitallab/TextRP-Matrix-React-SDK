@@ -16,7 +16,8 @@ limitations under the License.
 
 import React, { ReactNode } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
-
+import { isComponentEnabled } from "../../../../../service";
+import { DEVELOPER_MODE } from "../../../../../FeaturesConstant";
 import AccessibleButton from "../../../elements/AccessibleButton";
 import { _t, getCurrentLanguage } from "../../../../../languageHandler";
 import { MatrixClientPeg } from "../../../../../MatrixClientPeg";
@@ -379,7 +380,7 @@ export default class HelpUserSettingsTab extends React.Component<IProps, IState>
                             </SettingsSubsectionText>
                         )}
                         <SettingsSubsectionText>
-                            <details>
+                            <details style={isComponentEnabled(DEVELOPER_MODE)? {}: {pointerEvents: 'none', opacity: 0.4}}>
                                 <summary>{_t("Access Token")}</summary>
                                 <b>
                                     {_t(

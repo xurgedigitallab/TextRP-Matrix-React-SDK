@@ -226,13 +226,13 @@ export default class ProfileSettings extends React.Component<{}, IState> {
                                 <span className="mx_ProfileSettings_profile_controls_userId">{userIdentifier}</span>
                             )}
                         </p>
-                        <p>
+                        {/* <p>
                             {this.state?.user?.address && (
                                 <span className="mx_ProfileSettings_profile_controls_userId">
                                     {this.state.user.address}
                                 </span>
                             )}
-                        </p>
+                        </p> */}
                     </div>
                     <AvatarSetting
                         avatarUrl={avatarUrl}

@@ -106,7 +106,7 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
         }
     }
 
-    private async handleBuyCredits(): Promise<void> {        
+    private async handleBuyCredits(): Promise<void> {
         try {
             this.setState({ isLoading: true });
             const details = UserIdentifierCustomisations.getDisplayUserIdentifier(
@@ -135,7 +135,7 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
         // noinspection JSIgnoredPromiseFromCall
         this.fetchDetails();
         this.setState({ selectedCredit: 0});
-        
+
     }
 
     public componentWillUnmount(): void {}
@@ -169,7 +169,7 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                     </select>
                 </div>
                 <div>
-                    <p style={{ margin: 0 }}>You will be charged</p>
+                    <p style={{ margin: 0 }}>Price:</p>
                     {/* <b>
                         {this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price || 0}{" "}
                         XRP (
