@@ -584,6 +584,11 @@ export default class TextualBody extends React.Component<IBodyProps, IState> {
         const stripReply = !mxEvent.replacingEvent() && !!getParentEventId(mxEvent);
         isEmote = content.msgtype === MsgType.Emote;
         isNotice = content.msgtype === MsgType.Notice;
+        if (content && content.formatted_body) {
+            if (content.formatted_body.includes("matrix.to")) {
+                content.formatted_body = content.formatted_body.replace("matrix.to", "app.textrp.io");
+            }
+        }
         let body = HtmlUtils.bodyToHtml(content, this.props.highlights, {
             disableBigEmoji: isEmote || !SettingsStore.getValue<boolean>("TextualBody.enableBigEmoji"),
             // Part of Replies fallback support
