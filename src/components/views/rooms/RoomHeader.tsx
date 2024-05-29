@@ -17,7 +17,7 @@ limitations under the License.
 
 import React, { FC, useState, useMemo, useCallback, useEffect, useRef, useContext } from "react";
 import classNames from "classnames";
-import { set, throttle } from "lodash";
+import { throttle } from "lodash";
 import { Select } from "antd";
 const { Option } = Select;
 import BaseDialog from "../dialogs/BaseDialog";
@@ -433,14 +433,14 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
     }
 };
 function XrpP2P({ props, onFinished }: any): JSX.Element {
-    const [amount, setAmount] = useState(0);
+    const [amount, setAmount] = useState(null);
     const [currency, setCurrency] = useState("XRP");
     const [tokens, setTokens] = useState([]);
     const [expanded, setExpanded] = useState(false);
     const [fee, setFee] = useState(0);
     const [flags, setFlags] = useState([]);
     const [calculatedFee, setCalculatedFee] = useState(0);
-    const [destination, setDestination] = useState<string>("");
+    const [destination, setDestination] = useState<string>(null);
     const [tooltip, setTooltip] = useState(false);
     const [showQRScanner, setShowQRScanner] = useState(false);
     const [whichOne, setWhichOne] = useState(0);
@@ -601,28 +601,28 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
         setMemos((pre) => [...pre.map((m) => (m.id === memo.id ? memo : m))]);
     };
     return (
-        < >
+        <>
             {" "}
             {showQRScanner && <QRCodeScanner setScannedData={setScannedData} setShowQRScanner={setShowQRScanner} />}
             <BaseDialog className="mx_xrp_model" onFinished={onFinished}>
-                <div className="grid grid-cols-2 gap-4 my-8 "style={{marginTop: '15px'}}>
+                <div className="grid grid-cols-2 gap-4 my-8 " style={{ marginTop: "15px" }}>
                     <Tabs>
                         <TabList>
                             <Tab>
+                                <span className="shift_little">Send</span>
                                 <img
                                     src={require("../../../../res/img/element-icons/upload2.svg").default}
                                     className="mx_xrp_receive"
                                     alt="send"
                                 />
-                                <span className="shift_little">Send</span>
                             </Tab>
                             <Tab>
+                                <span className="shift_little">Receive</span>
                                 <img
                                     src={require("../../../../res/img/element-icons/download.svg").default}
                                     className="mx_xrp_receive"
                                     alt="receive"
                                 />
-                                <span className="shift_little">Receive</span>
                             </Tab>
                         </TabList>
 
@@ -630,6 +630,8 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                             <div className="mx_tab_div">
                                 <div>
                                     <label htmlFor="recieverAddresses">Destination : </label>
+                                </div>
+                                <div>
                                     <CustomSelect
                                         options={destinations}
                                         onChange={(value) => setDestination(value)}
@@ -643,17 +645,21 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                         }}
                                     ></span>
                                 </div>
-                                {!destination ? <span style={{ color: "red" }}>destination require</span> : null}
+                                {destination !== null && !destination ? (
+                                    <span style={{ color: "red", marginTop: "15px" }}>destination require</span>
+                                ) : null}
                                 <div>
                                     <label htmlFor="recieverTag">Destination Tag : </label>
+                                </div>
+                                <div>
                                     <input
-                                        className="mx_Field"
+                                        className="mx_Field mx_Field_custom_select"
                                         type="text"
                                         style={{ width: "310px" }}
                                         id="recieverTag"
                                         value={destinationTag}
                                         onChange={(e) => setDestinationTag(handleInputChangeMy(e))}
-                                        placeholder="(Optional) Enter the valid desatination tag 0 to 4,294,967,295"
+                                        placeholder="(Optional)"
                                     />
                                 </div>
                                 {Number(destinationTag) > 4294967295 ? (
@@ -661,8 +667,10 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                 ) : null}
                                 <div>
                                     <label htmlFor="recieverAddresses">Amount : </label>
+                                </div>
+                                <div>
                                     <select
-                                        className="select_input2"
+                                        className="select_input2 "
                                         name="recieverAddresses"
                                         id="recieverAddresses"
                                         onChange={(e) => setCurrency(e.target.value)}
@@ -673,125 +681,67 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                             </option>
                                         ))}
                                     </select>
-                                    <span className="amount">
-                                        Available:{" "}
-                                        {
-                                            props?.txnInfo?.userHoldings.filter(
-                                                (holding) => holding.currency === currency,
-                                            )?.[0]?.value
-                                        }
+                                    <span className="amount" style={{ margin: "10px" }}>
+                                        <span style={{ position: "relative", zIndex: 2 }}>
+                                            Wallet balance:{" "}
+                                            <span className="amount_value">
+                                                {
+                                                    props?.txnInfo?.userHoldings.filter(
+                                                        (holding) => holding.currency === currency,
+                                                    )?.[0]?.value
+                                                }
+                                            </span>
+                                        </span>
                                     </span>
                                     <input
                                         type="number"
                                         id="xrpAmount"
-                                        className="select_input3"
+                                        className="select_input3 mx_Field_custom_select"
                                         value={amount}
                                         onChange={(e) => setAmount(Number(e.target.value))}
                                     />
                                 </div>
-                                {amount <= 0 ? (
-                                    <span style={{ color: "red" }}>Amount must not be Zero or less</span>
+
+                                {amount !== null && amount <= 0 ? (
+                                    <span style={{ color: "red", padding: "10px 0", marginTop: "15px" }}>
+                                        Amount must not be Zero or less
+                                    </span>
                                 ) : null}
                                 <div></div>
-                                <div>
-                                    <AccessibleTooltipButton
-                                        kind="icon"
-                                        className={classNames("mx_DeviceExpandDetailsButton", {
-                                            mx_DeviceExpandDetailsButton_expanded: expanded,
-                                        })}
-                                        onClick={() => setExpanded(!expanded)}
-                                    >
-                                        <CaretIcon className="mx_DeviceExpandDetailsButton_icon" />
-                                    </AccessibleTooltipButton>
-                                    <p
-                                        style={{ width: "90%", cursor: "pointer" }}
-                                        onClick={() => setExpanded(!expanded)}
-                                    >
-                                        {expanded ? "Show less" : "Show more"}
-                                    </p>
-                                </div>
-                                {expanded && (
+                                {/* <div>
+                                        <AccessibleTooltipButton
+                                            kind="icon"
+                                            className={classNames("mx_DeviceExpandDetailsButton", {
+                                                mx_DeviceExpandDetailsButton_expanded: expanded,
+                                            })}
+                                            onClick={() => setExpanded(!expanded)}
+                                        >
+                                            <CaretIcon className="mx_DeviceExpandDetailsButton_icon" />
+                                        </AccessibleTooltipButton>
+                                        <p
+                                            style={{ width: "90%", cursor: "pointer" }}
+                                            onClick={() => setExpanded(!expanded)}
+                                        >
+                                            {expanded ? "Show less" : "Show more"}
+                                        </p>
+                                    </div> */}
+                                {/* <div style={{ width: "100%", height: "40px", display: "flex" }}>
+                                        <button
+                                            style={{
+                                                float: "left",
+                                                padding: "5px",
+                                                borderRadius: "0px",
+                                                color: "grey",
+                                                border: "2px solid #d1d1d1",
+                                            }}
+                                            onClick={onAddMemo}
+                                        >
+                                            + Add Memo
+                                        </button>
+                                    </div> */}
+                                {
                                     <>
-                                        <div>
-                                            <label htmlFor="senderTag">Source Tag : </label>
-                                            <input
-                                                className="mx_Field"
-                                                type="text"
-                                                style={{ width: "310px" }}
-                                                id="senderTag"
-                                                value={sourceTag}
-                                                onChange={(e) => setSourceTag(handleInputChangeMy(e))}
-                                                placeholder="(Optional) Enter the valid source tag 0 to 4,294,967,295"
-                                            />
-                                        </div>
-                                        {Number(sourceTag) > 4294967295 ? (
-                                            <span style={{ color: "red" }}>Invalid Input</span>
-                                        ) : null}
-                                        <div>
-                                            <label htmlFor="Fee">Fee : </label>
-                                            <input
-                                                className="mx_Field"
-                                                type="range"
-                                                ref={sliderRef}
-                                                onChange={(e) => {
-                                                    setValue(Number(e.target.value));
-                                                    setFee(Number(e.target.value));
-                                                }}
-                                                style={{
-                                                    ...styles, // Adding the background for Mozilla using a template string for dynamic value
-                                                    background: getMozBackground(value),
-                                                    width: "250px",
-                                                    marginLeft: "5px",
-                                                    flexGrow: 4,
-                                                }}
-                                                id="Fee"
-                                                min={0}
-                                                max={100}
-                                                value={fee}
-                                                onMouseOver={() => setTooltip(true)}
-                                                onMouseLeave={() => setTooltip(false)}
-                                            />
-                                            {tooltip && (
-                                                <div
-                                                    ref={tooltipRef}
-                                                    className="tooltip"
-                                                    style={{ position: "absolute", left: "30px" }}
-                                                >
-                                                    {calculatedFee}
-                                                </div>
-                                            )}
-                                            <input
-                                                className="mx_Field"
-                                                type="text"
-                                                style={{ width: "70px" }}
-                                                id="feeAmount"
-                                                value={calculatedFee}
-                                                disabled
-                                            />
-                                        </div>
-                                        <div id="inputCorrect">
-                                            <label htmlFor="flags">Flags : </label>
-                                            <Select
-                                                mode="multiple"
-                                                className="inputCorrect"
-                                                style={{
-                                                    flexGrow: 1,
-                                                    height: "40px",
-                                                    marginLeft: "5px",
-                                                    marginRight: "10px",
-                                                }}
-                                                placeholder="Select Flags"
-                                                onChange={handleChange}
-                                            >
-                                                {options.map((option, i) => (
-                                                    <Option key={i} value={option}>
-                                                        {option}
-                                                    </Option>
-                                                ))}
-                                            </Select>
-                                        </div>
                                         <div style={{ alignItems: "baseline" }}>
-                                            <label htmlFor="memos">Memos : </label>
                                             <div className="memos">
                                                 {memos.map((memo) => (
                                                     <>
@@ -805,35 +755,6 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                                                 value={memo.text}
                                                                 placeholder="(Optional) Enter you memo message"
                                                             ></textarea>
-                                                        </div>
-                                                        <div className="lastInput">
-                                                            <label htmlFor="format" className="labelfomat">
-                                                                Format{" "}
-                                                            </label>
-                                                            <input
-                                                                className="inputoflast"
-                                                                style={{ width: "100%" }}
-                                                                onChange={(e) => {
-                                                                    onFormatChange(e, memo);
-                                                                }}
-                                                                value={memo.format}
-                                                                placeholder="(Optional) Enter format"
-                                                            ></input>
-                                                        </div>
-                                                        <div className="lastInput">
-                                                            <label htmlFor="type" className="labelfomat">
-                                                                Type{" "}
-                                                            </label>
-                                                            <input
-                                                                style={{ flexGrow: 1 }}
-                                                                id="type"
-                                                                onChange={(e) => {
-                                                                    onTypeChange(e, memo);
-                                                                }}
-                                                                className="inputoflast"
-                                                                value={memo.type}
-                                                                placeholder="(Optional) Enter type"
-                                                            ></input>
                                                         </div>
                                                         <div style={{ width: "100%" }}>
                                                             <button
@@ -855,14 +776,16 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                                         </div>
                                                     </>
                                                 ))}
-                                                <div style={{ width: "100%", height: "40px", display: "flex" }}>
+                                                <div style={{ width: "154px", height: "44px", display: "flex" }}>
                                                     <button
                                                         style={{
                                                             float: "left",
-                                                            padding: "5px",
-                                                            borderRadius: "0px",
-                                                            color: "grey",
-                                                            border: "2px solid #d1d1d1",
+                                                            color: "#411188",
+                                                            border: "none",
+                                                            background: "#F0E8FC",
+                                                            left: "50px",
+                                                            position: "fixed",
+                                                            marginTop: "10px",
                                                         }}
                                                         onClick={onAddMemo}
                                                     >
@@ -872,19 +795,29 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                             </div>
                                         </div>
                                     </>
-                                )}
-                                <button style={{ marginTop: "10px" }} onClick={makeTxn}>
+                                }
+                                <button
+                                    style={{
+                                        marginTop: "12px",
+                                        color: "white",
+                                        backgroundColor: "#8949E9",
+                                        paddingLeft: "20px",
+                                        border: "none",
+                                    }}
+                                    onClick={makeTxn}
+                                >
                                     {`Send ${currency}`}
                                 </button>
                             </div>
                         </TabPanel>
                         <TabPanel>
                             <div className="mx_tab_div2">
+                                <span style={{ margin: "10px" }}>Scan Or Copy wallet address</span>
                                 <QRCode
                                     data={[{ data: Buffer.from(props.txnInfo.sender.address ?? ""), mode: "byte" }]}
                                     className="mx_QRCode"
                                 />
-                                <div style={{ background: "#eeeeee", paddingInline: "9px", borderRadius: "5px" }}>
+                                <div style={{ margin: "10px", paddingInline: "9px", borderRadius: "5px" }}>
                                     <span>{props.txnInfo.sender.address}</span>
                                     <TooltipOption
                                         id="mx_SpotlightDialog_button_inviteLink"
@@ -903,7 +836,6 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                         />
                                     </TooltipOption>
                                 </div>
-                                <span style={{ marginTop: "5px" }}>Scan Or Copy wallet address</span>
                             </div>
                         </TabPanel>
                     </Tabs>
@@ -946,7 +878,7 @@ const Xrp = (props) => {
                     if (props.appShown && props.toggleFun) {
                         props.toggleFun();
                     }
-                    Modal.createDialog(XrpP2P, { props: props, onFinished: ()=> console.log("Closed the model") });
+                    Modal.createDialog(XrpP2P, { props: props, onFinished: () => console.log("Closed the model") });
                 }}
                 title={_t("XRP Widget")}
                 //  Testnet.

@@ -18,9 +18,7 @@ function CustomSelect({ options, onChange, destinationPre }) {
 
     return (
         <div ref={ref} className="custom-select" id="recieverAddresses" onClick={() => setIsOpen(!isOpen)}>
-            <div className="selected-option">
-                {destinationPre || "Select an address"}
-            </div>
+            <div className="selected-option">{destinationPre || "Select an address"}</div>
             {isOpen && (
                 <div className="options">
                     {options.map((option) => (
