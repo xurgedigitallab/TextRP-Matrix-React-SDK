@@ -15,7 +15,6 @@ function CustomSelect({ options, onChange, destinationPre }) {
             setIsOpen(false);
         }
     });
-
     return (
         <div ref={ref} className="custom-select" id="recieverAddresses" onClick={() => setIsOpen(!isOpen)}>
             <div className="selected-option">{destinationPre || "Select an address"}</div>

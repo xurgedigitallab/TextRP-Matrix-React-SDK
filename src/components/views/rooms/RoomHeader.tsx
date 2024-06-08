@@ -168,10 +168,7 @@ export const QRCodeScanner = ({ setShowQRScanner, setScannedData }) => {
 
     return (
         <>
-            <div
-                style={{ width: "500px", position: "fixed", top: "15%", right: "30%", zIndex: 100 }}
-                className="qrCodePrompt mx_dialog"
-            >
+            <div style={{ maxHeight: "455px"}} className="qrCodePrompt">
                 <AccessibleButton
                     className="mx_SearchBar_cancel_my"
                     onClick={() => setShowQRScanner((pre) => !pre)}
@@ -585,7 +582,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     };
     const options = ["No Direct Ripple", "Partial Payment", "Limit Quality"];
     const onAddMemo = () => {
-        setMemos((pre) => [...pre, { id: memoId, text: "", format: "", type: "" }]);
+        setMemos((pre) => [...pre, { id: memoId, text: "Sent via TextRp in-chat Payment", format: "", type: "" }]);
         setMemoId((pre) => pre + 1);
     };
     const onTextChange = (event, memo) => {
@@ -753,7 +750,6 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                                                     onTextChange(e, memo);
                                                                 }}
                                                                 value={memo.text}
-                                                                placeholder="(Optional) Enter you memo message"
                                                             ></textarea>
                                                         </div>
                                                         <div style={{ width: "100%" }}>

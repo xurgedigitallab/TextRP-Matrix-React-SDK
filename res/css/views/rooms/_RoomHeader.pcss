@@ -103,11 +103,19 @@ limitations under the License.
         border-top: none;
         z-index: 1;
         color: $custom_select_color;
+        max-height: 200px;
+        overflow-y: auto;
         background-color: $custom_select_background;
         .option-my {
             height: 30px;
             padding: 5px;
             color: $custom_select_color;
+        }
+        @media (max-width: 480px) {
+            .option-my {
+                font-size: 1rem;
+                overflow: hidden;
+            }
         }
         .option-my:hover {
             background-color: $mx_xrp_model_color;
@@ -340,6 +348,18 @@ limitations under the License.
     background-color: $background;
     border: 2px solid rgb(236, 234, 234);
     border-radius: 8px;
+    max-width: 500px;
+    width: 40%;
+    left: 35%;
+    z-index: 100;
+    position: fixed;
+    top: 28%;
+}
+@media (max-width: 1300px) {
+    .qrCodePrompt {
+        min-width: 40%;
+        left: 30%;
+    }
 }
 .memos {
     display: flex;
@@ -354,7 +374,7 @@ limitations under the License.
 .textarea123 {
     border: 1px solid $custom_select_border;
     background-color: $custom_select_background;
-    color: #61708b;
+    color: $selected_option_color;
     border-radius: 4px;
     padding: 5px;
 }
@@ -410,6 +430,7 @@ limitations under the License.
 .mx_Field_custom_select {
     background-color: $custom_select_background !important;
     color: $custom_select_color !important;
+    width: 60%;
     border: 1px solid $custom_select_border !important;
 }
 .mx_RoomHeader_button_xrp {
@@ -786,33 +807,33 @@ input[type="range"]::-ms-fill-upper {
 }
 
 //
-.LeftPanel_openBtn{
-   display: none;
-   font-size: 19px;
-   margin-left: 7px;
+.LeftPanel_openBtn {
+    display: none;
+    font-size: 19px;
+    margin-left: 7px;
 }
 
 //Responsive Design
 
-@media (max-width: 1024px){
-    .LeftPanel_openBtn{
+@media (max-width: 1024px) {
+    .LeftPanel_openBtn {
         display: block;
-     }
+    }
 }
 
 //
-.LeftPanel_openBtn{
-   display: none;
-   font-size: 19px;
-   margin-left: 7px;
+.LeftPanel_openBtn {
+    display: none;
+    font-size: 19px;
+    margin-left: 7px;
 }
 
 //Responsive Design
 
-@media (max-width: 1024px){
-    .LeftPanel_openBtn{
+@media (max-width: 1024px) {
+    .LeftPanel_openBtn {
         display: block;
-     }
+    }
 }
 @media (max-width: 850px) {
     .mx_xrp_model {
@@ -824,7 +845,7 @@ input[type="range"]::-ms-fill-upper {
 
 @media (max-width: 480px) {
     .mx_xrp_model {
-        min-width: 90%;
+        max-width: 90%;
         min-height: 200px;
         padding: 5px;
     }
