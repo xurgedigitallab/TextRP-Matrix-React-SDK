@@ -1,0 +1,94 @@
+{
+  "name": "proposal-temporal",
+  "version": "0.9.0",
+  "description": "Experimental polyfill for the TC39 Temporal proposal",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "browser": "dist/index.umd.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "coverage": "c8 report --reporter html",
+    "test": "node --no-warnings --experimental-modules --icu-data-dir node_modules/full-icu --loader ./test/resolve.source.mjs ./test/all.mjs",
+    "test-cookbook": "TEST=all npm run test-cookbook-one && TEST=stockExchangeTimeZone npm run test-cookbook-one",
+    "test-cookbook-one": "node --no-warnings --experimental-modules --icu-data-dir node_modules/full-icu --loader ./test/resolve.cookbook.mjs ../docs/cookbook/$TEST.mjs",
+    "test262": "./ci_test.sh",
+    "codecov:tests": "NODE_V8_COVERAGE=coverage/tmp npm run test && c8 report --reporter=text-lcov > coverage/tests.lcov && codecov -F tests -f coverage/tests.lcov",
+    "codecov:test262": "COVERAGE=yes npm run test262 && codecov -F test262 -f coverage/test262.lcov",
+    "build": "rollup -c rollup.config.js",
+    "build262": "TEST262=1 rollup -c rollup.config.js",
+    "prepublishOnly": "npm run build",
+    "playground": "node --experimental-modules --no-warnings --icu-data-dir node_modules/full-icu -r ./lib/init.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tc39/proposal-temporal.git",
+    "directory": "polyfill"
+  },
+  "keywords": [
+    "Calendar",
+    "Date",
+    "DateTime",
+    "Duration",
+    "Instant",
+    "MonthDay",
+    "Polyfill",
+    "TC39",
+    "Temporal",
+    "Time",
+    "Timestamp",
+    "TimeZone",
+    "YearMonth"
+  ],
+  "author": "Philipp Dunkel <pip@pipobscure.com>",
+  "contributors": [
+    "Daniel Ehrenberg",
+    "Jason Williams",
+    "Justin Grant",
+    "Maggie Johnson-Pint",
+    "Matt Johnson-Pint",
+    "Ms2ger",
+    "Philip Chimento",
+    "Philipp Dunkel",
+    "Sasha Pierson",
+    "Shane F. Carr",
+    "Ujjwal Sharma"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tc39/proposal-temporal/issues"
+  },
+  "homepage": "https://tc39.es/proposal-temporal/docs/index.html",
+  "files": [
+    "index.d.ts",
+    "dist",
+    "lib"
+  ],
+  "dependencies": {
+    "big-integer": "^1.6.48",
+    "es-abstract": "^1.18.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.11.6",
+    "@babel/preset-env": "^7.11.5",
+    "@pipobscure/demitasse": "^1.0.10",
+    "@pipobscure/demitasse-pretty": "^1.0.10",
+    "@pipobscure/demitasse-run": "^1.0.10",
+    "@rollup/plugin-babel": "^5.2.1",
+    "@rollup/plugin-commonjs": "^19.0.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "@rollup/plugin-replace": "^2.3.3",
+    "c8": "^7.3.1",
+    "codecov": "^3.7.2",
+    "core-js": "^3.6.4",
+    "full-icu": "^1.3.0",
+    "nyc": "^15.1.0",
+    "rollup": "^2.28.2",
+    "rollup-plugin-terser": "^7.0.2",
+    "test262-harness": "^9.0.0",
+    "timezones.json": "^1.5.2",
+    "uuid": "^8.3.0"
+  },
+  "engines": {
+    "node": ">=12"
+  }
+}

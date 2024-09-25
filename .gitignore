@@ -1,10 +1,5 @@
 /.npmrc
 /*.log
-package-lock.json
-
-/coverage
-/node_modules
-/lib
 
 # version file and tarball created by `npm pack` / `yarn pack`
 /git-revision.txt
