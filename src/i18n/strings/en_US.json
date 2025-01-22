@@ -61,7 +61,7 @@
     "Failed to load timeline position": "Failed to load timeline position",
     "Failed to mute user": "Failed to mute user",
     "Failed to reject invite": "Failed to reject invite",
-    "Textrp Enviroment":"Textrp Enviroment",
+    "Textrp Enviroment": "Textrp Enviroment",
     "Failed to reject invitation": "Failed to reject invitation",
     "Failed to send request.": "Failed to send request.",
     "Failed to set display name": "Failed to set display name",
@@ -449,5 +449,5 @@
     "%(seconds)ss left": "%(seconds)ss left",
     "%(minutes)sm %(seconds)ss left": "%(minutes)sm %(seconds)ss left",
     "%(hours)sh %(minutes)sm %(seconds)ss left": "%(hours)sh %(minutes)sm %(seconds)ss left",
-    "Buy Credits": "Buy Credits"
+    "Buy Credits": "Get mCredits"
 }

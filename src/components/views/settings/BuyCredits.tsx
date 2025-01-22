@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useState } from "react";
 import axios from "axios";
 
 import Spinner from "../elements/Spinner";
@@ -22,7 +22,7 @@ import { MatrixClientPeg } from "../../../MatrixClientPeg";
 import { _t } from "../../../languageHandler";
 import UserIdentifierCustomisations from "../../../customisations/UserIdentifier";
 import AccessibleButton from "../elements/AccessibleButton";
-import { getXRPLPrice } from "../../../modules/XRPLtoUSD";
+import { getTokenPrice, getXRPLPrice } from "../../../modules/XRPLtoUSD";
 import SdkConfig from "../../../SdkConfig";
 
 // TODO: this "view" component still has far too much application logic in it,
@@ -48,10 +48,17 @@ interface IState {
     creditPackages?: {
         data: any[];
     };
+    tokenData?: {
+        data: any[];
+    };
     selectedCredit?: number;
+    selectedToken?: string;
     xrpPrice?: number;
     isLoading: boolean;
     usdPrice?: string;
+    usdTokenPrice: string;
+    issuer?: string;
+    selectedBonus?: number;
     user?: {
         user: {
             address?: string;
@@ -74,8 +81,12 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
             creditPackages: {
                 data: [],
             },
+            tokenData: { data: [] },
             isLoading: false,
             usdPrice: "",
+            usdTokenPrice: "",
+            issuer: "",
+            selectedBonus: 0,
         };
     }
 
@@ -93,19 +104,60 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                 address: details,
             });
             const { data: creditPackages } = await axios.get(`${SdkConfig.get("backend_url")}/credits`);
+
+            const { data: tokenData } = await axios.get(`${SdkConfig.get("backend_url")}/payment_tokens`);
+            console.log("token data is", tokenData);
             // const { data: xrpPrice } = await axios.get(`https://api.binance.com/api/v3/avgPrice?symbol=XRPUSDT`);
 
             const price: any = await getXRPLPrice();
-
+            console.log("asdasdasd toke price", this.state.selectedToken);
+            // const token_xrp_price: any = await getTokenPrice(this.state.selectedToken);
+            console.log("price of 1 USD in xrp", price);
             this.setState({ usdPrice: price });
 
-            this.setState({ creditPackages, xrpPrice: Number(price), user: address, phase: Phase.Ready });
+            this.setState({ creditPackages, tokenData, xrpPrice: Number(price), user: address, phase: Phase.Ready });
         } catch (e) {
             this.setState({ phase: Phase.Error });
             console.error(e);
         }
     }
 
+    private async fetchTokenPrice(token: any, issuer: any): Promise<number> {
+        // Step a: Query the XRPL to get the XRP price of the issued token
+        const tokenXrpPrice = await getTokenPrice(token, issuer);
+
+        // Step b: Fetch the USD price of XRP from Binance's API
+        // const price: any = await getXRPLPrice();
+
+        // const xrpUsdPrice = Number(price);
+
+        // Step c: Calculate the USD price of the issued token
+        return tokenXrpPrice * Number(this.state.usdPrice);
+    }
+
+    private async handleTokenChange(event: React.ChangeEvent<HTMLSelectElement>): Promise<void> {
+        const [selectedCurrency, selectedIssuer] = event.target.value.split(":");
+        const selectedTokenData = this.state.tokenData?.data.find((p) => p.currency === selectedCurrency);
+        console.log("selectedTokenData", selectedTokenData);
+        this.setState({ selectedBonus: selectedTokenData?.bonus || 0 });
+        this.setState({ selectedToken: selectedCurrency });
+
+        if (selectedCurrency && selectedCurrency !== "XRP") {
+            try {
+                const tokenUsdPrice = await this.fetchTokenPrice(selectedCurrency, selectedIssuer);
+                this.setState({ usdTokenPrice: tokenUsdPrice.toString() });
+                this.setState({ issuer: selectedIssuer });
+            } catch (error) {
+                console.error("Error fetching token price", error);
+            }
+        } else if (selectedCurrency === "XRP") {
+            this.setState({ usdTokenPrice: this.state.xrpPrice.toString() });
+            this.setState({ selectedToken: "XRP" });
+        } else {
+            this.setState({ usdTokenPrice: "" });
+            this.setState({ selectedToken: "" });
+        }
+    }
     private async handleBuyCredits(): Promise<void> {
         try {
             this.setState({ isLoading: true });
@@ -115,13 +167,16 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                     withDisplayName: true,
                 },
             );
-            console.log("this.state.selectedCredit", this.state.selectedCredit);
             const res = await axios.post(
                 `${SdkConfig.get("backend_url")}/payment/credit/${this.state.selectedCredit}`,
                 {
                     address: details,
+                    token: this.state.selectedToken,
+                    issuer: this.state.issuer,
+                    bonus: this.state.selectedBonus,
                 },
             );
+
             window.open(res?.data?.data?.next?.always, "_blank");
             this.setState({ isLoading: false });
         } catch (e) {
@@ -134,8 +189,8 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
         console.log("buy mounted");
         // noinspection JSIgnoredPromiseFromCall
         this.fetchDetails();
-        this.setState({ selectedCredit: 0});
-
+        this.setState({ selectedCredit: 0 });
+        this.setState({ selectedToken: "" });
     }
 
     public componentWillUnmount(): void {}
@@ -167,7 +222,22 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                             </>
                         ))}
                     </select>
+                    <p className="">Select the token</p>
+                    <select
+                        onChange={(e) => {
+                            this.handleTokenChange(e);
+                        }}
+                    >
+                        <option value="">Select Token</option>
+                        {(this.state?.tokenData?.data || [])?.map((p) => (
+                            <>
+                                <option value={`${p.currency}:${p.issuer}`}>{p.currency}</option>
+                            </>
+                        ))}
+                    </select>
+                    <b>{<p style={{ margin: "20px 0" }}>Bonus mCredits: {this.state.selectedBonus}</p>}</b>
                 </div>
+
                 <div>
                     <p style={{ margin: 0 }}>Price:</p>
                     {/* <b>
@@ -182,8 +252,11 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                     <b>
                         ${this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price || 0}{" "}
                         USD ({" "}
-                        {(Number((this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price || 0)/ this.state.xrpPrice)).toFixed(2)}{" "}
-                        XRP )
+                        {Number(
+                            (this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price ||
+                                0) / parseFloat(this.state.usdTokenPrice || "1"),
+                        ).toFixed(2)}{" "}
+                        {this.state.selectedToken} )
                     </b>
                 </div>
                 <div>
@@ -192,7 +265,9 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                         {parseFloat(
                             this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)
                                 ?.available_credits || 0,
-                        ) + parseFloat(this.state.user?.user?.credit?.balance)}
+                        ) +
+                            parseFloat(this.state.user?.user?.credit?.balance) +
+                            this.state.selectedBonus}
                     </b>
                 </div>
                 <AccessibleButton

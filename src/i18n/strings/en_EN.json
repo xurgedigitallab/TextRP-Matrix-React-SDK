@@ -906,7 +906,7 @@
     "Home": "Home",
     "Favourites": "Favourites",
     "People": "People",
-    "Bot":"Bots",
+    "Bot": "Bots",
     "Other rooms": "Other rooms",
     "You joined the call": "You joined the call",
     "%(senderName)s joined the call": "%(senderName)s joined the call",
@@ -3435,7 +3435,7 @@
     "You seem to be uploading files, are you sure you want to quit?": "You seem to be uploading files, are you sure you want to quit?",
     "You seem to be in a call, are you sure you want to quit?": "You seem to be in a call, are you sure you want to quit?",
     "Failed to reject invite": "Failed to reject invite",
-    "Textrp Enviroment":"Textrp Enviroment",
+    "Textrp Enviroment": "Textrp Enviroment",
     "You have %(count)s unread notifications in a prior version of this room.|other": "You have %(count)s unread notifications in a prior version of this room.",
     "You have %(count)s unread notifications in a prior version of this room.|one": "You have %(count)s unread notification in a prior version of this room.",
     "Joining": "Joining",
@@ -3761,7 +3761,7 @@
     "New line": "New line",
     "Force complete": "Force complete",
     "Search (must be enabled)": "Search (must be enabled)",
-    "Buy Credits": "Buy Credits",
+    "Buy Credits": "Get mCredits",
     "Feature Packs": "Feature Packs",
     "Message User": "Message User"
 }
