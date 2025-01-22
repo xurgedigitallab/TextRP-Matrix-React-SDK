@@ -29,3 +29,34 @@ export const getXRPLPrice = async () => {
         console.log(err);
     }
 };
+
+export const getTokenPrice = async (token, issuer) => {
+    try {
+        const client = new xrpl.Client("wss://s1.ripple.com");
+        await client.connect();
+
+        console.log("tokens value for asdasdis ", token);
+        const response = await client.request({
+            command: "book_offers",
+            taker_pays: {
+                currency: token,
+                issuer: issuer,
+            },
+            taker_gets: {
+                currency: "XRP",
+            },
+            ledger_index: "validated",
+            limit: 1,
+        });
+        console.log();
+        console.log(response.result);
+
+        const price = response.result.offers[0].TakerGets / 1000000 / response.result.offers[0].TakerPays.value;
+        console.log("1 token is", price);
+        console.log("Taker Pays", response.result.offers[0].TakerPays.value);
+        await client.disconnect();
+        return price;
+    } catch (err: any) {
+        console.log(err);
+    }
+};
