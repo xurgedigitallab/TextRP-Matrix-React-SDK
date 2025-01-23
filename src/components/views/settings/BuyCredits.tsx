@@ -173,7 +173,12 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                     address: details,
                     token: this.state.selectedToken,
                     issuer: this.state.issuer,
-                    bonus: this.state.selectedBonus,
+                    bonus:
+                        parseFloat(
+                            this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)
+                                ?.available_credits || 0,
+                        ) *
+                        (this.state.selectedBonus / 100),
                 },
             );
 
@@ -222,7 +227,7 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                             </>
                         ))}
                     </select>
-                    <p className="">Select the token</p>
+                    <p className="">Select payment token</p>
                     <select
                         onChange={(e) => {
                             this.handleTokenChange(e);
@@ -235,7 +240,18 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                             </>
                         ))}
                     </select>
-                    <b>{<p style={{ margin: "20px 0" }}>Bonus mCredits: {this.state.selectedBonus}</p>}</b>
+                    <b>
+                        {
+                            <p style={{ margin: "20px 0" }}>
+                                Bonus mCredits:{" "}
+                                {parseFloat(
+                                    this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)
+                                        ?.available_credits || 0,
+                                ) *
+                                    (this.state.selectedBonus / 100)}
+                            </p>
+                        }
+                    </b>
                 </div>
 
                 <div>
@@ -266,8 +282,12 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                             this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)
                                 ?.available_credits || 0,
                         ) +
-                            parseFloat(this.state.user?.user?.credit?.balance) +
-                            this.state.selectedBonus}
+                            parseFloat(
+                                this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)
+                                    ?.available_credits || 0,
+                            ) *
+                                (this.state.selectedBonus / 100) +
+                            parseFloat(this.state.user?.user?.credit?.balance)}
                     </b>
                 </div>
                 <AccessibleButton
