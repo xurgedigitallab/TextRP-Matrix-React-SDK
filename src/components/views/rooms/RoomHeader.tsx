@@ -168,7 +168,7 @@ export const QRCodeScanner = ({ setShowQRScanner, setScannedData }) => {
 
     return (
         <>
-            <div style={{ maxHeight: "455px"}} className="qrCodePrompt">
+            <div style={{ maxHeight: "455px" }} className="qrCodePrompt">
                 <AccessibleButton
                     className="mx_SearchBar_cancel_my"
                     onClick={() => setShowQRScanner((pre) => !pre)}
@@ -1426,10 +1426,13 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
         function openPanel() {
             const panel = document.getElementById("mobile_Panel");
-            const closeBtn = document.getElementById("LeftPanel_closeBtn");
-            panel.style.width = "80vw";
-            panel.style.maxWidth = "80vw";
-            closeBtn.style.display = "block";
+            // const closeBtn = document.getElementById("LeftPanel_closeBtn");
+            //const leftPanelUser = document.querySelector(".mx_LeftPanel_wrapper-user") as HTMLElement;
+
+            panel.style.width = "100vw";
+            panel.style.maxWidth = "100vw";
+            panel.style.display = "flex";
+            // closeBtn.style.display = "block";
         }
 
         return (
@@ -1439,7 +1442,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                     aria-owns={this.state.rightPanelOpen ? "mx_RightPanel" : undefined}
                 >
                     <div className="LeftPanel_openBtn" onClick={openPanel}>
-                        &#9776;
+                        &larr;
                     </div>
                     <div className="mx_RoomHeader_avatar">{roomAvatar}</div>
                     {icon}
