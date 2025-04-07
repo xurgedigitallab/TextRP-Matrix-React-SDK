@@ -9,6 +9,12 @@
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=matrix-react-sdk&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=matrix-react-sdk)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=matrix-react-sdk&metric=bugs)](https://sonarcloud.io/summary/new_code?id=matrix-react-sdk)
 
+
+# Local Setup 
+This is library used in TextRP-Client
+In TextRP-Matrix-React-SDK/src/SdkConfig.ts replace backend_url with your own localhost:8080
+
+The steps to link and run this in local setup is mentioned in [TextRP-Client](https://github.com/xurgedigitallab/TextRP-Client/blob/main/README.md)
 # matrix-react-sdk
 
 This is a react-based SDK for inserting a Matrix chat/voip client into a web page.

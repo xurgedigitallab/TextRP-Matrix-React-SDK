@@ -5,7 +5,8 @@ function CustomSelect({ options, onChange, destinationPre }) {
     const [selectedOption, setSelectedOption] = useState(null);
     const ref = useRef();
     const handleOptionClick = (option) => {
-        setSelectedOption(option);
+       
+        setSelectedOption(option.displayName);
         setIsOpen(false);
         onChange(option);
     };
@@ -21,9 +22,9 @@ function CustomSelect({ options, onChange, destinationPre }) {
             {isOpen && (
                 <div className="options">
                     {options.map((option) => (
-                        <div key={option} className="option-my" onClick={() => handleOptionClick(option.wallet)}>
-                            <div>{option.wallet}</div>
-                            <div style={{ fontSize: "10px", fontStyle: "italic" }}>@{option.displayName}</div>
+                        <div key={option} className="option-my" onClick={() => handleOptionClick(option)}>
+                            <div>{option.displayName}</div>
+                            <div style={{ fontSize: "10px", fontStyle: "italic" }}>@{option.wallet}</div>
                         </div>
                     ))}
                 </div>

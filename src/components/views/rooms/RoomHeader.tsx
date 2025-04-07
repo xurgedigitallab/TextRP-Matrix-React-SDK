@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FC, useState, useMemo, useCallback, useEffect, useRef, useContext } from "react";
+import React, { FC, useState, useMemo, useCallback, useEffect, useRef, createRef } from "react";
 import classNames from "classnames";
 import { throttle } from "lodash";
 import { Select } from "antd";
@@ -31,7 +31,7 @@ import { Tabs, Tab, TabList, TabPanel } from "react-tabs";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
 import { CallType } from "matrix-js-sdk/src/webrtc/call";
 import { ISearchResults } from "matrix-js-sdk/src/@types/search";
-import type { MatrixEvent } from "matrix-js-sdk/src/models/event";
+import type { IEventRelation, MatrixEvent } from "matrix-js-sdk/src/models/event";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import { _t } from "../../../languageHandler";
 import defaultDispatcher from "../../../dispatcher/dispatcher";
@@ -85,7 +85,15 @@ import { Alignment } from "../elements/Tooltip";
 import RoomCallBanner from "../beacon/RoomCallBanner";
 import { shouldShowComponent } from "../../../customisations/helpers/UIComponents";
 import { UIComponent } from "../../../settings/UIFeature";
-import { getTopic } from "../../../hooks/room/useTopic";
+
+
+
+
+
+import ResizeNotifier from "../../../utils/ResizeNotifier";
+import { MatrixClientPeg } from "../../../MatrixClientPeg";
+import StyledCheckbox from "../elements/StyledCheckbox";
+
 class DisabledWithReason {
     public constructor(public readonly reason: string) {}
 }
@@ -96,6 +104,7 @@ interface VoiceCallButtonProps {
     setBusy: (value: boolean) => void;
     behavior: DisabledWithReason | "legacy_or_jitsi";
 }
+
 
 /**
  * Button for starting voice calls, supporting only legacy 1:1 calls and Jitsi
@@ -148,6 +157,97 @@ interface VideoCallButtonProps {
     busy: boolean;
     setBusy: (value: boolean) => void;
     behavior: DisabledWithReason | "legacy_or_jitsi" | "element" | "jitsi_or_element";
+}
+
+function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,currency }) {
+    const [qrPng, setQrPng] = useState("");
+    const [paymentSuccess, setPaymentSuccess] = useState(false);
+    const [status, setStatus] = useState("pending");
+
+   
+ 
+    useEffect( () => {
+       
+        if (qrData?.created?.refs?.qr_png) {
+            setQrPng(qrData?.created?.refs.qr_png);
+          
+        }
+        if (!qrData?.created?.refs?.websocket_status) return;
+        const ws = new WebSocket(qrData?.created?.refs.websocket_status);
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log("Payment update:", data);
+
+            if (data.signed === true) {
+                setPaymentSuccess(true);
+                if(checkbox){
+                     sendMessageOnPaymentSuccess(room);
+                }
+                setStatus("pending");
+                ws.close();
+                onClose();
+            } else if (data.signed === false) {
+                setPaymentSuccess(false);
+                setStatus("expired");
+                ws.close();
+            }
+        };
+       
+        return () => ws.close();
+    }, [qrData]);
+
+    const handleClose = () => {
+        setStatus("pending");
+        onClose(); 
+    };
+
+    const sendMessageOnPaymentSuccess = async (room) => {
+        const client = MatrixClientPeg.get()
+        // let amount = ""
+       
+   
+        
+        // if(transacInfo?.Amount)
+        // {
+           
+        //     amount = ((transacInfo?.Amount)/1000000).toFixed(2)
+        // }
+        console.log('aedasda',destination)
+        const content = {
+            msgtype: "m.notice",
+            body: `** Sent ${amount.toFixed(2)} ${currency} sent to @${destination} **`,
+            displayname:destination, // Customize your message here
+        };
+      
+       await client.sendMessage(room.roomId,content)
+        
+    };
+    if (!show) {
+        return null;
+    }
+
+    return (
+        <BaseDialog className="mx_xrp_model" onFinished={handleClose}>
+            <div style={{ textAlign: "center" }}>
+                <h2>Payment QR</h2>
+                <p
+                    style={{
+                        fontSize: "15px",
+                        color: status === "expired" ? "red" : "green",
+                        alignContent: "centre",
+                    }}
+                >
+                    {status === "expired" ? "Payment Expired" : `Payment Pending`}
+                </p>
+                {qrPng ? (
+                    <img src={qrPng} alt="Payment QR Code" style={{ width: "200px", height: "200px" }} />
+                ) : (
+                    <QRCode data={qrData?.created?.next?.always ?? ""} />
+                )}
+            </div>
+        </BaseDialog>
+    );
 }
 
 export const QRCodeScanner = ({ setShowQRScanner, setScannedData }) => {
@@ -437,7 +537,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     const [fee, setFee] = useState(0);
     const [flags, setFlags] = useState([]);
     const [calculatedFee, setCalculatedFee] = useState(0);
-    const [destination, setDestination] = useState<string>(null);
+    const [destination, setDestination] = useState(null);
     const [tooltip, setTooltip] = useState(false);
     const [showQRScanner, setShowQRScanner] = useState(false);
     const [whichOne, setWhichOne] = useState(0);
@@ -446,11 +546,13 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     const [env, setEnv] = useState("");
     const [destinationTag, setDestinationTag] = useState<number | string>("");
     const [sourceTag, setSourceTag] = useState<number | string>("");
-
+    const [qrData, setQrData] = useState(null);
+    const [showQRModal, setShowQRModal] = useState(false);
     const [memoId, setMemoId] = useState(0);
     const [value, setValue] = useState(0);
     const sliderRef = useRef(null); // Reference to the slider element
     const tooltipRef = useRef(null);
+    const [notify, setNotify] = useState(false);
     let destinations: string[] = [];
     const [inviteLinkCopied, setInviteLinkCopied] = useState<boolean>(false);
     if (props.txnInfo.recievers) {
@@ -496,7 +598,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     const makeTxn = async () => {
         try {
             const res = await axios.post(`${SdkConfig.get("backend_url")}/accounts/makeTxn/${amount}`, {
-                address: destination,
+                address: destination?.wallet,
                 currency,
                 memos,
                 fee: Number(calculatedFee) * 1000000,
@@ -505,7 +607,10 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                 DestinationTag: Number(destinationTag),
                 SourceTag: Number(sourceTag),
             });
-            window.open(res?.data?.data?.next?.always, "_blank");
+            console.log("data", res?.data?.data);
+            setQrData(res?.data?.data);
+            setShowQRModal(true);
+            // window.open(res?.data?.data?.next?.always, "_blank");
         } catch (e) {
             console.error("ERROR handleBuyCredits", e);
         }
@@ -580,6 +685,10 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
 
         return numericValue;
     };
+
+    const handleCheck = (event) => {
+        setNotify(event.target.checked);
+    };
     const options = ["No Direct Ripple", "Partial Payment", "Limit Quality"];
     const onAddMemo = () => {
         setMemos((pre) => [...pre, { id: memoId, text: "Sent via TextRp in-chat Payment", format: "", type: "" }]);
@@ -631,8 +740,10 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                 <div>
                                     <CustomSelect
                                         options={destinations}
-                                        onChange={(value) => setDestination(value)}
-                                        destinationPre={destination}
+                                        onChange={(value) => {
+                                            setDestination(value);
+                                        }}
+                                        destinationPre={destination?.displayName}
                                     />
                                     <span
                                         className="qrscan"
@@ -788,6 +899,9 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                                         + Add Memo
                                                     </button>
                                                 </div>
+                                                <div>
+                                                    <StyledCheckbox onChange={handleCheck} name="">Include payment in chat</StyledCheckbox>
+                                                </div>
                                             </div>
                                         </div>
                                     </>
@@ -837,6 +951,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                     </Tabs>
                 </div>
             </BaseDialog>
+            <QRCodeModal show={showQRModal} onClose={() => setShowQRModal(false)} qrData={qrData} checkbox={notify} room={props.room} destination={destination?.displayName} amount={amount} currency={currency}/>
         </>
     );
 }
@@ -1026,6 +1141,9 @@ export interface IProps {
     enableRoomOptionsMenu?: boolean;
     viewingCall: boolean;
     activeCall: Call | null;
+    replyToEvent?: MatrixEvent;
+    relation?: IEventRelation;
+  
 }
 
 interface IState {
@@ -1048,6 +1166,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
     };
     public static contextType = RoomContext;
     public context!: React.ContextType<typeof RoomContext>;
+    private messageComposerInput = createRef<SendMessageComposerClass>();
     private readonly client = this.props.room.client;
     txnInfo = {};
     public constructor(props: IProps, context: IState) {
@@ -1112,6 +1231,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                     return reciever.userId !== this.props.room.myUserId;
                 });
                 this.setState({ txnInfo: tranctionInfo });
+               
             };
             getTxnInfo();
         }
@@ -1193,6 +1313,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                 toggleFun={this.props.onAppsClick}
                 appShown={this.props.appsShown}
                 buttonShown={!this.props.viewingCall && this.props.onAppsClick}
+               room={this.props.room}
             />,
         );
         if (!this.props.viewingCall && this.props.inRoom && !this.context.tombstone) {
@@ -1402,8 +1523,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
         let searchStatus: JSX.Element | null = null;
 
-        // don't display the search count until the search completes and
-        // gives us a valid (possibly zero) searchCount.
+
         if (typeof this.props.searchInfo?.count === "number") {
             searchStatus = (
                 <div className="mx_RoomHeader_searchStatus">
@@ -1426,13 +1546,12 @@ export default class RoomHeader extends React.Component<IProps, IState> {
 
         function openPanel() {
             const panel = document.getElementById("mobile_Panel");
-            // const closeBtn = document.getElementById("LeftPanel_closeBtn");
-            //const leftPanelUser = document.querySelector(".mx_LeftPanel_wrapper-user") as HTMLElement;
+    
 
             panel.style.width = "100vw";
             panel.style.maxWidth = "100vw";
             panel.style.display = "flex";
-            // closeBtn.style.display = "block";
+     
         }
 
         return (
