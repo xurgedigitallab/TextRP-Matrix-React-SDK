@@ -49,7 +49,6 @@ limitations under the License.
         position: relative;
 
         &[data-collapsed] {
-            max-width: var(--collapsedWidth);
         }
     }
 }
@@ -251,35 +250,38 @@ limitations under the License.
 
 //
 
-.LeftPanel_closeBtn{
+.LeftPanel_closeBtn {
     display: none;
 }
-#mobile_Panel{
+#mobile_Panel {
     display: none;
 }
-
 
 //Responsive design
-@media (max-width: 1024px){
-    .mx_LeftPanel_outerWrapper{
+@media (max-width: 1024px) {
+    .mx_LeftPanel_outerWrapper {
         display: none;
     }
 
-    #mobile_Panel{
+    #mobile_Panel {
         /* border: 2px solid red; */
-        display: flex !important;
-        position: absolute;
+        display: none;
+        position: fixed;
         top: 0;
         left: 0;
-        z-index: 10;
-        max-width: 80vw;
-        width: 80vw;
-        height: 100vh;
-        transition: all 0.3s ease;
+        width: 100vw; /* Full viewport width */
+        height: 100vh; /* Full viewport height */
+        background-color: #fff; /* Background color */
+        z-index: 1000; /* High z-index to overlay other content */
+        transition: all 0.3s ease; /* Smooth transition */
+
+        .mx_LeftPanel_wrapper--user {
+            width: 100vw;
+        }
     }
 
-    .LeftPanel_closeBtn{
-        display: block;
+    .LeftPanel_closeBtn {
+        display: none;
         position: absolute;
         font-size: 35px;
         top: 50px;

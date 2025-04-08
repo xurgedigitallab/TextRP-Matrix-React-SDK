@@ -25,7 +25,7 @@ import { DeepReadonly, Defaultize } from "./@types/common";
 
 // see element-web config.md for docs, or the IConfigOptions interface for dev docs
 export const DEFAULTS: DeepReadonly<IConfigOptions> = {
-    brand: "Element",
+    brand: "TextRP",
     integrations_ui_url: "https://scalar.vector.im/",
     integrations_rest_url: "https://scalar.vector.im/api",
     uisi_autorageshake_app: "element-auto-uisi",
@@ -37,7 +37,7 @@ export const DEFAULTS: DeepReadonly<IConfigOptions> = {
         url: "https://call.element.io",
         use_exclusively: false,
         participant_limit: 8,
-        brand: "Element Call",
+        brand: "TextRP Call",
     },
     //backend_url: "http://localhost:8080",
     backend_url: "https://backend-prod.textrp.io",

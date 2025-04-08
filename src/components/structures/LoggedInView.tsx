@@ -173,29 +173,29 @@ class LoggedInView extends React.Component<IProps, IState> {
                 let room = cli.getRoom(roomId);
                 rooms.push(room);
             }
-            let twitter:any = [
+            let twitter: any = [
                 {
                     name: "Twitter bridge bot",
                     userId: "@twitterbot:synapse.textrp.io",
                     getMxcAvatarUrl: "mxc://maunium.net/HVHcnusJkQcpVcsVGZRELLCn",
                 },
             ];
-            let twillio:any = [
+            let twillio: any = [
                 {
                     name: "Twilio Puppet Bridge",
                     userId: "@_twiliopuppet_bot:synapse.textrp.io",
                     getMxcAvatarUrl: "mxc://maunium.net/HVHcnusJkQcpVcsVGZRELLCn",
                 },
             ];
-            let discord:any = [
+            let discord: any = [
                 {
                     name: "Discord bridge bot",
                     userId: "@discordbot:synapse.textrp.io",
                     getMxcAvatarUrl: "mxc://maunium.net/nIdEykemnwdisvHbpxflpDlC",
                 },
-            ];            
-            if (!rooms.map((room) => room.name).includes("Twitter bridge bot")) {                
-                 await startDm(cli, twitter, false, { andView: false });
+            ];
+            if (!rooms.map((room) => room.name).includes("Twitter bridge bot")) {
+                await startDm(cli, twitter, false, { andView: false });
             }
             if (!rooms.map((room) => room.name).includes("Discord bridge bot")) {
                 await startDm(cli, discord, false, { andView: false });
@@ -203,7 +203,7 @@ class LoggedInView extends React.Component<IProps, IState> {
             if (!rooms.map((room) => room.name).includes("Twilio Puppet Bridge")) {
                 await startDm(cli, twillio, false, { andView: false });
             }
-        };        
+        };
         textingRoomCreation();
         this.updateServerNoticeEvents();
 
@@ -709,13 +709,15 @@ class LoggedInView extends React.Component<IProps, IState> {
             return <AudioFeedArrayForLegacyCall call={call} key={call.callId} />;
         });
 
-        function closePanel() {
-            const panel = document.getElementById('mobile_Panel');
-            const closeBtn = document.getElementById('LeftPanel_closeBtn');
-            panel.style.width = '0px';
-            panel.style.maxWidth = '0px';
-            closeBtn.style.display = 'none';
-        }
+        // function closePanel() {
+        //     const panel = document.getElementById("mobile_Panel");
+        //     // const closeBtn = document.getElementById("LeftPanel_closeBtn");
+        //     panel.style.width = "0px";
+        //     panel.style.maxWidth = "0px";
+        //     panel.style.transition = "all 0.3s ease";
+        //     // panel.style.display = 'flex !important'
+        //     // closeBtn.style.display = "none";
+        // }
 
         return (
             <MatrixClientContext.Provider value={this._matrixClient}>
@@ -727,9 +729,10 @@ class LoggedInView extends React.Component<IProps, IState> {
                 >
                     <ToastContainer />
                     <div className={bodyClasses}>
-
-                        <div id="LeftPanel_closeBtn" className="LeftPanel_closeBtn" onClick={closePanel}>&times;</div>
                         <div id="mobile_Panel" className="mx_LeftPanel_outerWrapper">
+                            {/* <div id="LeftPanel_closeBtn" className="LeftPanel_closeBtn" onClick={closePanel}>
+                                &times;
+                            </div> */}
                             <LeftPanelLiveShareWarning isMinimized={this.props.collapseLhs || false} />
                             <nav className="mx_LeftPanel_wrapper">
                                 <BackdropPanel blurMultiplier={0.5} backgroundImage={this.state.backgroundImage} />

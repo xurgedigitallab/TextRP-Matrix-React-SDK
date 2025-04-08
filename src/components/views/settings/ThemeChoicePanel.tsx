@@ -75,7 +75,8 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
         // We have to mirror the logic from ThemeWatcher.getEffectiveTheme so we
         // show the right values for things.
 
-        const themeChoice: string = SettingsStore.getValue("theme");
+        const themeChoice: string = SettingsStore.getValue("theme") || "dark";
+
         const systemThemeExplicit: boolean = SettingsStore.getValueAt(
             SettingLevel.DEVICE,
             "use_system_theme",
@@ -83,6 +84,7 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
             false,
             true,
         );
+
         const themeExplicit: string = SettingsStore.getValueAt(SettingLevel.DEVICE, "theme", null, false, true);
 
         // If the user has enabled system theme matching, use that.
@@ -142,7 +144,9 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
                     withDisplayName: true,
                 },
             );
+            console.log("details");
             await axios.get(`${SdkConfig.get("backend_url")}/check-nft/${details}/main/dark`);
+
             this.setState({
                 showDarkModeToggle: true,
             });
@@ -223,6 +227,7 @@ export default class ThemeChoicePanel extends React.Component<IProps, IState> {
     public render(): React.ReactElement<HTMLDivElement> {
         // const themeWatcher = new ThemeWatcher();
         let systemThemeSection: JSX.Element | undefined;
+
         // if (themeWatcher.isSystemThemeSupported()) {
         //     systemThemeSection = (
         //         <div data-testid="checkbox-use-system-theme">

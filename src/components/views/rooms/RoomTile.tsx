@@ -239,6 +239,15 @@ export class RoomTile extends React.PureComponent<ClassProps, State> {
             metricsTrigger: "RoomList",
             metricsViaKeyboard: ev.type !== "click",
         });
+        const panel = document.getElementById("mobile_Panel");
+        // const closeBtn = document.getElementById("LeftPanel_closeBtn");
+        panel.style.width = "0px";
+        panel.style.maxWidth = "0px";
+        // panel.style.display = 'flex !important'
+
+        // if (document.activeElement instanceof HTMLElement) {
+        //     document.activeElement.blur();
+        // }
     };
 
     private onActiveRoomUpdate = (isActive: boolean): void => {
@@ -383,7 +392,7 @@ export class RoomTile extends React.PureComponent<ClassProps, State> {
             mx_RoomTile_minimized: this.props.isMinimized,
         });
 
-        let name =  this.props.room.name;
+        let name = this.props.room.name;
         if (typeof name !== "string") name = "";
         name = name.replace(":", ":\u200b"); // add a zero-width space to allow linewrapping after the colon
 

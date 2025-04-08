@@ -305,20 +305,20 @@ export class SendMessageComposer extends React.Component<ISendMessageComposerPro
             this.editorRef.current?.focus();
         }
     }
-    public extractWalletAddress = (inputString: string) => {
-        // Define a regular expression pattern to match XRPL addresses
-        const addressRegex = /@([a-zA-Z0-9]{25,34})/;
+    // public extractWalletAddress = (inputString: string) => {
+    //     // Define a regular expression pattern to match XRPL addresses
+    //     const addressRegex = /@([a-zA-Z0-9]{25,34})/;
 
-        // Use the RegExp.exec method to find the address in the input string
-        const match = addressRegex.exec(inputString);
+    //     // Use the RegExp.exec method to find the address in the input string
+    //     const match = addressRegex.exec(inputString);
 
-        // Check if a match was found and extract the address
-        if (match && match[1]) {
-            return match[1];
-        }
-        // Return null if no address was found
-        return null;
-    };
+    //     // Check if a match was found and extract the address
+    //     if (match && match[1]) {
+    //         return match[1];
+    //     }
+    //     // Return null if no address was found
+    //     return null;
+    // };
     private onKeyDown = async (event: KeyboardEvent): Promise<void> => {
         // ignore any keypress while doing IME compositions
         if (this.editorRef.current?.isComposing(event)) {
