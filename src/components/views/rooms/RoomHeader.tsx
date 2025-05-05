@@ -204,20 +204,14 @@ function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,c
 
     const sendMessageOnPaymentSuccess = async (room) => {
         const client = MatrixClientPeg.get()
-        // let amount = ""
-       
    
-        
-        // if(transacInfo?.Amount)
-        // {
-           
-        //     amount = ((transacInfo?.Amount)/1000000).toFixed(2)
-        // }
         console.log('aedasda',destination)
         const content = {
             msgtype: "m.notice",
-            body: `** Sent ${amount.toFixed(2)} ${currency} sent to @${destination} **`,
-            displayname:destination, // Customize your message here
+            body: `Sent ${amount.toFixed(2)} ${currency} to @${destination}`,
+            displayname:destination,
+            format: "org.matrix.custom.html",
+            formatted_body:`<code>Sent<strong>${amount.toFixed(2)} ${currency}</strong> to <strong>@${destination}</strong></code>`
         };
       
        await client.sendMessage(room.roomId,content)
@@ -245,6 +239,9 @@ function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,c
                 ) : (
                     <QRCode data={qrData?.created?.next?.always ?? ""} />
                 )}
+                <a href={qrData?.created?.next?.always} target="_blank" rel="noopener noreferrer">
+                    <p>Open in Xaman</p>
+                </a>
             </div>
         </BaseDialog>
     );
@@ -1166,7 +1163,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
     };
     public static contextType = RoomContext;
     public context!: React.ContextType<typeof RoomContext>;
-    private messageComposerInput = createRef<SendMessageComposerClass>();
+   
     private readonly client = this.props.room.client;
     txnInfo = {};
     public constructor(props: IProps, context: IState) {
