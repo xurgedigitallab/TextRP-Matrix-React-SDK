@@ -159,14 +159,14 @@ interface VideoCallButtonProps {
     behavior: DisabledWithReason | "legacy_or_jitsi" | "element" | "jitsi_or_element";
 }
 
-function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,currency }) {
+function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,currency,sender,explorer }) {
     const [qrPng, setQrPng] = useState("");
     const [paymentSuccess, setPaymentSuccess] = useState(false);
     const [status, setStatus] = useState("pending");
 
    
  
-    useEffect( () => {
+    useEffect(  () => {
        
         if (qrData?.created?.refs?.qr_png) {
             setQrPng(qrData?.created?.refs.qr_png);
@@ -175,14 +175,24 @@ function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,c
         if (!qrData?.created?.refs?.websocket_status) return;
         const ws = new WebSocket(qrData?.created?.refs.websocket_status);
 
-        ws.onmessage = (event) => {
+        ws.onmessage = async (event) => {
             const data = JSON.parse(event.data);
-            console.log("Payment update:", data);
+            
 
             if (data.signed === true) {
                 setPaymentSuccess(true);
+                await fetch(`${SdkConfig.get().backend_url}/generate-user-token`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        payload_uuid: data?.payload_uuidv4,
+                        user_id:sender
+                    }),
+                }); 
                 if(checkbox){
-                     sendMessageOnPaymentSuccess(room);
+                    await sendMessageOnPaymentSuccess(room,data?.txid);
                 }
                 setStatus("pending");
                 ws.close();
@@ -202,16 +212,16 @@ function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,c
         onClose(); 
     };
 
-    const sendMessageOnPaymentSuccess = async (room) => {
+    const sendMessageOnPaymentSuccess = async (room,txId) => {
         const client = MatrixClientPeg.get()
    
-        console.log('aedasda',destination)
+        
         const content = {
             msgtype: "m.notice",
             body: `Sent ${amount.toFixed(2)} ${currency} to @${destination}`,
             displayname:destination,
             format: "org.matrix.custom.html",
-            formatted_body:`<code>Sent<strong>${amount.toFixed(2)} ${currency}</strong> to <strong>@${destination}</strong></code>`
+            formatted_body:`<code>Sent<strong> ${amount.toFixed(2)} ${currency}</strong> to <strong>@${destination}</strong> <a href="${explorer}/${txId}" target="_blank">View Transaction</a></code>`
         };
       
        await client.sendMessage(room.roomId,content)
@@ -541,6 +551,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     const [scannedData, setScannedData] = useState("");
     const [memos, setMemos] = useState([]);
     const [env, setEnv] = useState("");
+    const [explorer,setExplorer] = useState("")
     const [destinationTag, setDestinationTag] = useState<number | string>("");
     const [sourceTag, setSourceTag] = useState<number | string>("");
     const [qrData, setQrData] = useState(null);
@@ -564,14 +575,22 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
         const getEnv = async () => {
             await axios
                 .get(`${SdkConfig.get().backend_url}/get-all-env`)
-                .then((res) =>
+                .then((res) =>{
+                    
                     setEnv(
                         res.data[0].value === "xrplMain"
                             ? "mainnet"
                             : res.data[0].value === "xrplDev"
                             ? "devnet"
                             : "testnet",
-                    ),
+                    )
+                    setExplorer(
+                        res.data[0].value === "xrplMain"
+                        ? "https://xrplexplorer.com/explorer"
+                        : res.data[0].value === "xrplDev"
+                        ? "https://dev.xrplexplorer.com/explorer"
+                        : "https://test.xrplexplorer.com/explorer",)
+                }
                 );
         };
         getEnv();
@@ -948,7 +967,16 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                     </Tabs>
                 </div>
             </BaseDialog>
-            <QRCodeModal show={showQRModal} onClose={() => setShowQRModal(false)} qrData={qrData} checkbox={notify} room={props.room} destination={destination?.displayName} amount={amount} currency={currency}/>
+            <QRCodeModal show={showQRModal} onClose={() => setShowQRModal(false)} 
+            qrData={qrData} 
+            checkbox={notify} 
+            room={props.room} 
+            destination={destination?.displayName} 
+            amount={amount} 
+            currency={currency} 
+            sender={props.txnInfo.sender.address}
+            explorer={explorer}
+             />
         </>
     );
 }
