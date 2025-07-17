@@ -68,6 +68,7 @@ interface IButtonProps extends IAccessibleButtonProps {
     className: string;
     onClick(ev: ButtonEvent): void;
 }
+// const isMobile = window.innerWidth <= 768
 
 const Button: React.FC<IButtonProps> = ({ children, className, onClick, ...props }) => {
     return (
@@ -111,12 +112,22 @@ const AppRow: React.FC<IAppRowProps> = ({ app, room }) => {
         setCanModifyWidget(WidgetUtils.canUserModifyWidgets(room.client, room.roomId));
     }, [room.client, room.roomId]);
 
+    
+    
     const onOpenWidgetClick = (): void => {
-        RightPanelStore.instance.pushCard({
-            phase: RightPanelPhases.Widget,
-            state: { widgetId: app.id },
-        });
+        const isMobile = UIStore.instance.windowWidth <= 768;
+        
+        if (isMobile) {
+            WidgetLayoutStore.instance.moveToContainer(room, app, Container.Center);
+            RightPanelStore.instance.togglePanel(null);
+        } else {
+            RightPanelStore.instance.pushCard({
+                phase: RightPanelPhases.Widget,
+                state: { widgetId: app.id },
+            });
+        }
     };
+ 
 
     const isPinned = WidgetLayoutStore.instance.isInContainer(room, app, Container.Top);
     const togglePin = isPinned
@@ -154,6 +165,8 @@ const AppRow: React.FC<IAppRowProps> = ({ app, room }) => {
     }
 
     const isMaximised = WidgetLayoutStore.instance.isInContainer(room, app, Container.Center);
+
+    
     const toggleMaximised = isMaximised
         ? () => {
               WidgetLayoutStore.instance.moveToContainer(room, app, Container.Right);
@@ -163,6 +176,10 @@ const AppRow: React.FC<IAppRowProps> = ({ app, room }) => {
           };
 
     const maximiseTitle = isMaximised ? _t("Close") : _t("Maximise");
+
+   
+
+
 
     let openTitle = "";
     if (isPinned) {
@@ -176,6 +193,7 @@ const AppRow: React.FC<IAppRowProps> = ({ app, room }) => {
         mx_RoomSummaryCard_Button_maximised: isMaximised,
     });
 
+    
     return (
         <div className={classes} ref={handle}>
             <AccessibleTooltipButton

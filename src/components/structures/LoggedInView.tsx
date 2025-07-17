@@ -283,13 +283,20 @@ class LoggedInView extends React.Component<IProps, IState> {
                 if (collapsed) {
                     dis.dispatch({ action: "hide_left_panel" });
                     window.localStorage.setItem("mx_lhs_size", "0");
+                    if(this._resizeContainer.current){
+                        this._resizeContainer.current.style.width='auto'
+                    }
                 } else {
                     dis.dispatch({ action: "show_left_panel" });
+                    if (this._resizeContainer.current) {
+                        this._resizeContainer.current.style.width = `${panelSize}px`;
+                    }
                 }
             },
             onResized: (size) => {
                 panelSize = size;
                 this.props.resizeNotifier.notifyLeftHandleResized();
+                
             },
             onResizeStart: () => {
                 this.props.resizeNotifier.startResizing();

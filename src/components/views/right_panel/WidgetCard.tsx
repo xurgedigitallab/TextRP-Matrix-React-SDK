@@ -34,9 +34,10 @@ interface IProps {
     room: Room;
     widgetId: string;
     onClose(): void;
+    windowWidth: number;
 }
 
-const WidgetCard: React.FC<IProps> = ({ room, widgetId, onClose }) => {
+const WidgetCard: React.FC<IProps> = ({ room, widgetId, onClose, windowWidth }) => {
     const cli = useContext(MatrixClientContext);
 
     const apps = useWidgets(room);
@@ -46,14 +47,39 @@ const WidgetCard: React.FC<IProps> = ({ room, widgetId, onClose }) => {
     const [menuDisplayed, handle, openMenu, closeMenu] = useContextMenu();
 
     useEffect(() => {
+        if (!app) return;
+        
+        const isMobile = windowWidth <= 768;
+        const isInRightContainer = WidgetLayoutStore.instance.isInContainer(room, app, Container.Right);
+        const isInCenterContainer = WidgetLayoutStore.instance.isInContainer(room, app, Container.Center);
+        
+    
+        if (isMobile && isInRightContainer) {
+            WidgetLayoutStore.instance.moveToContainer(room, app, Container.Center);
+            RightPanelStore.instance.popCard();
+        }
+      
+        else if (!isMobile && isInCenterContainer) {
+            WidgetLayoutStore.instance.moveToContainer(room, app, Container.Right);
+        }
+    }, [windowWidth, room, app]);
+
+    useEffect(() => {
         if (!app || !isRight) {
-            // stop showing this card
+            
             RightPanelStore.instance.popCard();
         }
     }, [app, isRight]);
 
-    // Don't render anything as we are about to transition
-    if (!app || !isRight) return null;
+   
+    if (!app) return null;
+    
+    // If widget is in center container (full screen on mobile), don't render the card
+    const isInCenterContainer = WidgetLayoutStore.instance.isInContainer(room, app, Container.Center);
+    if (isInCenterContainer) return null;
+    
+    // If widget is not in right container, don't render
+    if (!isRight) return null;
 
     let contextMenu: JSX.Element | undefined;
     if (menuDisplayed) {
@@ -63,7 +89,7 @@ const WidgetCard: React.FC<IProps> = ({ room, widgetId, onClose }) => {
         contextMenu = (
             <WidgetContextMenu
                 chevronFace={ChevronFace.None}
-                right={UIStore.instance.windowWidth - rightMargin - 12}
+                right={windowWidth - rightMargin - 12}
                 top={bottomMargin + 12}
                 onFinished={closeMenu}
                 app={app}

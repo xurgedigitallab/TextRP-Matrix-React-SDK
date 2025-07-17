@@ -79,7 +79,7 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
     public componentDidMount(): void {
         this.updateFeed(null, this.props.feed);
         const cli = MatrixClientPeg.get();
-        this.props.call.direction === "outbound" && axios
+        this.props.feed.connected && this.props.call.direction === "outbound" && axios
         .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
             service: "video",
             type: "call",

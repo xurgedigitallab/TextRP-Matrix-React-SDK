@@ -52,43 +52,60 @@ export default class AudioFeed extends React.Component<IProps, IState> {
         const roomId = LegacyCallHandler.instance.roomIdForCall(this.props.feed.call);        
         if (roomId) LegacyCallHandler.instance.hangupOrReject(roomId);
     };
-    public componentDidMount(): void {
-    MediaDeviceHandler.instance.addListener(MediaDeviceHandlerEvent.AudioOutputChanged, this.onAudioOutputChanged);
-    const cli = MatrixClientPeg.get();
-    this.props.feed.call.direction === "outbound" && axios
-    .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
-        service: "intra_app_voice",
-        type: "call",
-        address: extractWalletAddress(cli.getUserId()),
-        password: "demo123",
-    })
-    .catch((e) => {
-        this.onHangupClick();
-        Modal.createDialog(ErrorDialog, {
-            title: _t("Insufficient credits message"),
-            description: <BuyCredits2 />,
-        });
-    });
-        this.props.feed.addListener(CallFeedEvent.NewStream, this.onNewStream);
-        this.setState({
-            interval: setInterval(() => {                
-               this.props.feed.call.direction === "outbound" && axios
-                    .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
-                        service: "intra_app_voice",
-                        type: "call",
-                        address: extractWalletAddress(cli.getUserId()),
-                        password: "demo123",
-                    })
-                    .catch((e) => {
-                        this.onHangupClick();
-                        Modal.createDialog(ErrorDialog, {
-                            title: _t("Insufficient credits message"),
-                            description: <BuyCredits2 />,
-                        });
+
+
+    private onCallConnected = (): void => {
+        const cli = MatrixClientPeg.get();
+        this.props.feed.call.direction === "outbound" && this.props.feed.connected && axios
+            .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+                service: "intra_app_voice",
+                type: "call",
+                address: extractWalletAddress(cli.getUserId()),
+                password: "demo123",
+            })
+            .catch((e) => {
+                this.onHangupClick();
+                Modal.createDialog(ErrorDialog, {
+                    title: _t("Insufficient credits message"),
+                    description: <BuyCredits2 />,
+                });
+            });
+    
+        // 🔥 Also start your interval only AFTER call is connected
+        const interval = setInterval(() => {
+            axios
+                .post(`${SdkConfig.get("backend_url")}/chat-webhook`, {
+                    service: "intra_app_voice",
+                    type: "call",
+                    address: extractWalletAddress(cli.getUserId()),
+                    password: "demo123",
+                })
+                .catch((e) => {
+                    this.onHangupClick();
+                    Modal.createDialog(ErrorDialog, {
+                        title: _t("Insufficient credits message"),
+                        description: <BuyCredits2 />,
                     });
-            }, 60000),
-        });
-        this.playMedia();
+                });
+        }, 60000);
+        
+        this.setState({ interval });
+    };
+    public componentDidMount(): void {
+
+    console.log('audio feed',this.props.feed.connected)
+
+
+
+    MediaDeviceHandler.instance.addListener(MediaDeviceHandlerEvent.AudioOutputChanged, this.onAudioOutputChanged);
+    this.props.feed.addListener(CallFeedEvent.NewStream, this.onNewStream);
+
+    // 🔥 Listen for call connected event
+    this.props.feed.addListener(CallFeedEvent.ConnectedChanged, this.onCallConnected);
+
+    this.playMedia();
+
+    // this.playMedia();
     }
 
     public componentWillUnmount(): void {
@@ -98,6 +115,7 @@ export default class AudioFeed extends React.Component<IProps, IState> {
             this.onAudioOutputChanged,
         );
         this.props.feed.removeListener(CallFeedEvent.NewStream, this.onNewStream);
+        this.props.feed.removeListener(CallFeedEvent.ConnectedChanged, this.onCallConnected);
         this.stopMedia();
     }
 

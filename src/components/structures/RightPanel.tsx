@@ -68,6 +68,7 @@ interface IState {
     phase?: RightPanelPhases;
     searchQuery: string;
     cardState?: IRightPanelCardState;
+    windowWidth?: number;
 }
 
 export default class RightPanel extends React.Component<Props, IState> {
@@ -79,6 +80,7 @@ export default class RightPanel extends React.Component<Props, IState> {
 
         this.state = {
             searchQuery: "",
+            windowWidth: window.innerWidth,
         };
     }
 
@@ -93,11 +95,13 @@ export default class RightPanel extends React.Component<Props, IState> {
     public componentDidMount(): void {
         this.context.on(RoomStateEvent.Members, this.onRoomStateMember);
         RightPanelStore.instance.on(UPDATE_EVENT, this.onRightPanelStoreUpdate);
+        window.addEventListener('resize', this.handleResize);
     }
 
     public componentWillUnmount(): void {
         this.context?.removeListener(RoomStateEvent.Members, this.onRoomStateMember);
         RightPanelStore.instance.off(UPDATE_EVENT, this.onRightPanelStoreUpdate);
+        window.removeEventListener('resize', this.handleResize);
     }
 
     public static getDerivedStateFromProps(props: Props): Partial<IState> {
@@ -158,6 +162,10 @@ export default class RightPanel extends React.Component<Props, IState> {
 
     private onSearchQueryChanged = (searchQuery: string): void => {
         this.setState({ searchQuery });
+    };
+    private handleResize = () => {
+        this.setState({ windowWidth: window.innerWidth });
+        this.delayedUpdate(); // Use the existing throttled update
     };
 
     public render(): React.ReactNode {
@@ -302,8 +310,9 @@ export default class RightPanel extends React.Component<Props, IState> {
                 break;
 
             case RightPanelPhases.Widget:
+             
                 if (!!this.props.room && !!cardState?.widgetId) {
-                    card = <WidgetCard room={this.props.room} widgetId={cardState.widgetId} onClose={this.onClose} />;
+                    card = <WidgetCard room={this.props.room} widgetId={cardState.widgetId} onClose={this.onClose}  windowWidth={this.state.windowWidth}/>;
                 }
                 break;
         }
