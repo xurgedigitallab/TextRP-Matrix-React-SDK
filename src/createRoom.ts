@@ -349,6 +349,29 @@ export default async function createRoom(client: MatrixClient, opts: IOpts): Pro
                 const plEvent = (await room).currentState.getStateEvents(EventType.RoomPowerLevels, "");
                 await client.setPowerLevel(roomId, client.getUserId()!, 100, plEvent);
             }
+            
+            //Inject TokenGate widget after room is created            
+            const userId = client.getUserId();
+            const displayName = 'NFT Gate';
+            const avatarUrl = '';
+            const clientId = client.getDeviceId(); 
+            const language = 'en'; 
+            const baseUrl = client.baseUrl || 'https://matrix.org'; 
+            const widgetUrl = `https://tokengate-tapp-ci6k.vercel.app/#/?theme=$org.matrix.msc2873.client_theme&matrix_user_id=${encodeURIComponent(userId)}&matrix_display_name=${encodeURIComponent(displayName)}&matrix_avatar_url=${encodeURIComponent(avatarUrl)}&matrix_room_id=${encodeURIComponent(roomId)}&matrix_client_id=${encodeURIComponent(clientId)}&matrix_client_language=${encodeURIComponent(language)}&matrix_device_id=${encodeURIComponent(client.getDeviceId())}&matrix_base_url=${encodeURIComponent(baseUrl)}`;
+            
+            await client.sendStateEvent(
+                roomId,
+                "im.vector.modular.widgets",
+                {
+                    id: "tokengate-widget",
+                    type: "m.custom",
+                    url: widgetUrl,                    
+                    name: "NFT Gate",
+                    data: {},
+                    creatorUserId: client.getUserId(),
+                },
+                "tokengate-widget",
+            );
         })
         .then(
             function () {
