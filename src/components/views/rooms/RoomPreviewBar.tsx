@@ -586,7 +586,23 @@ export default class RoomPreviewBar extends React.Component<IProps, IState> {
             if (!Array.isArray(subTitle)) {
                 subTitle = [subTitle];
             }
-            subTitleElements = subTitle.map((t, i) => <p key={`subTitle${i}`}>{t}</p>);
+
+            if( messageCase === MessageCase.Kicked ){
+                subTitleElements = subTitle.map((t: string, i: number) => (
+                    <p
+                        key={`subTitle${i}`}
+                        dangerouslySetInnerHTML={{
+                            __html: t.replace(
+                                /(https?:\/\/[^\s]+)/g,
+                                '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>',
+                            ),
+                        }}
+                    />
+                ));
+            }
+            else{
+                subTitleElements = subTitle.map((t, i) => <p key={`subTitle${i}`}>{t}</p>);
+            }
         }
 
         let titleElement;
