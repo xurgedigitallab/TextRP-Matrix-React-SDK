@@ -561,13 +561,16 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     const sliderRef = useRef(null); // Reference to the slider element
     const tooltipRef = useRef(null);
     const [notify, setNotify] = useState(false);
+    const [tokenIssuer,setTokenIssuer] = useState([])
     let destinations: string[] = [];
+    
     const [inviteLinkCopied, setInviteLinkCopied] = useState<boolean>(false);
     if (props.txnInfo.recievers) {
         props.txnInfo.recievers.forEach((reciever, i) => {
             destinations.push(reciever);
         });
     }
+
     function handleChange(value) {
         setFlags(value);
     }
@@ -609,6 +612,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                 holdings.add(element.currency);
             });
             setTokens([...holdings]);
+          
         }
     }, [props]);
     const makeTxn = async () => {
@@ -1256,7 +1260,9 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                     return reciever.userId !== this.props.room.myUserId;
                 });
                 this.setState({ txnInfo: tranctionInfo });
-               
+            //    const issuer = holdings.reduce((token,issuer)=>{
+            //     if(token)
+            //    })
             };
             getTxnInfo();
         }
