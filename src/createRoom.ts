@@ -358,7 +358,11 @@ export default async function createRoom(client: MatrixClient, opts: IOpts): Pro
             // const language = 'en'; 
             // const baseUrl = client.baseUrl || 'https://matrix.org'; 
             // const widgetUrl = `https://tokengate-tapp-ci6k.vercel.app/#/?theme=$org.matrix.msc2873.client_theme&matrix_user_id=${encodeURIComponent(userId)}&matrix_display_name=${encodeURIComponent(displayName)}&matrix_avatar_url=${encodeURIComponent(avatarUrl)}&matrix_room_id=${encodeURIComponent(roomId)}&matrix_client_id=${encodeURIComponent(clientId)}&matrix_client_language=${encodeURIComponent(language)}&matrix_device_id=${encodeURIComponent(client.getDeviceId())}&matrix_base_url=${encodeURIComponent(baseUrl)}`;
-            const widgetUrl = 'https://tokengate-tapp-ci6k.vercel.app/#/?theme=$org.matrix.msc2873.client_theme';
+            
+            const isDevelopment = process.env.NODE_ENV === "development";
+            const widgetUrl = isDevelopment ? 
+            'http://3.65.216.69:3000/#/?theme=$org.matrix.msc2873.client_theme&matrix_user_id=$matrix_user_id&matrix_display_name=$matrix_display_name&matrix_avatar_url=$matrix_avatar_url&matrix_room_id=$matrix_room_id&matrix_client_id=$org.matrix.msc2873.client_id&matrix_client_language=$org.matrix.msc2873.client_language&matrix_device_id=$org.matrix.msc3819.matrix_device_id&matrix_base_url=$org.matrix.msc4039.matrix_base_url' 
+            : 'https://tokengate-tapp-ci6k.vercel.app/#/?theme=$org.matrix.msc2873.client_theme&matrix_user_id=$matrix_user_id&matrix_display_name=$matrix_display_name&matrix_avatar_url=$matrix_avatar_url&matrix_room_id=$matrix_room_id&matrix_client_id=$org.matrix.msc2873.client_id&matrix_client_language=$org.matrix.msc2873.client_language&matrix_device_id=$org.matrix.msc3819.matrix_device_id&matrix_base_url=$org.matrix.msc4039.matrix_base_url';
             
             await client.sendStateEvent(
                 roomId,
