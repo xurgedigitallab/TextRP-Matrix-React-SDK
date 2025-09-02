@@ -42,6 +42,8 @@ interface ISSOButtonProps extends IProps {
 
 const getIcon = (brand: IdentityProviderBrand | string): string | null => {
     switch (brand) {
+        case "Xumm":
+            return require(`../../../../res/img/xaman.png`);
         case IdentityProviderBrand.Apple:
             return require(`../../../../res/img/element-icons/brands/apple.svg`).default;
         case IdentityProviderBrand.Facebook:
@@ -107,6 +109,8 @@ const SSOButton: React.FC<ISSOButtonProps> = ({
 
     let icon: JSX.Element | undefined;
     let brandClass: string | undefined;
+    if(idp.name == "Xumm")
+        idp.brand = "Xumm"
     const brandIcon = idp?.brand ? getIcon(idp.brand) : null;
     if (idp?.brand && brandIcon) {
         const brandName = idp.brand.split(".").pop();
@@ -114,7 +118,7 @@ const SSOButton: React.FC<ISSOButtonProps> = ({
         icon = <img src={brandIcon} height="24" width="24" alt={brandName} />;
     } else if (typeof idp?.icon === "string" && idp.icon.startsWith("mxc://")) {
         const src = mediaFromMxc(idp.icon, matrixClient).getSquareThumbnailHttp(24) ?? undefined;
-        icon = <img src={src} height="24" width="24" alt={idp.name} />;
+        icon = <img src={src} height="48" width="48" alt={idp.name} />;
     }
 
     const brandPart = brandClass ? { [brandClass]: brandClass } : undefined;
