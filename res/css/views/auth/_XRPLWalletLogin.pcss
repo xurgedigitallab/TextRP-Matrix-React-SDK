@@ -1,0 +1,373 @@
+/*
+Copyright 2024 TextRP Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+.mx_XRPLWalletLogin {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.mx_XRPLWalletLogin_container {
+    background: $background;
+    border-radius: 16px;
+    padding: 32px 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid $quinary-content;
+}
+
+/* Header Section */
+.mx_XRPLWalletLogin_header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.mx_XRPLWalletLogin_logo {
+    margin-bottom: 16px;
+}
+
+.mx_XRPLWalletLogin_logoIcon {
+    font-size: 48px;
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.mx_XRPLWalletLogin_title {
+    margin: 0 0 12px 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: $primary-content;
+    line-height: 1.2;
+}
+
+.mx_XRPLWalletLogin_subtitle {
+    margin: 0;
+    font-size: 16px;
+    color: $secondary-content;
+    line-height: 1.5;
+}
+
+/* Error Banner */
+.mx_XRPLWalletLogin_errorBanner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.mx_XRPLWalletLogin_errorIcon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.mx_XRPLWalletLogin_errorContent {
+    flex: 1;
+    
+    h4 {
+        margin: 0 0 4px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #dc2626;
+    }
+    
+    p {
+        margin: 0;
+        font-size: 14px;
+        color: #7f1d1d;
+        line-height: 1.4;
+    }
+}
+
+/* Wallet Cards */
+.mx_XRPLWalletLogin_wallets {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.mx_XRPLWalletLogin_card {
+    width: 100%;
+}
+
+.mx_XRPLWalletLogin_cardButton {
+    width: 100%;
+    padding: 0;
+    border: 2px solid $input-border-color;
+    border-radius: 16px;
+    background: $background;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+
+    &:hover:not(:disabled) {
+        border-color: $accent;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+    }
+}
+
+.mx_XRPLWalletLogin_cardContent {
+    display: flex;
+    align-items: center;
+    padding: 20px 24px;
+    gap: 16px;
+}
+
+.mx_XRPLWalletLogin_cardIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: $quaternary-content;
+    flex-shrink: 0;
+}
+
+.mx_XRPLWalletLogin_emoji {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.mx_XRPLWalletLogin_cardInfo {
+    flex: 1;
+    text-align: left;
+}
+
+.mx_XRPLWalletLogin_cardTitle {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: $primary-content;
+    line-height: 1.2;
+}
+
+.mx_XRPLWalletLogin_cardDescription {
+    margin: 0;
+    font-size: 14px;
+    color: $secondary-content;
+    line-height: 1.3;
+}
+
+.mx_XRPLWalletLogin_cardArrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mx_XRPLWalletLogin_arrow {
+    font-size: 20px;
+    color: $secondary-content;
+    transition: transform 0.2s ease;
+}
+
+.mx_XRPLWalletLogin_cardButton:hover:not(:disabled) .mx_XRPLWalletLogin_arrow {
+    transform: translateX(4px);
+}
+
+.mx_XRPLWalletLogin_loadingText {
+    font-size: 14px;
+    color: $secondary-content;
+    font-weight: 500;
+}
+
+/* Wallet-specific styling */
+.mx_XRPLWalletLogin_xumm {
+    &:hover:not(:disabled) {
+        border-color: #3052ff;
+        background: linear-gradient(135deg, #3052ff08, #3052ff04);
+    }
+    
+    .mx_XRPLWalletLogin_cardIcon {
+        background: linear-gradient(135deg, #3052ff, #4461ff);
+    }
+}
+
+.mx_XRPLWalletLogin_gem {
+    &:hover:not(:disabled) {
+        border-color: #00d4aa;
+        background: linear-gradient(135deg, #00d4aa08, #00d4aa04);
+    }
+    
+    .mx_XRPLWalletLogin_cardIcon {
+        background: linear-gradient(135deg, #00d4aa, #00e6c0);
+    }
+}
+
+.mx_XRPLWalletLogin_crossmark {
+    &:hover:not(:disabled) {
+        border-color: #ff6b6b;
+        background: linear-gradient(135deg, #ff6b6b08, #ff6b6b04);
+    }
+    
+    .mx_XRPLWalletLogin_cardIcon {
+        background: linear-gradient(135deg, #ff6b6b, #ff8080);
+    }
+}
+
+/* Footer Section */
+.mx_XRPLWalletLogin_footer {
+    border-top: 1px solid $quinary-content;
+    padding-top: 24px;
+    text-align: center;
+}
+
+.mx_XRPLWalletLogin_security {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.mx_XRPLWalletLogin_securityIcon {
+    font-size: 16px;
+}
+
+.mx_XRPLWalletLogin_securityText {
+    margin: 0;
+    font-size: 14px;
+    color: $secondary-content;
+    font-weight: 500;
+}
+
+.mx_XRPLWalletLogin_help {
+    margin-top: 16px;
+}
+
+.mx_XRPLWalletLogin_helpText {
+    margin: 0;
+    font-size: 14px;
+    color: $tertiary-content;
+    line-height: 1.4;
+}
+
+.mx_XRPLWalletLogin_helpLink {
+    color: $accent;
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 4px;
+    
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .mx_XRPLWalletLogin_container {
+        padding: 24px 20px;
+        border-radius: 12px;
+    }
+    
+    .mx_XRPLWalletLogin_title {
+        font-size: 24px;
+    }
+    
+    .mx_XRPLWalletLogin_subtitle {
+        font-size: 15px;
+    }
+    
+    .mx_XRPLWalletLogin_cardContent {
+        padding: 16px 20px;
+        gap: 12px;
+    }
+    
+    .mx_XRPLWalletLogin_cardIcon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .mx_XRPLWalletLogin_emoji {
+        font-size: 20px;
+    }
+    
+    .mx_XRPLWalletLogin_cardTitle {
+        font-size: 16px;
+    }
+    
+    .mx_XRPLWalletLogin_cardDescription {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 320px) {
+    .mx_XRPLWalletLogin_container {
+        padding: 20px 16px;
+    }
+    
+    .mx_XRPLWalletLogin_cardContent {
+        padding: 14px 16px;
+        gap: 10px;
+    }
+}
+
+/* Dark theme support */
+.mx_theme_dark {
+    .mx_XRPLWalletLogin_container {
+        background: $header-panel-bg-color;
+        border-color: $input-border-color;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .mx_XRPLWalletLogin_cardButton {
+        background: $header-panel-bg-color;
+        border-color: $input-border-color;
+        
+        &:hover:not(:disabled) {
+            background: $quinary-content;
+        }
+    }
+    
+    .mx_XRPLWalletLogin_errorBanner {
+        background: #422006;
+        border-color: #92400e;
+        
+        .mx_XRPLWalletLogin_errorContent {
+            h4 {
+                color: #fbbf24;
+            }
+            
+            p {
+                color: #d97706;
+            }
+        }
+    }
+}
