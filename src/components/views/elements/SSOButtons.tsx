@@ -92,7 +92,7 @@ const SSOButton: React.FC<ISSOButtonProps> = ({
 }) => {
     let label: string;
     if (idp) {
-        label = _t("Continue with %(provider)s", { provider: idp.name });
+        label = _t("Login with %(provider)s", { provider: idp.name == "Xumm" ? "Xaman" : idp.name });
     } else if (DELEGATED_OIDC_COMPATIBILITY.findIn<boolean>(flow)) {
         label = _t("Continue");
     } else {

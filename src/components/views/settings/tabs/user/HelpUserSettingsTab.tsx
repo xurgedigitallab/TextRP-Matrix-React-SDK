@@ -150,7 +150,7 @@ export default class HelpUserSettingsTab extends React.Component<IProps, IState>
                                 {
                                     photo: (sub) => (
                                         <ExternalLink
-                                            href="themes/element/img/backgrounds/lake.jpg"
+                                            href="themes/textrp/img/backgrounds/bg.png"
                                             rel="noreferrer noopener"
                                             target="_blank"
                                         >

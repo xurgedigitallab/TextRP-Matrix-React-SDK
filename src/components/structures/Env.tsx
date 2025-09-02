@@ -28,7 +28,7 @@ export default function Env() {
                 border: "2px solid purple"
             }}
         >
-            <span>{env === "xrplMain" ? "XRPL LABS MAINNET" : env === "xrplDev" ? "XRPL LABS DEVNET" : "XRPL LABS TESTNET"}</span>
+            <span>{env === "xrplMain" ? "XRPL MAINNET" : env === "xrplDev" ? "XRPL DEVNET" : "XRPL TESTNET"}</span>
         </div>
     );
 }
