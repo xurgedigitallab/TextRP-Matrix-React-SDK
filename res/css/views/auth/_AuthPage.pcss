@@ -50,3 +50,46 @@ limitations under the License.
         margin-top: auto !important;
     }
 }
+
+/* Separator for different login methods */
+.mx_AuthPage_separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 24px 0;
+
+    &::before,
+    &::after {
+        content: "";
+        flex: 1;
+        border-bottom: 1px solid $quinary-content;
+    }
+
+    span {
+        padding: 0 16px;
+        color: $secondary-content;
+        font-size: $font-14px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    &:not(:empty) {
+        &::before {
+            margin-right: 0;
+        }
+        &::after {
+            margin-left: 0;
+        }
+    }
+}
+
+/* Dark theme support */
+.mx_theme_dark {
+    .mx_AuthPage_separator {
+        &::before,
+        &::after {
+            border-color: $header-panel-bg-color;
+        }
+    }
+}
