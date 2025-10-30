@@ -411,6 +411,16 @@ class MatrixClientPegClass implements IMatrixClientPeg {
     }
 
     private createClient(creds: IMatrixClientCreds): void {
+        console.log("🔷🔷🔷 ========== CREATE MATRIX CLIENT ========== 🔷🔷🔷");
+        console.log("🔷 Credentials received:");
+        console.log("🔷   - homeserverUrl:", creds.homeserverUrl);
+        console.log("🔷   - identityServerUrl:", creds.identityServerUrl);
+        console.log("🔷   - userId:", creds.userId);
+        console.log("🔷   - deviceId:", creds.deviceId);
+        console.log("🔷   - accessToken (first 20):", creds.accessToken?.substring(0, 20));
+        console.log("🔷 Creating client with baseUrl:", creds.homeserverUrl);
+        console.log("🔷🔷🔷 ============================================== 🔷🔷🔷");
+        
         const opts: ICreateClientOpts = {
             baseUrl: creds.homeserverUrl,
             idBaseUrl: creds.identityServerUrl,

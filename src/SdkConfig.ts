@@ -39,8 +39,8 @@ export const DEFAULTS: DeepReadonly<IConfigOptions> = {
         participant_limit: 8,
         brand: "TextRP Call",
     },
-    //backend_url: "http://localhost:8080",
-    backend_url: "https://backend-prod.textrp.io",
+    backend_url: "https://backend-dev.textrp.io",
+    // backend_url: "https://backend-prod.textrp.io",
     xrpl_bridge_bot: "@r8K8gtpqaq2yzRNuPWVSY16t5tfvSDrhq:synapse.textrp.io",
     // @ts-ignore - we deliberately use the camelCase version here so we trigger
     // the fallback behaviour. If we used the snake_case version then we'd break

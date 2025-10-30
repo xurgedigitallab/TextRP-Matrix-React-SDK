@@ -1,21 +1,6 @@
-/*
-Copyright 2019 New Vector Ltd
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 import React from "react";
 import classNames from "classnames";
+import { RouteComponentProps } from "react-router-dom";
 
 import SdkConfig from "../../../SdkConfig";
 import AuthPage from "./AuthPage";
@@ -25,14 +10,56 @@ import { UIFeature } from "../../../settings/UIFeature";
 import LanguageSelector from "./LanguageSelector";
 import EmbeddedPage from "../../structures/EmbeddedPage";
 import { MATRIX_LOGO_HTML } from "../../structures/static-page-vars";
+import XamanLogin from "./XamanLogin";
 
 // translatable strings for Welcome pages
 _td("Sign in with SSO");
+_td("Sign in with Xaman");
 
-interface IProps {}
+interface IProps extends RouteComponentProps {}
 
-export default class Welcome extends React.PureComponent<IProps> {
+interface IState {
+    showXamanLogin: boolean;
+}
+
+export default class Welcome extends React.PureComponent<IProps, IState> {
+    constructor(props: IProps) {
+        super(props);
+        this.state = {
+            showXamanLogin: false
+        };
+    }
+
+    componentDidMount() {
+        // Check if we should show Xaman login directly
+        if (window.location.hash === "#/xaman_login") {
+            this.setState({ showXamanLogin: true });
+        }
+    }
+
+    private onXamanLoginSuccess = (credentials: any) => {
+        // Redirect to home after successful login
+        window.location.href = "/";
+    };
+
+    private onXamanCancel = () => {
+        this.setState({ showXamanLogin: false });
+        window.location.hash = "#/welcome";
+    };
+
     public render(): React.ReactNode {
+        if (this.state.showXamanLogin) {
+            return (
+                <AuthPage>
+                    <XamanLogin
+                        matrixClient={null} // Will be created in component
+                        onLoginSuccess={this.onXamanLoginSuccess}
+                        onCancel={this.onXamanCancel}
+                    />
+                </AuthPage>
+            );
+        }
+
         const pagesConfig = SdkConfig.getObject("embedded_pages");
         let pageUrl: string | undefined;
         if (pagesConfig) {
@@ -47,11 +74,11 @@ export default class Welcome extends React.PureComponent<IProps> {
         };
 
         if (!pageUrl) {
-            // Fall back to default and replace $logoUrl in welcome.html
+            // Use custom welcome page with Xaman option
             const brandingConfig = SdkConfig.getObject("branding");
             const logoUrl = brandingConfig?.get("auth_header_logo_url") ?? "themes/textrp/img/logos/textrp-logo.svg";
             replaceMap["$logoUrl"] = logoUrl;
-            pageUrl = "welcome.html";
+            pageUrl = "welcome_xaman.html";
         }
 
         return (

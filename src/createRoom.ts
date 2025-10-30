@@ -357,22 +357,22 @@ export default async function createRoom(client: MatrixClient, opts: IOpts): Pro
             // const clientId = client.getDeviceId(); 
             // const language = 'en'; 
             // const baseUrl = client.baseUrl || 'https://matrix.org'; 
-            //const widgetUrl = 'https://tokengate-dev.textrp.io/#/?theme=$org.matrix.msc2873.client_theme&matrix_user_id=$matrix_user_id&matrix_display_name=$matrix_display_name&matrix_avatar_url=$matrix_avatar_url&matrix_room_id=$matrix_room>';
+            const widgetUrl = 'https://tokengate-dev.textrp.io/#/?theme=$org.matrix.msc2873.client_theme&matrix_user_id=$matrix_user_id&matrix_display_name=$matrix_display_name&matrix_avatar_url=$matrix_avatar_url&matrix_room_id=$matrix_room>';
             //const widgetUrl = `https://3.65.216.69:3000/#/?theme=$org.matrix.msc2873.client_theme&matrix_user_id=$matrix_user_id&matrix_display_name=$matrix_display_name&matrix_avatar_url=$matrix_avatar_url&matrix_room_id=$matrix_room_id&matrix_client_id=$org.matrix.msc2873.client_id&matrix_client_language=$org.matrix.msc2873.client_language&matrix_device_id=$org.matrix.msc3819.matrix_device_id&matrix_base_url=$org.matrix.msc4039.matrix_base_url`
             
-            // await client.sendStateEvent(
-            //     roomId,
-            //     "im.vector.modular.widgets",
-            //     {
-            //         id: "tokengate-widget",
-            //         type: "m.custom",
-            //         url: widgetUrl,        
-            //         name: "NFT Gate",
-            //         data: {},
-            //         creatorUserId: client.getUserId(),
-            //     },
-            //     "tokengate-widget",
-            // );
+            await client.sendStateEvent(
+                roomId,
+                "im.vector.modular.widgets",
+                {
+                    id: "tokengate-widget",
+                    type: "m.custom",
+                    url: widgetUrl,        
+                    name: "NFT Gate",
+                    data: {},
+                    creatorUserId: client.getUserId(),
+                },
+                "tokengate-widget",
+            );
         })
         .then(
             function () {
