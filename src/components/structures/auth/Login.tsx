@@ -42,6 +42,7 @@ import SdkConfig from "../../../SdkConfig";
 
 // Add to imports
 import XamanLogin from "../../views/auth/XamanLogin";
+import WalletConnectLogin from "../../views/auth/WalletConnectLogin";
 
 // These are used in several places, and come from the js-sdk's autodiscovery
 // stuff. We define them here so that they'll be picked up by i18n.
@@ -89,7 +90,7 @@ interface IState {
     canTryLogin: boolean;
 
     flows?: LoginFlow[];
-    loginView?: 'welcome' | 'default' | 'xaman';
+    loginView?: 'welcome' | 'default' | 'xaman' | 'walletconnect';
 
     // used for preserving form values when changing homeserver
     username: string;
@@ -466,12 +467,14 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
             });
 
             // Get wallet connect URL - Use Apache proxy to wallet service
+            // Apache config: ProxyPass /wallet-api/ http://localhost:3000/api/
+            // So /wallet-api/matrix/qr-init becomes http://localhost:3000/api/matrix/qr-init
             const walletConnectUrl = `${window.location.origin}/wallet-api`;
             
             console.log('🔗 Wallet Connect URL:', walletConnectUrl);
             
-            // Call API to get QR code data
-            const response = await fetch(`${walletConnectUrl}/api/matrix/qr-init`, {
+            // Call API to get QR code data (no /api/ prefix - Apache adds it)
+            const response = await fetch(`${walletConnectUrl}/matrix/qr-init`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -567,7 +570,7 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
             try {
         // include correlation id if we have one to aid tracing in server logs
         const correlationParam = (this as any).state?.correlationId ? `&correlation_id=${encodeURIComponent((this as any).state.correlationId)}` : '';
-        const response = await fetch(`${walletConnectUrl}/api/matrix/qr-status?uuid=${uuid}${correlationParam}`);
+        const response = await fetch(`${walletConnectUrl}/matrix/qr-status?uuid=${uuid}${correlationParam}`);
         const data = await response.json();
 
         console.log('🔄 Poll status:', data.status, 'correlation=', (this as any).state?.correlationId || data.correlation_id || null);
@@ -596,7 +599,7 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
             this.setState({ qrStatus: 'signed' });
 
             // Fetch the authentication data (JWT or access token)
-            const response = await fetch(`${walletConnectUrl}/api/matrix/qr-status?uuid=${uuid}`);
+            const response = await fetch(`${walletConnectUrl}/matrix/qr-status?uuid=${uuid}`);
                 const data = await response.json();
 
             console.log('🔐 Authentication data received, method:', data.method, 'correlation=', data.correlation_id || (this as any).state?.correlationId || null);
@@ -815,7 +818,42 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                     >
                         <img src={require("../../../../res/img/xaman.png")} alt="Xaman" style={{width: "32px", height: "32px"}} />
                         <span>Continue with Xaman Wallet</span>
-                    </button>                    
+                    </button>
+                    
+                    <button
+                        className="wallet-button walletconnect"
+                        onClick={() => this.setState({ loginView: 'walletconnect' })}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "1rem",
+                            padding: "1.5rem 2rem",
+                            border: "2px solid #3B99FC",
+                            borderRadius: "8px",
+                            background: "white",
+                            cursor: "pointer",
+                            fontSize: "1.2rem",
+                            fontWeight: "600",
+                            color: "#333",
+                            transition: "all 0.2s ease"
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.background = "#3B99FC";
+                            e.currentTarget.style.color = "white";
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.background = "white";
+                            e.currentTarget.style.color = "#333";
+                        }}
+                    >
+                        <span style={{fontSize: "28px"}}>🔗</span>
+                        <div style={{display: "flex", flexDirection: "column", alignItems: "flex-start"}}>
+                            <span>WalletConnect</span>
+                            <span style={{fontSize: "0.75rem", fontWeight: "400", opacity: 0.8}}>Joey, Atomic, Bifrost & more</span>
+                        </div>
+                    </button>
+                    
                     {/* Placeholder for future wallet support - GEM, Crossmark, etc. */}
                 </div>
                 
@@ -843,6 +881,24 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         );
     };
 
+    private renderWalletConnectLogin = (): JSX.Element => {
+        const matrixClient: any = this.loginLogic.createTemporaryClient();
+        return (
+            <WalletConnectLogin
+                matrixClient={matrixClient}
+                loginLogic={this.loginLogic}
+                onLoginSuccess={this.onLoginSuccess}
+                onCancel={this.onWalletConnectCancel}
+            />
+        );
+    };
+
+    private onWalletConnectCancel = (): void => {
+        this.setState({
+            loginView: 'welcome'
+        });
+    };
+
     public renderLoginComponentForFlows(): ReactNode {
         if (!this.state.flows) return null;
 
@@ -854,6 +910,11 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         // If we're in Xaman login view, show the Xaman component
         if (this.state.loginView === 'xaman') {
             return this.renderXamanLogin();
+        }
+
+        // If we're in WalletConnect login view, show the WalletConnect component
+        if (this.state.loginView === 'walletconnect') {
+            return this.renderWalletConnectLogin();
         }
 
         // Check if JWT flow is available for Xaman login option

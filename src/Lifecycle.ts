@@ -904,7 +904,26 @@ async function clearStorage(opts?: { deleteEverything?: boolean }): Promise<void
         }
     }
 
+    // Preserve WalletConnect session data during login (before clearing sessionStorage)
+    const wcSessionTopic = window.sessionStorage?.getItem('wc_session_topic');
+    const walletAddress = window.sessionStorage?.getItem('wallet_address');
+    const walletName = window.sessionStorage?.getItem('wallet_name');
+
     window.sessionStorage?.clear();
+
+    // Restore WalletConnect session data after clearing (only during login, not during deleteEverything/logout)
+    if (!opts?.deleteEverything && window.sessionStorage) {
+        if (wcSessionTopic) {
+            window.sessionStorage.setItem('wc_session_topic', wcSessionTopic);
+            logger.log('🔄 Preserved WalletConnect session ID during login clearStorage:', wcSessionTopic);
+        }
+        if (walletAddress) {
+            window.sessionStorage.setItem('wallet_address', walletAddress);
+        }
+        if (walletName) {
+            window.sessionStorage.setItem('wallet_name', walletName);
+        }
+    }
 
     // create a temporary client to clear out the persistent stores.
     const cli = createMatrixClient({

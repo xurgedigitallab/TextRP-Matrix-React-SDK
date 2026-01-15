@@ -430,7 +430,7 @@ export default class UserMenu extends React.Component<IProps, IState> {
         const position = this.props.isPanelCollapsed
             ? toRightOf(this.state.contextMenuPosition)
             : below(this.state.contextMenuPosition);
-
+            
         return (
             <IconizedContextMenu {...position} onFinished={this.onCloseMenu} className="mx_UserMenu_contextMenu">
                 <div className="mx_UserMenu_contextMenu_header">

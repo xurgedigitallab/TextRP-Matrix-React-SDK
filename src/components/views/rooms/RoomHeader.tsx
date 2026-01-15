@@ -49,6 +49,7 @@ import { WHATSAPP, VIDEO_CALL, VOICE_CALL } from "../../../FeaturesConstant";
 import { QrReader } from "react-qr-reader"; // make sure the library import is correct
 import RoomTopic from "../elements/RoomTopic";
 import { isComponentEnabled } from "../../../service";
+// import { SignClient } from "@walletconnect/sign-client"; // Removed - will load dynamically
 import RoomName from "../elements/RoomName";
 import { E2EStatus } from "../../../utils/ShieldUtils";
 import { IOOBData } from "../../../stores/ThreepidInviteStore";
@@ -615,6 +616,97 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
           
         }
     }, [props]);
+
+    // Sign and submit WalletConnect transaction
+    const signAndSubmitWalletConnectTransaction = async (transaction: any, paymentId: number) => {
+        try {
+            console.log("Signing WalletConnect transaction:", transaction);
+
+            // Get WalletConnect session from sessionStorage
+            const wcSessionTopic = sessionStorage.getItem('wc_session_topic');
+            if (!wcSessionTopic) {
+                throw new Error('WalletConnect session not found. Please reconnect your wallet.');
+            }
+
+            // Get WalletConnect project ID from environment or config
+            const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'b7e531d70b844ce082816ab8a3e75b9a';
+
+            // Dynamically import SignClient to avoid webpack issues
+            const { SignClient } = await import('@walletconnect/sign-client');
+
+            // Initialize SignClient
+            const signClient = await SignClient.init({
+                projectId,
+                metadata: {
+                    name: 'TextRP',
+                    description: 'TextRP Payment',
+                    url: window.location.origin,
+                    icons: [`${window.location.origin}/favicon.ico`]
+                }
+            });
+
+            // Get active session
+            const sessions = signClient.session.getAll();
+            const session = sessions.find(s => s.topic === wcSessionTopic);
+            
+            if (!session) {
+                throw new Error('WalletConnect session expired. Please reconnect your wallet.');
+            }
+
+            console.log("Found WalletConnect session:", session);
+
+            // Determine chain ID (mainnet or testnet)
+            const chainId = 'xrpl:0'; // 0 for mainnet, 1 for testnet
+
+            // Request signature from wallet
+            console.log("Requesting signature from wallet...");
+            const result = await signClient.request({
+                topic: session.topic,
+                chainId: chainId,
+                request: {
+                    method: 'xrpl_signTransaction',
+                    params: {
+                        tx_json: transaction
+                    }
+                }
+            });
+
+            console.log("Transaction signed:", result);
+
+            // Submit signed transaction to backend
+            const submitRes = await axios.post(`${SdkConfig.get("backend_url")}/payment/submit-signed`, {
+                signed_transaction: result.tx_blob || result,
+                payment_id: paymentId
+            });
+
+            console.log("Transaction submitted:", submitRes.data);
+
+            if (submitRes.data.success) {
+                alert(`Payment successful! Transaction hash: ${submitRes.data.transaction_hash}`);
+                
+                // Send success message to chat
+                if (notify) {
+                    sendMessageOnPaymentSuccess(submitRes.data.transaction_hash);
+                }
+            } else {
+                throw new Error(submitRes.data.error || 'Transaction failed');
+            }
+
+        } catch (error) {
+            console.error("Error signing WalletConnect transaction:", error);
+            
+            // Provide more helpful error messages
+            if (error.message?.includes('session not found')) {
+                alert('Your wallet session has expired. Please reconnect your wallet and try again.');
+            } else if (error.message?.includes('User rejected')) {
+                alert('Transaction was rejected in your wallet.');
+            } else {
+                alert(`Failed to sign transaction: ${error.message}`);
+            }
+            throw error;
+        }
+    };
+
     const makeTxn = async () => {
         try {
             const res = await axios.post(`${SdkConfig.get("backend_url")}/accounts/makeTxn/${amount}`, {
@@ -627,12 +719,21 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                 DestinationTag: Number(destinationTag),
                 SourceTag: Number(sourceTag),
             });
-            console.log("data", res?.data?.data);
-            setQrData(res?.data?.data);
-            setShowQRModal(true);
-            // window.open(res?.data?.data?.next?.always, "_blank");
+            console.log("data", res?.data);
+
+            // Check if this is a WalletConnect payment or Xaman payment
+            if (res?.data?.wallet_provider === 'walletconnect') {
+                // WalletConnect flow - sign transaction client-side
+                await signAndSubmitWalletConnectTransaction(res.data.transaction, res.data.payment_id);
+            } else {
+                // Xaman flow - show QR code modal
+                setQrData(res?.data?.data);
+                setShowQRModal(true);
+                // window.open(res?.data?.data?.next?.always, "_blank");
+            }
         } catch (e) {
-            console.error("ERROR handleBuyCredits", e);
+            console.error("ERROR makeTxn", e);
+            alert(`Transaction failed: ${e.message}`);
         }
     };
     const getWebkitBackground = (value) => {
@@ -1235,7 +1336,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
             });
             const getTxnInfo = async () => {
                 let tranctionInfo = {};
-
+                
                 const { data: address1 } = await axios.post(`${SdkConfig.get("backend_url")}/my-address`, {
                     address: this.props.room.myUserId,
                 });

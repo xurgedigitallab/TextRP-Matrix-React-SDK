@@ -213,7 +213,7 @@ export async function sendLoginRequest(
         baseUrl: hsUrl,
         idBaseUrl: isUrl,
     });
-
+    
     const data = await client.login(loginType, loginParams);
     
     console.log("🔶 Login response data:", data);

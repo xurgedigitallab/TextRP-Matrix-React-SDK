@@ -66,6 +66,8 @@
         "@sentry/browser": "^7.0.0",
         "@sentry/tracing": "^7.0.0",
         "@testing-library/react-hooks": "^8.0.1",
+        "@walletconnect/sign-client": "^2.23.0",
+        "@walletconnect/types": "^2.23.0",
         "antd": "^5.11.1",
         "await-lock": "^2.1.0",
         "axios": "^1.4.0",
