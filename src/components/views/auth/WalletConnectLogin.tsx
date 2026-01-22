@@ -27,6 +27,19 @@ interface IProps {
     loginLogic: Login;
     onLoginSuccess: (credentials: any) => void;
     onCancel: () => void;
+    onAuthDataReceived?: (authData: {
+        method: 'jwt' | 'direct';
+        token?: string;
+        access_token?: string;
+        homeserver: string;
+        user_id: string;
+        device_id?: string;
+        address: string;
+        is_new_user: boolean;
+        display_name: string | null;
+        wallet_provider: string;
+        wallet_name: string;
+    }) => void;
 }
 
 interface IState {
@@ -253,7 +266,7 @@ export default class WalletConnectLogin extends React.Component<IProps, IState> 
                 this.addLog(`💼 Wallet Address: ${data.wallet_address}`);
                 this.addLog(`📱 Wallet Name: ${data.wallet_name}`);
                 this.addLog(`🎫 JWT Token received (length: ${data.token.length})`);
-                
+
                 // ============================================================
                 // CRITICAL FIX: Use session_topic from response (WalletConnect topic)
                 // NOT the random sessionId from init response!
@@ -262,7 +275,7 @@ export default class WalletConnectLogin extends React.Component<IProps, IState> 
                 this.addLog(`📋 STEP 1: Checking for WalletConnect session topic...`);
                 this.addLog(`📋 session_topic from response = ${data.session_topic || 'NULL/UNDEFINED'}`);
                 this.addLog(`📋 fallback sessionId from state = ${this.state.sessionId || 'NULL/UNDEFINED'}`);
-                
+
                 // Store WalletConnect session topic for later use (payments, etc.)
                 if (sessionTopic) {
                     this.addLog(`✅ STEP 2: sessionTopic exists! Storing in sessionStorage...`);
@@ -292,20 +305,57 @@ export default class WalletConnectLogin extends React.Component<IProps, IState> 
                         phase: this.state.phase
                     })}`);
                 }
-                
+
                 // Stop polling
                 if (this.pollInterval) {
                     clearInterval(this.pollInterval);
                     this.pollInterval = null;
                 }
-                
+
                 this.setState({
                     phase: 'processing',
                     walletAddress: data.wallet_address,
                     walletName: data.wallet_name
                 });
-                
-                await this.loginToMatrix(data.token, data.wallet_address, data.wallet_name);
+
+                // If onAuthDataReceived callback is provided, use confirmation flow
+                // Otherwise fall back to direct login (backwards compatibility)
+                if (this.props.onAuthDataReceived) {
+                    this.addLog(`🔄 Using confirmation page flow...`);
+
+                    // Smart fallback for is_new_user if not explicitly set
+                    let isNewUser = data.is_new_user;
+                    if (isNewUser === undefined || isNewUser === null) {
+                        if (data.method === 'direct') {
+                            isNewUser = false; // Direct login means existing user
+                        } else if (data.method === 'jwt' && !data.display_name) {
+                            isNewUser = true; // JWT without display name = new user
+                        } else if (data.method === 'jwt' && data.display_name) {
+                            isNewUser = false; // JWT with display name = existing user (fallback)
+                        } else {
+                            isNewUser = data.method === 'jwt';
+                        }
+                        this.addLog(`🔄 is_new_user fallback: method=${data.method}, display_name=${data.display_name || 'null'} => ${isNewUser}`);
+                    }
+
+                    this.props.onAuthDataReceived({
+                        method: data.method || 'jwt',
+                        token: data.token,
+                        access_token: data.access_token,
+                        homeserver: data.homeserver,
+                        user_id: data.user_id,
+                        device_id: data.device_id,
+                        address: data.wallet_address,
+                        is_new_user: isNewUser,
+                        display_name: data.display_name || null,
+                        wallet_provider: 'walletconnect',
+                        wallet_name: data.wallet_name || 'WalletConnect Wallet'
+                    });
+                } else {
+                    // Fallback to direct login for backwards compatibility
+                    this.addLog(`🔄 Using direct login flow (no confirmation callback)...`);
+                    await this.loginToMatrix(data.token || data.access_token, data.wallet_address, data.wallet_name);
+                }
                 return;
             }
             
