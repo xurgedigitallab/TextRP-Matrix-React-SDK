@@ -92,6 +92,18 @@ export interface IConfigOptions {
     setting_defaults?: Record<string, any>; // <SettingName, Value>
     backend_url: string;
     xrpl_bridge_bot: string,
+    payment_verification?: {
+        status_url?: string;
+        status_path?: string;
+        request_method?: "GET" | "POST";
+        request_timeout_ms?: number;
+        polling_interval_ms?: number;
+        timeout_ms?: number;
+        max_retries?: number;
+        success_statuses?: string[];
+        failure_statuses?: string[];
+        pending_statuses?: string[];
+    };
     integrations_ui_url?: string;
     integrations_rest_url?: string;
     integrations_widgets_urls?: string[];

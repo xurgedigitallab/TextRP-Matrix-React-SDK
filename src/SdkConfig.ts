@@ -42,6 +42,18 @@ export const DEFAULTS: DeepReadonly<IConfigOptions> = {
     //backend_url: "http://localhost:8080",
     backend_url: "https://backend-prod.textrp.io",
     xrpl_bridge_bot: "@r8K8gtpqaq2yzRNuPWVSY16t5tfvSDrhq:synapse.textrp.io",
+    payment_verification: {
+        status_url: "",
+        status_path: "/payments/verify",
+        request_method: "POST",
+        request_timeout_ms: 10000,
+        polling_interval_ms: 3000,
+        timeout_ms: 120000,
+        max_retries: 40,
+        success_statuses: ["success", "succeeded", "confirmed"],
+        failure_statuses: ["failed", "reverted", "dropped", "expired"],
+        pending_statuses: ["pending", "submitted", "queued"],
+    },
     // @ts-ignore - we deliberately use the camelCase version here so we trigger
     // the fallback behaviour. If we used the snake_case version then we'd break
     // everyone's config which has the camelCase property because our default would

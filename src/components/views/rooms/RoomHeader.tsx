@@ -28,6 +28,7 @@ import { TooltipOption } from "../dialogs/spotlight/TooltipOption";
 import axios from "axios";
 import { copyPlaintext } from "../../../utils/strings";
 import { Tabs, Tab, TabList, TabPanel } from "react-tabs";
+import escapeHtml from "escape-html";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
 import { CallType } from "matrix-js-sdk/src/webrtc/call";
 import { ISearchResults } from "matrix-js-sdk/src/@types/search";
@@ -93,6 +94,11 @@ import { UIComponent } from "../../../settings/UIFeature";
 import ResizeNotifier from "../../../utils/ResizeNotifier";
 import { MatrixClientPeg } from "../../../MatrixClientPeg";
 import StyledCheckbox from "../elements/StyledCheckbox";
+import {
+    claimPaymentMessageSend,
+    finalizePaymentMessageSend,
+    verifyTransactionOnLedger,
+} from "../../../utils/paymentVerification";
 
 class DisabledWithReason {
     public constructor(public readonly reason: string) {}
@@ -159,6 +165,59 @@ interface VideoCallButtonProps {
     behavior: DisabledWithReason | "legacy_or_jitsi" | "element" | "jitsi_or_element";
 }
 
+const isMatrixUserId = (value: string): boolean => /^@[^:]+:.+$/u.test(value);
+
+const buildPaymentMessageContent = ({
+    amount,
+    currency,
+    destination,
+    explorer,
+    txId,
+}: {
+    amount: number;
+    currency: string;
+    destination?: string;
+    explorer?: string;
+    txId?: string;
+}) => {
+    const amountText = amount.toFixed(2);
+    const destinationLabel = destination
+        ? destination.startsWith("@")
+            ? destination
+            : `@${destination}`
+        : "recipient";
+    const escapedDestination = escapeHtml(destinationLabel);
+    const transactionUrl = explorer && txId ? `${explorer}/${txId}` : undefined;
+
+    let formattedDestination = escapedDestination;
+    const mentions: { user_ids?: string[] } = {};
+    if (destination && isMatrixUserId(destinationLabel)) {
+        const mentionUrl = `https://matrix.to/#/${encodeURIComponent(destinationLabel)}`;
+        formattedDestination = `<a href="${mentionUrl}">${escapedDestination}</a>`;
+        mentions.user_ids = [destinationLabel];
+    }
+
+    const formattedBody =
+        `Sent <strong>${escapeHtml(amountText)} ${escapeHtml(currency)}</strong> to ${formattedDestination}` +
+        (transactionUrl
+            ? ` <a href="${escapeHtml(transactionUrl)}" target="_blank" rel="noopener noreferrer">View transaction</a>`
+            : "");
+
+    const content: Record<string, unknown> = {
+        msgtype: "m.notice",
+        body: `Sent ${amountText} ${currency} to ${destinationLabel}`,
+        format: "org.matrix.custom.html",
+        formatted_body: formattedBody,
+    };
+
+    if (mentions.user_ids?.length) {
+        // Intentional mentions need an explicit list to trigger Matrix notifications.
+        content["org.matrix.msc3952.mentions"] = mentions;
+    }
+
+    return content;
+};
+
 function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,currency,sender,explorer }) {
     const [qrPng, setQrPng] = useState("");
     const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -192,7 +251,26 @@ function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,c
                     }),
                 }); 
                 if(checkbox){
-                    await sendMessageOnPaymentSuccess(room,data?.txid);
+                    // Only post to chat after the backend confirms the ledger result.
+                    const verification = await verifyTransactionOnLedger({
+                        txId: data?.txid,
+                        payloadUuid: data?.payload_uuidv4,
+                    });
+                    if (verification.outcome === "success") {
+                        const confirmedTxId = verification.txId || data?.txid;
+                        const callerUserId = room?.myUserId || MatrixClientPeg.get().getUserId();
+                        const dedupeKeyParts = [room?.roomId, callerUserId, confirmedTxId || data?.payload_uuidv4];
+                        const dedupeKey = dedupeKeyParts.filter(Boolean).join("|");
+                        if (claimPaymentMessageSend(dedupeKey)) {
+                            try {
+                                await sendMessageOnPaymentSuccess(room, confirmedTxId);
+                                finalizePaymentMessageSend(dedupeKey, true);
+                            } catch (error) {
+                                finalizePaymentMessageSend(dedupeKey, false);
+                                throw error;
+                            }
+                        }
+                    }
                 }
                 setStatus("pending");
                 ws.close();
@@ -216,13 +294,13 @@ function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,c
         const client = MatrixClientPeg.get()
    
         
-        const content = {
-            msgtype: "m.notice",
-            body: `Sent ${amount.toFixed(2)} ${currency} to @${destination}`,
-            displayname:destination,
-            format: "org.matrix.custom.html",
-            formatted_body:`<code>Sent<strong> ${amount.toFixed(2)} ${currency}</strong> to <strong>@${destination}</strong> <a href="${explorer}/${txId}" target="_blank">View Transaction</a></code>`
-        };
+        const content = buildPaymentMessageContent({
+            amount,
+            currency,
+            destination,
+            explorer,
+            txId,
+        });
       
        await client.sendMessage(room.roomId,content)
         
