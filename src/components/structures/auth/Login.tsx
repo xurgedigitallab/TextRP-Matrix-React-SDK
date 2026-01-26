@@ -838,6 +838,44 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         }
     };
 
+    // Store WalletConnect session to backend before completing login
+    private async persistWalletConnectSession(walletAddress: string, walletProvider?: string): Promise<void> {
+        try {
+            const sessionTopic = sessionStorage.getItem('wc_session_topic');
+            if (!sessionTopic) {
+                console.log('⚠️ No WalletConnect session topic in sessionStorage, skipping session persistence');
+                return;
+            }
+
+            console.log('📡 Persisting WalletConnect session to backend...');
+            // Use the Apache proxy path like WalletConnectLogin does
+            const response = await fetch(`${SdkConfig.get("backend_url")}/walletconnect/store-session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userAddress: walletAddress,
+                    sessionTopic: sessionTopic,
+                    accounts: [walletAddress],
+                    chains: ['xrpl:mainnet'],
+                    walletType: walletProvider || 'walletconnect',
+                }),
+            });
+
+            if (!response.ok) {
+                console.error(`❌ Failed to persist session: ${response.status}`);
+                // Don't fail login if session persistence fails
+                return;
+            }
+
+            const result = await response.json();
+            console.log('✅ WalletConnect session persisted to Redis!');
+            console.log(`   User: ${result.userAddress}`);
+        } catch (err) {
+            console.error('❌ Error persisting WalletConnect session:', err);
+            // Continue with login even if persistence fails
+        }
+    }
+
     // Handle "Continue to your account" from confirmation page
     private handleContinueToAccount = async (): Promise<void> => {
         const { confirmationData, displayNameInput } = this.state;
@@ -880,6 +918,10 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         if (confirmationData.method === 'jwt') {
             if (confirmationData.token && confirmationData.homeserver) {
                 console.log('✅ Proceeding with JWT login for new user...');
+                // Persist WalletConnect session BEFORE login
+                if (confirmationData.wallet_provider) {
+                    await this.persistWalletConnectSession(confirmationData.address, confirmationData.wallet_provider);
+                }
                 await this.attemptJWTLogin(confirmationData.token, confirmationData.homeserver, confirmationData.user_id, displayNameInput.trim());
             } else {
                 this.setState({
@@ -890,6 +932,10 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         } else if (confirmationData.method === 'direct') {
             if (confirmationData.access_token && confirmationData.homeserver && confirmationData.user_id) {
                 console.log('✅ Proceeding with direct login for existing user...');
+                // Persist WalletConnect session BEFORE login
+                if (confirmationData.wallet_provider) {
+                    await this.persistWalletConnectSession(confirmationData.address, confirmationData.wallet_provider);
+                }
                 await this.attemptDirectLogin(
                     confirmationData.access_token,
                     confirmationData.homeserver,
