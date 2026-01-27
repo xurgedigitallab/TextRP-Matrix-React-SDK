@@ -170,6 +170,8 @@ export class StopGapWidget extends EventEmitter {
         super();
         this.client = MatrixClientPeg.get();
 
+        console.log("Hellooooooooooooooooooooooooooooooooooooooooooooooooo")
+
         let app = appTileProps.app;
         // Backwards compatibility: not all old widgets have a creatorUserId
         if (!app.creatorUserId) {
@@ -202,6 +204,7 @@ export class StopGapWidget extends EventEmitter {
      * The URL to use in the iframe
      */
     public get embedUrl(): string {
+        console.log("runUrlTemplate embedUrl~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         return this.runUrlTemplate({ asPopout: false });
     }
 
@@ -223,7 +226,9 @@ export class StopGapWidget extends EventEmitter {
             clientTheme: SettingsStore.getValue("theme"),
             clientLanguage: getUserLanguage(),
             deviceId: this.client.getDeviceId() ?? undefined,
+            // matrix_auth_provider: OwnProfileStore.instance.authProvider ?? undefined,
         };
+        console.log("defaults ====> ", defaults)
         const templated = this.mockWidget.getCompleteUrl(Object.assign(defaults, fromCustomisation), opts?.asPopout);
         const client = MatrixClientPeg.get();
         const roomInfo = client.getRoom(this.roomId);
@@ -244,8 +249,10 @@ export class StopGapWidget extends EventEmitter {
             }
         });
         console.log("userInfo", userInfo, memebersInfo);
-        
+        console.log("JSON.stringify(userInfo)", JSON.stringify(userInfo));
+        console.log("templated", templated);
         let parsed = new URL(templated);
+        console.log("parsed.search", parsed.search);
         if (parsed.search.includes("?url=https%3A%2F%2Ftextrpdemo.s3.eu-central-1.amazonaws.com%2Findex.html")) {
             parsed.search=  parsed.search.replace(
                 "?url=https%3A%2F%2Ftextrpdemo.s3.eu-central-1.amazonaws.com%2Findex.html",
@@ -258,6 +265,10 @@ export class StopGapWidget extends EventEmitter {
         if (!opts?.asPopout) {
             parsed.searchParams.set("widgetId", this.mockWidget.id);
             parsed.searchParams.set("parentUrl", window.location.href.split("#", 2)[0]);
+            
+            // Add auth_provider from profile store
+            const authProvider = OwnProfileStore.instance.authProvider || "unknown";
+            parsed.searchParams.set("authProvider", authProvider);
 
             // Give the widget a scalar token if we're supposed to (more legacy)
             // TODO: Stop doing this
@@ -268,6 +279,7 @@ export class StopGapWidget extends EventEmitter {
 
         // Replace the encoded dollar signs back to dollar signs. They have no special meaning
         // in HTTP, but URL parsers encode them anyways.
+        console.log("parsed.toString()", parsed.toString().replace(/%24/g, "$"));
         return parsed.toString().replace(/%24/g, "$");
     }
 

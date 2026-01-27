@@ -139,23 +139,41 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
         const [selectedCurrency, selectedIssuer] = event.target.value.split(":");
         const selectedTokenData = this.state.tokenData?.data.find((p) => p.currency === selectedCurrency);
         console.log("selectedTokenData", selectedTokenData);
+        console.log("tokens value for asdasdis ", selectedCurrency);
+        console.log("🔍 Split result - currency:", selectedCurrency, "issuer:", selectedIssuer);
+        
         this.setState({ selectedBonus: selectedTokenData?.bonus || 0 });
         this.setState({ selectedToken: selectedCurrency });
 
         if (selectedCurrency && selectedCurrency !== "XRP") {
             try {
-                const tokenUsdPrice = await this.fetchTokenPrice(selectedCurrency, selectedIssuer);
-                this.setState({ usdTokenPrice: tokenUsdPrice.toString() });
-                this.setState({ issuer: selectedIssuer });
+                // Use the issuer from selectedTokenData if split result is empty
+                const issuerToUse = selectedIssuer || selectedTokenData?.issuer || "";
+                console.log("🔑 Using issuer:", issuerToUse);
+                
+                const tokenUsdPrice = await this.fetchTokenPrice(selectedCurrency, issuerToUse);
+                console.log("💵 Token USD price:", tokenUsdPrice);
+                // Batch state updates together
+                this.setState({ 
+                    usdTokenPrice: tokenUsdPrice.toString(),
+                    issuer: issuerToUse
+                });
+                console.log("✅ State set - issuer:", issuerToUse, "usdTokenPrice:", tokenUsdPrice.toString());
             } catch (error) {
                 console.error("Error fetching token price", error);
             }
         } else if (selectedCurrency === "XRP") {
-            this.setState({ usdTokenPrice: this.state.xrpPrice.toString() });
-            this.setState({ selectedToken: "XRP" });
+            this.setState({ 
+                usdTokenPrice: this.state.xrpPrice.toString(),
+                selectedToken: "XRP",
+                issuer: "" // XRP has no issuer
+            });
         } else {
-            this.setState({ usdTokenPrice: "" });
-            this.setState({ selectedToken: "" });
+            this.setState({ 
+                usdTokenPrice: "",
+                selectedToken: "",
+                issuer: ""
+            });
         }
     }
     private async handleBuyCredits(): Promise<void> {
@@ -167,25 +185,112 @@ export default class BuyCredits extends React.PureComponent<IProps, IState> {
                     withDisplayName: true,
                 },
             );
+            // Prefer the resolved XRPL address returned by /my-address (stored in state.user.address)
+            // Fallback to the Matrix user identifier if no resolved address is available.
+            const addressToSend = this.state.user?.address || details;
+
+            // Get WalletConnect session topic from sessionStorage if available
+            const wcSessionTopic = sessionStorage.getItem('wc_session_topic');
+            
+            console.log("═══════════════════════════════════════════════");
+            console.log("💳 PAYMENT REQUEST - SESSION ID CHECK");
+            console.log("═══════════════════════════════════════════════");
+            console.log("🔍 Retrieving sessionId from sessionStorage...");
+            console.log(`🔑 Key: 'wc_session_topic'`);
+            console.log(`💎 Retrieved value: ${wcSessionTopic || 'NULL/UNDEFINED'}`);
+            console.log(`📏 Value length: ${wcSessionTopic?.length || 0} chars`);
+            console.log(`✔️  Value type: ${typeof wcSessionTopic}`);
+            
+            if (wcSessionTopic) {
+                console.log(`✅ SessionId FOUND - will be sent to backend`);
+            } else {
+                console.log(`❌ SessionId NOT FOUND - backend will receive null!`);
+                console.log(`⚠️  This will cause 422 error!`);
+            }
+            console.log("═══════════════════════════════════════════════");
+
+            // Calculate the exact token amount to send (same as displayed in UI)
+            const creditPrice = this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)?.price || 0;
+            const usdTokenPrice = parseFloat(this.state.usdTokenPrice || "1");
+            const tokenAmount = Number(creditPrice / usdTokenPrice);
+            
+            console.log("💰 TOKEN AMOUNT CALCULATION:");
+            console.log("  creditPrice (USD):", creditPrice);
+            console.log("  usdTokenPrice:", this.state.usdTokenPrice);
+            console.log("  usdTokenPrice (parsed):", usdTokenPrice);
+            console.log("  tokenAmount:", tokenAmount);
+            console.log("  issuer from state:", this.state.issuer);
+            console.log("  selectedToken from state:", this.state.selectedToken);
+            
+            const payloadData = {
+                address: addressToSend,
+                token: this.state.selectedToken,
+                issuer: this.state.issuer,
+                tokenAmount: tokenAmount, // Send the exact amount calculated in frontend
+                bonus:
+                    parseFloat(
+                        this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)
+                            ?.available_credits || 0,
+                    ) *
+                    (this.state.selectedBonus / 100),
+                sessionId: wcSessionTopic, // Include WalletConnect session ID if available
+            };
+            
+            console.log("═══════════════════════════════════════════════");
+            console.log("📤 SENDING PAYMENT REQUEST TO BACKEND");
+            console.log("═══════════════════════════════════════════════");
+            console.log(`🌐 URL: ${SdkConfig.get("backend_url")}/payment/credit/${this.state.selectedCredit}`);
+            console.log(`📦 Payload:`, JSON.stringify(payloadData, null, 2));
+            console.log(`🔑 sessionId in payload: ${payloadData.sessionId || 'NULL/UNDEFINED'}`);
+            console.log(`💰 tokenAmount in payload: ${payloadData.tokenAmount} ${this.state.selectedToken}`);
+            console.log("═══════════════════════════════════════════════");
+
             const res = await axios.post(
                 `${SdkConfig.get("backend_url")}/payment/credit/${this.state.selectedCredit}`,
-                {
-                    address: details,
-                    token: this.state.selectedToken,
-                    issuer: this.state.issuer,
-                    bonus:
-                        parseFloat(
-                            this.state?.creditPackages?.data?.find((p) => p.id == this.state.selectedCredit)
-                                ?.available_credits || 0,
-                        ) *
-                        (this.state.selectedBonus / 100),
-                },
+                payloadData,
             );
 
-            window.open(res?.data?.data?.next?.always, "_blank");
+            console.log("═══════════════════════════════════════════════");
+            console.log("📥 PAYMENT RESPONSE RECEIVED");
+            console.log("═══════════════════════════════════════════════");
+            console.log("Payment response:", res.data);
+            console.log("Response status:", res.status);
+            console.log("═══════════════════════════════════════════════");
+
+            // Handle different wallet provider responses
+            if (res?.data?.wallet_provider === "walletconnect") {
+                // WalletConnect flow: Backend handles signing via wallet
+                console.log("WalletConnect payment - backend is requesting wallet signature");
+                
+                alert(
+                    "Signing request sent to your wallet!\n\n" +
+                        "Please check your Joey Wallet or WalletConnect-enabled wallet.\n" +
+                        "Approve the transaction to complete your credit purchase.\n\n" +
+                        "This may take a few moments..."
+                );
+                
+                // The backend will handle the signing and submission
+                // Check if the response indicates success
+                if (res.data.success) {
+                    alert("Payment successful! Your credits have been added.");
+                    await this.fetchDetails();
+                } else if (res.data.error) {
+                    throw new Error(res.data.error);
+                }
+            } else {
+                // Xaman/XUMM flow: open payment URL
+                const paymentUrl = res?.data?.data?.next?.always;
+                if (paymentUrl) {
+                    window.open(paymentUrl, "_blank");
+                } else {
+                    console.warn("No payment URL returned from backend");
+                }
+            }
+
             this.setState({ isLoading: false });
         } catch (e) {
             console.error("ERROR handleBuyCredits", e);
+            alert(`Payment failed: ${e.message || e}`);
             this.setState({ isLoading: false });
         }
     }

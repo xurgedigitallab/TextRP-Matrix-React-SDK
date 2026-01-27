@@ -99,3 +99,392 @@ div.mx_AccessibleButton_kind_link.mx_Login_forgot {
     align-content: center;
     padding: 14px;
 }
+
+/* QR Code Modal Styles */
+.mx_QrModal_backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4000;
+    backdrop-filter: blur(4px);
+}
+
+.mx_QrModal_container {
+    background: $background;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mx_QrModal_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid $menu-border-color;
+
+    h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: $primary-content;
+    }
+}
+
+.mx_QrModal_closeButton {
+    font-size: 24px;
+    color: $secondary-content;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    
+    &:hover {
+        color: $primary-content;
+    }
+}
+
+.mx_QrModal_content {
+    padding: 32px 24px;
+    text-align: center;
+}
+
+.mx_QrModal_loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 0;
+
+    p {
+        margin: 0;
+        color: $secondary-content;
+    }
+}
+
+.mx_QrModal_qrCode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.mx_QrModal_qrImage {
+    width: 280px;
+    height: 280px;
+    border: 2px solid $menu-border-color;
+    border-radius: 12px;
+    padding: 16px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mx_QrModal_instructions {
+    text-align: left;
+    
+    h3 {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: $primary-content;
+        text-align: center;
+    }
+
+    ol {
+        margin: 0;
+        padding-left: 24px;
+        color: $secondary-content;
+        line-height: 1.8;
+
+        li {
+            margin-bottom: 8px;
+        }
+    }
+}
+
+.mx_QrModal_waiting {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    background: $system;
+    border-radius: 8px;
+    color: $secondary-content;
+    font-size: 14px;
+}
+
+.mx_QrModal_success {
+    padding: 40px 0;
+
+    .mx_QrModal_successIcon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 16px;
+        background: $accent;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: bold;
+        animation: successPulse 0.5s ease-out;
+    }
+
+    p {
+        margin: 0;
+        color: $primary-content;
+        font-size: 16px;
+    }
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.mx_QrModal_error {
+    padding: 40px 0;
+
+    p {
+        margin: 0 0 24px 0;
+        color: $alert;
+        font-size: 16px;
+    }
+
+    .mx_AccessibleButton {
+        min-width: 200px;
+    }
+}
+
+.mx_QrModal_footer {
+    padding: 16px 24px 24px;
+    border-top: 1px solid $menu-border-color;
+    text-align: center;
+
+    .mx_QrModal_helpText {
+        margin: 0;
+        color: $secondary-content;
+        font-size: 14px;
+
+        a {
+            color: $accent;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}
+
+/* Confirmation Page Styles - "Continue to your account" */
+.mx_Confirmation_backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4000;
+    backdrop-filter: blur(4px);
+}
+
+.mx_Confirmation_container {
+    background: $background;
+    border-radius: 16px;
+    max-width: 510px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+    padding: 45px 35px 15px 35px;
+}
+
+.mx_Confirmation_header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.mx_Confirmation_icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.mx_Confirmation_header h2 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: $primary-content;
+}
+
+.mx_Confirmation_subtitle {
+    margin: 0;
+    color: $secondary-content;
+    font-size: 14px;
+}
+
+.mx_Confirmation_card {
+    border-radius: 12px;
+    padding: 20px 10px;
+    margin-bottom: 15px;
+}
+
+.mx_Confirmation_field {
+    margin-bottom: 16px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    label {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        color: $secondary-content;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+}
+
+.mx_Confirmation_displayName {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    padding: 8px;
+}
+
+.mx_Confirmation_code {
+    display: block;
+    background: $background;
+    padding: 10px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    word-break: break-all;
+    color: $primary-content;
+}
+
+.mx_Confirmation_input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid $menu-border-color;
+    border-radius: 8px;
+    font-size: 15px;
+    background: $background;
+    color: $primary-content;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus {
+        outline: none;
+        border-color: $accent;
+        box-shadow: 0 0 0 3px rgba(48, 82, 255, 0.15);
+    }
+
+    &::placeholder {
+        color: $tertiary-content;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+}
+
+.mx_Confirmation_hint {
+    margin: 8px 0 0 0;
+    font-size: 12px;
+    color: $tertiary-content;
+}
+
+.mx_Confirmation_notice {
+    display: flex;
+    gap: 12px;
+    background: rgba(48, 82, 255, 0.08);
+    border: 1px solid rgba(48, 82, 255, 0.2);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 30px;
+}
+
+.mx_Confirmation_noticeIcon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.mx_Confirmation_noticeTitle {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: $accent;
+}
+
+.mx_Confirmation_noticeText {
+    margin: 0;
+    font-size: 13px;
+    color: $secondary-content;
+    line-height: 1.5;
+
+    strong {
+        color: $primary-content;
+    }
+}
+
+.mx_Confirmation_buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mx_Confirmation_continueButton {
+    width: 91%;
+    padding: 14px 24px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.mx_Confirmation_cancelButton {
+    width: 91%;
+    padding: 14px 24px !important;
+    font-size: 16px !important;
+}

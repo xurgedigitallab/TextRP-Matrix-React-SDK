@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to TextRP</title>
+    <style>
+        .mx_Welcome {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .logo {
+            max-width: 200px;
+            margin-bottom: 3rem;
+        }
+        
+        .wallet-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .wallet-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .wallet-button:hover {
+            border-color: #4CAF50;
+            background: #f5f5f5;
+        }
+        
+        .wallet-button.xaman {
+            border-color: #3052FF;
+        }
+        
+        .wallet-button.xaman:hover {
+            background: rgba(48, 82, 255, 0.1);
+        }
+        
+        .wallet-icon {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 2rem 0;
+            color: #666;
+        }
+        
+        .traditional-login {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .traditional-login a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="mx_Welcome">
+        <img src="$logoUrl" alt="TextRP" class="logo" />
+        
+        <h1>Welcome to TextRP</h1>
+        <p>Choose your preferred login method</p>
+        
+        <div class="wallet-options">
+            <a href="javascript:void(0);" onclick="redirectToWalletConnect('xaman')" class="wallet-button xaman">
+                <img src="themes/textrp/img/wallets/xaman.svg" alt="Xaman" class="wallet-icon" />
+                <span>Continue with Xaman</span>
+            </a>
+            
+            <div class="divider">— or —</div>
+            
+            <a href="#/login" class="wallet-button">
+                <span>Sign in with Email/Password</span>
+            </a>
+            
+            <a href="#/register" class="wallet-button">
+                <span>Create Account</span>
+            </a>
+        </div>
+        
+        <div class="traditional-login">
+            <p>More wallet options coming soon!</p>
+        </div>
+    </div>
+    
+    <script>
+        function redirectToWalletConnect(walletType) {
+            // Get current homeserver from config or use default
+            const homeserver = "https://synapse-dev.textrp.io";
+            const clientRedirectUrl = window.location.origin;
+            
+            // Build wallet connect URL
+            const walletConnectBaseUrl = "http://3.65.216.69:3000";
+            const walletConnectUrl = new URL(`${walletConnectBaseUrl}/matrix-login-enhanced`);
+            
+            // Add parameters
+            walletConnectUrl.searchParams.set('walletType', walletType);
+            walletConnectUrl.searchParams.set('redirect_url', clientRedirectUrl);
+            walletConnectUrl.searchParams.set('homeserver', homeserver);
+            walletConnectUrl.searchParams.set('auto_redirect', 'true');
+            walletConnectUrl.searchParams.set('client_type', 'textrp-matrix-sdk');
+            
+            // Redirect to wallet connect service
+            window.location.href = walletConnectUrl.toString();
+        }
+    </script>
+</body>
+</html>

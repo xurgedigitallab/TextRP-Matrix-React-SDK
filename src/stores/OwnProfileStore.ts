@@ -19,6 +19,7 @@ import { User, UserEvent } from "matrix-js-sdk/src/models/user";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
 import { throttle } from "lodash";
 import { EventType } from "matrix-js-sdk/src/@types/event";
+import axios from "axios";
 
 import { ActionPayload } from "../dispatcher/payloads";
 import { AsyncStoreWithClient } from "./AsyncStoreWithClient";
@@ -26,15 +27,18 @@ import defaultDispatcher from "../dispatcher/dispatcher";
 import { MatrixClientPeg } from "../MatrixClientPeg";
 import { _t } from "../languageHandler";
 import { mediaFromMxc } from "../customisations/Media";
+import SdkConfig from "../SdkConfig";
 
 interface IState {
     displayName?: string;
     avatarUrl?: string;
     fetchedAt?: number;
+    authProvider?: string;
 }
 
 const KEY_DISPLAY_NAME = "mx_profile_displayname";
 const KEY_AVATAR_URL = "mx_profile_avatar_url";
+const KEY_AUTH_PROVIDER = "mx_profile_auth_provider";
 
 export class OwnProfileStore extends AsyncStoreWithClient<IState> {
     private static readonly internalInstance = (() => {
@@ -52,6 +56,7 @@ export class OwnProfileStore extends AsyncStoreWithClient<IState> {
         super(defaultDispatcher, {
             displayName: window.localStorage.getItem(KEY_DISPLAY_NAME) || undefined,
             avatarUrl: window.localStorage.getItem(KEY_AVATAR_URL) || undefined,
+            authProvider: window.localStorage.getItem(KEY_AUTH_PROVIDER) || undefined,
         });
     }
 
@@ -76,6 +81,13 @@ export class OwnProfileStore extends AsyncStoreWithClient<IState> {
 
     public get isProfileInfoFetched(): boolean {
         return !!this.state.fetchedAt;
+    }
+
+    /**
+     * Gets the auth provider for the user, or null if not present.
+     */
+    public get authProvider(): string | null {
+        return this.state.authProvider || null;
     }
 
     /**
@@ -137,6 +149,7 @@ export class OwnProfileStore extends AsyncStoreWithClient<IState> {
             // We specifically do not use the User object we stored for profile info as it
             // could easily be wrong (such as per-room instead of global profile).
             const profileInfo = await this.matrixClient.getProfileInfo(this.matrixClient.getSafeUserId());
+            console.log("this.matrixClient.getSafeUserId()", this.matrixClient.getSafeUserId())
             if (profileInfo.displayname) {
                 window.localStorage.setItem(KEY_DISPLAY_NAME, profileInfo.displayname);
             } else {
@@ -148,9 +161,32 @@ export class OwnProfileStore extends AsyncStoreWithClient<IState> {
                 window.localStorage.removeItem(KEY_AVATAR_URL);
             }
 
+            // Fetch auth_provider from backend
+            let authProvider: string | undefined = undefined;
+            try {
+                const backendUrl = SdkConfig.get().backend_url;
+                if (backendUrl) {
+                    const response = await axios.post(`${backendUrl}/auth-provider`, {
+                        address: this.matrixClient.getSafeUserId(),
+                    });
+                    
+                    console.log('Fetched auth_provider from backend:', response.data);
+                    if (response.data && response.data.auth_provider) {
+                        authProvider = response.data.auth_provider;
+                        window.localStorage.setItem(KEY_AUTH_PROVIDER, authProvider);
+                    } else {
+                        window.localStorage.removeItem(KEY_AUTH_PROVIDER);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching auth_provider from backend:', error);
+                window.localStorage.removeItem(KEY_AUTH_PROVIDER);
+            }
+
             await this.updateState({
                 displayName: profileInfo.displayname,
                 avatarUrl: profileInfo.avatar_url,
+                authProvider: authProvider,
                 fetchedAt: Date.now(),
             });
         },

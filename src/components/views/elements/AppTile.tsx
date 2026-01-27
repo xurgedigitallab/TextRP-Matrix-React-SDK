@@ -647,9 +647,12 @@ export default class AppTile extends React.Component<IProps, IState> {
                     </div>
                 );
             } else {
+                // console.log("ssc =====> ", this.sgWidget.embedUrl);
+
                 appTileBody = (
                     <div className={appTileBodyClass} style={appTileBodyStyles}>
                         {this.state.loading && loadingElement}
+                        {/* ssc */}
                         <iframe
                             title={widgetTitle}
                             allow={iframeFeatures}

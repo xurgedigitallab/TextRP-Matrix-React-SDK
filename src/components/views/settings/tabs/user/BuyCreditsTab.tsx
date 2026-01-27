@@ -27,7 +27,7 @@ const BuyCredits = () => {
 
     useEffect(() => {
         userData();
-        console.log(OwnProfileStore.instance);
+        console.log("OwnProfileStore.instance ====> ", OwnProfileStore.instance);
     }, []);
 
     //   const { data: creditData, isLoading, mutate } = useSWR('/api/admin/credits', swrFetcher)

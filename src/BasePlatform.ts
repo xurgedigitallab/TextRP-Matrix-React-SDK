@@ -445,9 +445,37 @@ export default abstract class BasePlatform {
 
     /**
      * Clear app storage, called when logging out to perform data clean up.
+     * @param preserveWalletConnect - If true, preserves WalletConnect session data (default: false for logout)
      */
-    public async clearStorage(): Promise<void> {
+    public async clearStorage(preserveWalletConnect = false): Promise<void> {
+        let wcSessionTopic: string | null = null;
+        let walletAddress: string | null = null;
+        let walletName: string | null = null;
+
+        // Only preserve WalletConnect data if explicitly requested (during login, not logout)
+        if (preserveWalletConnect) {
+            wcSessionTopic = window.sessionStorage.getItem('wc_session_topic');
+            walletAddress = window.sessionStorage.getItem('wallet_address');
+            walletName = window.sessionStorage.getItem('wallet_name');
+        }
+        
         window.sessionStorage.clear();
         window.localStorage.clear();
+        
+        // Restore WalletConnect session data only if preservation was requested
+        if (preserveWalletConnect) {
+            if (wcSessionTopic) {
+                window.sessionStorage.setItem('wc_session_topic', wcSessionTopic);
+                console.log('🔄 Preserved WalletConnect session ID during login clearStorage:', wcSessionTopic);
+            }
+            if (walletAddress) {
+                window.sessionStorage.setItem('wallet_address', walletAddress);
+            }
+            if (walletName) {
+                window.sessionStorage.setItem('wallet_name', walletName);
+            }
+        } else {
+            console.log('🧹 Cleared all storage including WalletConnect session data (logout)');
+        }
     }
 }

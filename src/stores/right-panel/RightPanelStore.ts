@@ -172,6 +172,7 @@ export default class RightPanelStore extends ReadyWatchingStore {
 
     // Appends a card to the history and shows the right panel if not already visible
     public pushCard(card: IRightPanelCard, allowClose = true, roomId: string | null = null): void {
+        console.log("pushCard~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         const rId = roomId ?? this.viewedRoomId;
         const redirect = this.getVerificationRedirect(card);
         const targetPhase = redirect?.phase ?? card.phase;

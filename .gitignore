@@ -16,7 +16,7 @@ package-lock.json
 
 .vscode
 .vscode/
-
+/lib/
 /cypress/videos
 /cypress/downloads
 /cypress/screenshots
@@ -26,3 +26,5 @@ package-lock.json
 # Cypress will still auto-create them though...
 /cypress/performance
 /node_modules/*
+node_modules/
+lib/*

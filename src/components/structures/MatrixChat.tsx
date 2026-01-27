@@ -388,14 +388,23 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
         if (crossSigningIsSetUp) {
             // if the user has previously set up cross-signing, verify this device so we can fetch the
             // private keys.
-            if (SecurityCustomisations.SHOW_ENCRYPTION_SETUP_UI === false) {
+            if (SecurityCustomisations.SHOW_ENCRYPTION_SETUP_UI === false || this.tokenLogin) {
+                // Skip device verification for wallet/token logins to avoid re-authentication
+                console.log("🔐 Token/wallet login or custom security - skipping device verification");
                 this.onLoggedIn();
             } else {
                 this.setStateForNewView({ view: Views.COMPLETE_SECURITY });
             }
         } else if (await cli.doesServerSupportUnstableFeature("org.matrix.e2e_cross_signing")) {
-            // if cross-signing is not yet set up, do so now if possible.
-            this.setStateForNewView({ view: Views.E2E_SETUP });
+            // For wallet/token-based logins, skip cross-signing setup to avoid requiring re-authentication
+            // Wallet signatures provide strong authentication and we don't have passwords to verify with
+            if (this.tokenLogin) {
+                console.log("🔐 Token/wallet login detected - skipping E2E setup to avoid re-authentication");
+                this.onLoggedIn();
+            } else {
+                // if cross-signing is not yet set up, do so now if possible (for password logins)
+                this.setStateForNewView({ view: Views.E2E_SETUP });
+            }
         } else {
             this.onLoggedIn();
         }
@@ -1995,6 +2004,17 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
      * this, as they instead jump straight into the app after `attemptTokenLogin`.
      */
     private onUserCompletedLoginFlow = async (credentials: IMatrixClientCreds, password: string): Promise<void> => {
+        console.log("🟣🟣🟣 onUserCompletedLoginFlow called");
+        console.log("🟣 Password provided:", !!password);
+        console.log("🟣 Credentials userId:", credentials.userId);
+        
+        // If no password is provided, this is likely a JWT/wallet-based login (token login)
+        // Set tokenLogin flag to skip SSO re-authentication during cross-signing setup
+        if (!password || password === "") {
+            console.log("🟣 No password - treating as token login (JWT/wallet)");
+            this.tokenLogin = true;
+        }
+        
         this.stores.accountPasswordStore.setPassword(password);
 
         // Create and start the client

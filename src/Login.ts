@@ -149,6 +149,43 @@ export default class Login {
                 throw error;
             });
     }
+
+    public loginViaJWT(token: string): Promise<IMatrixClientCreds> {
+        console.log("🟠🟠🟠 ========== loginViaJWT CALLED ========== 🟠🟠🟠");
+        console.log("🟠 Token length:", token.length);
+        console.log("🟠 Homeserver URL (this.hsUrl):", this.hsUrl);
+        console.log("🟠 Identity server URL (this.isUrl):", this.isUrl);
+        
+        const loginParams = {
+            token,
+            initial_device_display_name: this.defaultDeviceDisplayName,
+        };
+
+        console.log("🟠 Login params:", loginParams);
+        console.log("🟠 Sending login request with type: org.matrix.login.jwt");
+        console.log("🟠🟠🟠 ============================================== 🟠🟠🟠");
+
+        return sendLoginRequest(this.hsUrl, this.isUrl, "org.matrix.login.jwt", loginParams)
+            .then((result) => {
+                console.log("✅✅✅ ========== JWT LOGIN REQUEST SUCCESS ========== ✅✅✅");
+                console.log("✅ Result object:", result);
+                console.log("✅ Result.homeserverUrl:", result.homeserverUrl);
+                console.log("✅ Result.userId:", result.userId);
+                console.log("✅ Result.deviceId:", result.deviceId);
+                console.log("✅ Result.accessToken (first 20):", result.accessToken?.substring(0, 20));
+                console.log("✅✅✅ ==================================================== ✅✅✅");
+                return result;
+            })
+            .catch((error) => {
+                console.error("❌❌❌ ========== JWT LOGIN REQUEST FAILED ========== ❌❌❌");
+                console.error("❌ Error:", error);
+                console.error("❌ Error status:", error.httpStatus);
+                console.error("❌ Error data:", error.data);
+                console.error("❌❌❌ ================================================== ❌❌❌");
+                logger.log("JWT Login failed", error);
+                throw error;
+            });
+    }
 }
 
 /**
@@ -168,18 +205,36 @@ export async function sendLoginRequest(
     loginType: string,
     loginParams: ILoginParams,
 ): Promise<IMatrixClientCreds> {
+    console.log("🔶🔶🔶 ========== sendLoginRequest ========== 🔶🔶🔶");
+    console.log("🔶 Input hsUrl:", hsUrl);
+    console.log("🔶 Login type:", loginType);
+    
     const client = createClient({
         baseUrl: hsUrl,
         idBaseUrl: isUrl,
     });
-
+    
     const data = await client.login(loginType, loginParams);
+    
+    console.log("🔶 Login response data:", data);
+    console.log("🔶 Well-known data:", data.well_known);
 
+    // Store the original hsUrl for JWT logins
+    const originalHsUrl = hsUrl;
+    
     const wellknown = data.well_known;
     if (wellknown) {
         if (wellknown["m.homeserver"]?.["base_url"]) {
-            hsUrl = wellknown["m.homeserver"]["base_url"];
-            logger.log(`Overrode homeserver setting with ${hsUrl} from login response`);
+            // For JWT login (wallet-based), preserve the explicitly specified homeserver URL
+            // instead of using the well_known override
+            if (loginType === "org.matrix.login.jwt") {
+                console.log("🔶 JWT login detected - IGNORING well_known homeserver override");
+                console.log("🔶 Well-known tried to change to:", wellknown["m.homeserver"]["base_url"]);
+                console.log("🔶 Keeping original URL:", originalHsUrl);
+            } else {
+                hsUrl = wellknown["m.homeserver"]["base_url"];
+                logger.log(`Overrode homeserver setting with ${hsUrl} from login response`);
+            }
         }
         if (wellknown["m.identity_server"]?.["base_url"]) {
             // TODO: should we prompt here?
@@ -195,6 +250,9 @@ export async function sendLoginRequest(
         deviceId: data.device_id,
         accessToken: data.access_token,
     };
+    
+    console.log("🔶 Final credentials homeserverUrl:", creds.homeserverUrl);
+    console.log("🔶🔶🔶 ============================================== 🔶🔶🔶");
 
     SecurityCustomisations.examineLoginResponse?.(data, creds);
 
