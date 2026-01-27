@@ -759,27 +759,33 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
             console.log("🟢 Calling onLoggedIn with these credentials...");
             console.log("🟢🟢🟢 ============================================== 🟢🟢🟢");
 
-            try {
-                // const walletConnectUrl = Env.get("walletConnectUrl") || "https://connect.textrp.io";
-                const walletConnectUrl = "https://client-dev.textrp.io/wallet-api";
-                const response = await fetch(`${walletConnectUrl}/matrix/set-display-name`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: credentials.userId,
-                        display_name: displayName,
-                        use_admin: false,
-                        access_token: credentials.accessToken,
-                    })
-                });
+            // Only set display name if one was provided (for new users or when explicitly changing name)
+            if (displayName && displayName.trim()) {
+                try {
+                    // const walletConnectUrl = Env.get("walletConnectUrl") || "https://connect.textrp.io";
+                    const walletConnectUrl = "https://client-dev.textrp.io/wallet-api";
+                    console.log('🔄 Setting display name for user:', credentials.userId, 'displayName:', displayName);
+                    const response = await fetch(`${walletConnectUrl}/matrix/set-display-name`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: credentials.userId,
+                            display_name: displayName.trim(),
+                            use_admin: false,
+                            access_token: credentials.accessToken,
+                        })
+                    });
 
-                if (!response.ok) {
-                    console.warn('Failed to set display name, continuing anyway');
-                } else {
-                    console.log('✅ Display name set successfully:', displayName);
+                    if (!response.ok) {
+                        console.warn('Failed to set display name, continuing anyway');
+                    } else {
+                        console.log('✅ Display name set successfully:', displayName);
+                    }
+                } catch (err) {
+                    console.warn('Error setting display name:', err);
                 }
-            } catch (err) {
-                console.warn('Error setting display name:', err);
+            } else {
+                console.log('⏭️ Skipping display name update (no displayName provided or user already exists)');
             }
 
             this.props.onLoggedIn(credentials, ""); // Empty password for wallet login
