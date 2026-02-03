@@ -99,6 +99,18 @@ import {
     finalizePaymentMessageSend,
     verifyTransactionOnLedger,
 } from "../../../utils/paymentVerification";
+import {
+    createPaymentIntent,
+    fetchPaymentIntentStatus,
+    finalizeIntentResolution,
+    getIntentPollingConfig,
+    isTrustlineFailure,
+    notifyRecipientIfNeeded,
+    persistLocalIntent,
+    shouldResolveIntent,
+    PaymentIntent,
+    PaymentIntentState,
+} from "../../../utils/paymentIntents";
 
 class DisabledWithReason {
     public constructor(public readonly reason: string) {}
@@ -218,7 +230,52 @@ const buildPaymentMessageContent = ({
     return content;
 };
 
-function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,currency,sender,explorer }) {
+const sendChatPaymentConfirmation = async ({
+    roomId,
+    amount,
+    currency,
+    destination,
+    explorer,
+    txId,
+    dedupeKey,
+}: {
+    roomId: string;
+    amount: number;
+    currency: string;
+    destination?: string;
+    explorer?: string;
+    txId?: string;
+    dedupeKey: string;
+}) => {
+    if (!claimPaymentMessageSend(dedupeKey)) return;
+    try {
+        const client = MatrixClientPeg.get();
+        const content = buildPaymentMessageContent({ amount, currency, destination, explorer, txId });
+        await client.sendMessage(roomId, content);
+        finalizePaymentMessageSend(dedupeKey, true);
+    } catch (error) {
+        finalizePaymentMessageSend(dedupeKey, false);
+        throw error;
+    }
+};
+
+function QRCodeModal({
+    show,
+    onClose,
+    qrData,
+    checkbox,
+    room,
+    destination,
+    destinationId,
+    amount,
+    currency,
+    sender,
+    senderId,
+    senderDisplayName,
+    explorer,
+    tokenIssuer,
+    onPaymentIntentCreated,
+}) {
     const [qrPng, setQrPng] = useState("");
     const [paymentSuccess, setPaymentSuccess] = useState(false);
     const [status, setStatus] = useState("pending");
@@ -261,13 +318,42 @@ function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,c
                         const callerUserId = room?.myUserId || MatrixClientPeg.get().getUserId();
                         const dedupeKeyParts = [room?.roomId, callerUserId, confirmedTxId || data?.payload_uuidv4];
                         const dedupeKey = dedupeKeyParts.filter(Boolean).join("|");
-                        if (claimPaymentMessageSend(dedupeKey)) {
-                            try {
-                                await sendMessageOnPaymentSuccess(room, confirmedTxId);
-                                finalizePaymentMessageSend(dedupeKey, true);
-                            } catch (error) {
-                                finalizePaymentMessageSend(dedupeKey, false);
-                                throw error;
+                        await sendChatPaymentConfirmation({
+                            roomId: room.roomId,
+                            amount,
+                            currency,
+                            destination,
+                            explorer,
+                            txId: confirmedTxId,
+                            dedupeKey,
+                        });
+                    } else if (verification.outcome === "failed" && isTrustlineFailure(verification.response)) {
+                        // Trustline failures are user-fixable; create an intent so the sender gets feedback without
+                        // weakening the "only message on ledger success" invariant.
+                        const recipientUserId =
+                            destinationId ||
+                            (typeof destination === "string" && destination.startsWith("@") ? destination : undefined);
+                        if (senderId && recipientUserId) {
+                            const intent = await createPaymentIntent({
+                                senderId,
+                                recipientId: recipientUserId,
+                                token: {
+                                    currency,
+                                    issuer: tokenIssuer || undefined,
+                                },
+                                amount,
+                                roomId: room?.roomId,
+                                failureTxId: data?.txid,
+                            });
+                            if (intent) {
+                                // Persist the intent so the sender can recover state on reload.
+                                persistLocalIntent(intent);
+                                onPaymentIntentCreated?.(intent);
+                                await notifyRecipientIfNeeded({
+                                    client: MatrixClientPeg.get(),
+                                    intent,
+                                    senderDisplayName: senderDisplayName || senderId,
+                                });
                             }
                         }
                     }
@@ -290,21 +376,6 @@ function QRCodeModal({ show, onClose, qrData, checkbox,room,destination,amount,c
         onClose(); 
     };
 
-    const sendMessageOnPaymentSuccess = async (room,txId) => {
-        const client = MatrixClientPeg.get()
-   
-        
-        const content = buildPaymentMessageContent({
-            amount,
-            currency,
-            destination,
-            explorer,
-            txId,
-        });
-      
-       await client.sendMessage(room.roomId,content)
-        
-    };
     if (!show) {
         return null;
     }
@@ -615,6 +686,7 @@ const CallButtons: FC<CallButtonsProps> = ({ room }) => {
     }
 };
 function XrpP2P({ props, onFinished }: any): JSX.Element {
+    const client = MatrixClientPeg.get();
     const [amount, setAmount] = useState(null);
     const [currency, setCurrency] = useState("XRP");
     const [tokens, setTokens] = useState([]);
@@ -639,7 +711,10 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     const sliderRef = useRef(null); // Reference to the slider element
     const tooltipRef = useRef(null);
     const [notify, setNotify] = useState(false);
-    const [tokenIssuer,setTokenIssuer] = useState([])
+    const [tokenIssuer, setTokenIssuer] = useState<string>("");
+    const [paymentIntent, setPaymentIntent] = useState<PaymentIntent | null>(null);
+    const [paymentIntentState, setPaymentIntentState] = useState<PaymentIntentState | null>(null);
+    const intentPollRef = useRef<number | null>(null);
     let destinations: string[] = [];
     
     const [inviteLinkCopied, setInviteLinkCopied] = useState<boolean>(false);
@@ -693,6 +768,13 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
           
         }
     }, [props]);
+    useEffect(() => {
+        if (!props.txnInfo.userHoldings || !currency) return;
+        const holding = props.txnInfo.userHoldings.find((entry) => entry.currency === currency);
+        setTokenIssuer(
+            holding?.issuer || holding?.issuer_address || holding?.issuerAddress || "",
+        );
+    }, [currency, props]);
     const makeTxn = async () => {
         try {
             const res = await axios.post(`${SdkConfig.get("backend_url")}/accounts/makeTxn/${amount}`, {
@@ -775,6 +857,70 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     useEffect(() => {
         setCalculatedFee(adjustSlider(fee));
     }, [fee]);
+    useEffect(() => {
+        if (!paymentIntent || paymentIntent.state !== "pending_recipient") return;
+        const { intervalMs, timeoutMs } = getIntentPollingConfig();
+        if (!intervalMs) return;
+
+        let cancelled = false;
+        const startedAt = Date.now();
+
+        const pollIntent = async () => {
+            if (cancelled) return;
+            if (timeoutMs && Date.now() - startedAt > timeoutMs) {
+                if (intentPollRef.current) {
+                    window.clearInterval(intentPollRef.current);
+                    intentPollRef.current = null;
+                }
+                return;
+            }
+            const latest = await fetchPaymentIntentStatus(paymentIntent.id);
+            if (!latest) return;
+            setPaymentIntentState(latest.state);
+            setPaymentIntent(latest);
+
+            if (latest.state === "completed" && latest.txId && shouldResolveIntent(latest.id)) {
+                // Re-verify on-ledger success before emitting any chat confirmation.
+                const verification = await verifyTransactionOnLedger({ txId: latest.txId });
+                if (verification.outcome === "success" && props?.room?.roomId) {
+                    const recipientLabel =
+                        props.room.getMember(latest.recipientId)?.name || latest.recipientId || destination?.displayName;
+                    const senderId = props?.txnInfo?.senderId || client.getUserId();
+                    const dedupeKeyParts = [props.room.roomId, senderId, latest.txId, latest.id];
+                    const dedupeKey = dedupeKeyParts.filter(Boolean).join("|");
+                    await sendChatPaymentConfirmation({
+                        roomId: props.room.roomId,
+                        amount: latest.amount ?? amount ?? 0,
+                        currency: latest.token?.currency || currency,
+                        destination: recipientLabel,
+                        explorer,
+                        txId: latest.txId,
+                        dedupeKey,
+                    });
+                }
+                finalizeIntentResolution(latest.id);
+            } else if (latest.state === "declined" || latest.state === "expired") {
+                finalizeIntentResolution(latest.id);
+            }
+
+            if (latest.state === "completed" || latest.state === "declined" || latest.state === "expired") {
+                if (intentPollRef.current) {
+                    window.clearInterval(intentPollRef.current);
+                    intentPollRef.current = null;
+                }
+            }
+        };
+
+        pollIntent();
+        intentPollRef.current = window.setInterval(pollIntent, intervalMs);
+        return () => {
+            cancelled = true;
+            if (intentPollRef.current) {
+                window.clearInterval(intentPollRef.current);
+                intentPollRef.current = null;
+            }
+        };
+    }, [paymentIntent, explorer, currency, amount, props, destination, client]);
     const handleInputChangeMy = (event) => {
         const inputValue = event.target.value;
 
@@ -786,6 +932,10 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
 
     const handleCheck = (event) => {
         setNotify(event.target.checked);
+    };
+    const handlePaymentIntentCreated = (intent: PaymentIntent) => {
+        setPaymentIntent(intent);
+        setPaymentIntentState(intent.state);
     };
     const options = ["No Direct Ripple", "Partial Payment", "Limit Quality"];
     const onAddMemo = () => {
@@ -1016,6 +1166,18 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                 >
                                     {`Send ${currency}`}
                                 </button>
+                                {paymentIntentState === "pending_recipient" && (
+                                    <div style={{ marginTop: "12px", color: "#555" }}>
+                                        <div>{_t("Waiting for recipient to accept")}</div>
+                                        <div>{_t("The recipient does not yet have a trustline for this token.")}</div>
+                                        <div>{_t("A request has already been sent.")}</div>
+                                    </div>
+                                )}
+                                {paymentIntentState === "declined" && (
+                                    <div style={{ marginTop: "12px", color: "#a33" }}>
+                                        {_t("Payment declined")}
+                                    </div>
+                                )}
                             </div>
                         </TabPanel>
                         <TabPanel>
@@ -1054,10 +1216,15 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
             checkbox={notify} 
             room={props.room} 
             destination={destination?.displayName} 
+            destinationId={destination?.userId || destination?.displayName}
             amount={amount} 
             currency={currency} 
             sender={props.txnInfo.sender.address}
+            senderId={props.txnInfo.senderId || client.getUserId()}
+            senderDisplayName={client.getUser(client.getUserId())?.displayName || client.getUserId()}
             explorer={explorer}
+            tokenIssuer={tokenIssuer}
+            onPaymentIntentCreated={handlePaymentIntentCreated}
              />
         </>
     );

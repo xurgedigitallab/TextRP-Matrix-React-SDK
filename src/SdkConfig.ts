@@ -54,6 +54,22 @@ export const DEFAULTS: DeepReadonly<IConfigOptions> = {
         failure_statuses: ["failed", "reverted", "dropped", "expired"],
         pending_statuses: ["pending", "submitted", "queued"],
     },
+    payment_intent: {
+        enabled: false,
+        create_url: "",
+        create_path: "",
+        status_url: "",
+        status_path: "",
+        notify_url: "",
+        notify_path: "",
+        accept_url_template: "",
+        decline_url_template: "",
+        request_timeout_ms: 0,
+        polling_interval_ms: 0,
+        timeout_ms: 0,
+        trustline_failure_codes: [],
+        trustline_failure_fields: [],
+    },
     // @ts-ignore - we deliberately use the camelCase version here so we trigger
     // the fallback behaviour. If we used the snake_case version then we'd break
     // everyone's config which has the camelCase property because our default would
