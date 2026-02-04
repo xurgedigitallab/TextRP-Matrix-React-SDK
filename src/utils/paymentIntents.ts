@@ -32,6 +32,7 @@ export interface PaymentIntent {
 
 interface PaymentIntentConfig {
     enabled?: boolean;
+    debug_logging?: boolean;
     trustline_check_url?: string;
     trustline_check_path?: string;
     trustline_check_method?: "GET" | "POST";
@@ -81,6 +82,17 @@ function normalizeList(values?: string[]): string[] {
     if (!values) return [];
     return values.map((value) => value.toLowerCase());
 }
+
+function maskAddress(address: string): string {
+    if (!address) return "";
+    if (address.length <= 8) return `${address.slice(0, 2)}…${address.slice(-2)}`;
+    return `${address.slice(0, 4)}…${address.slice(-4)}`;
+}
+
+export type TrustlineCheckResult = {
+    status: "available" | "missing" | "unknown";
+    reason?: string;
+};
 
 function getValueByPath(input: any, path: string): unknown {
     if (!input || !path) return undefined;
@@ -210,11 +222,15 @@ export async function createPaymentIntent(params: {
 export async function checkTrustlineAvailable(params: {
     recipientAddress: string;
     token: PaymentIntentToken;
-}): Promise<boolean | null> {
+}): Promise<TrustlineCheckResult> {
     const config = getConfig();
-    if (!config.enabled) return null;
+    if (!config.enabled) {
+        return { status: "unknown", reason: "disabled" };
+    }
     const url = resolveUrl(config.trustline_check_url, config.trustline_check_path);
-    if (!url) return null;
+    if (!url) {
+        return { status: "unknown", reason: "missing_url" };
+    }
 
     const requestMethod = (config.trustline_check_method || "GET").toUpperCase() as "GET" | "POST";
     const request: AxiosRequestConfig = {
@@ -232,9 +248,29 @@ export async function checkTrustlineAvailable(params: {
         request.data = payload;
     }
 
-    const response = await axios.request(request);
+    let response: any;
+    try {
+        response = await axios.request(request);
+    } catch (error) {
+        if (config.debug_logging) {
+            console.debug(
+                "[ChatPay] trustline check failed",
+                {
+                    recipient: maskAddress(params.recipientAddress),
+                    currency: params.token.currency,
+                    issuer: params.token.issuer ? maskAddress(params.token.issuer) : undefined,
+                    reason: "request_failed",
+                },
+                error,
+            );
+        }
+        return { status: "unknown", reason: "request_failed" };
+    }
+
     const fields = config.trustline_check_fields || [];
-    if (!fields.length) return null;
+    if (!fields.length) {
+        return { status: "unknown", reason: "missing_fields" };
+    }
 
     const trueValues = normalizeList(config.trustline_check_true_values);
     const falseValues = normalizeList(config.trustline_check_false_values);
@@ -242,16 +278,16 @@ export async function checkTrustlineAvailable(params: {
     for (const field of fields) {
         const value = getValueByPath(response?.data, field);
         if (typeof value === "boolean") {
-            return value;
+            return { status: value ? "available" : "missing" };
         }
         if (value != null) {
             const normalized = String(value).toLowerCase();
-            if (trueValues.includes(normalized)) return true;
-            if (falseValues.includes(normalized)) return false;
+            if (trueValues.includes(normalized)) return { status: "available" };
+            if (falseValues.includes(normalized)) return { status: "missing" };
         }
     }
 
-    return false;
+    return { status: "unknown", reason: "no_match" };
 }
 
 export async function createCheckPayload(params: {

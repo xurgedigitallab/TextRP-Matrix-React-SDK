@@ -56,6 +56,7 @@ export const DEFAULTS: DeepReadonly<IConfigOptions> = {
     },
     payment_intent: {
         enabled: false,
+        debug_logging: false,
         trustline_check_url: "",
         trustline_check_path: "",
         trustline_check_method: "GET",

@@ -819,19 +819,62 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     const makeTxn = async () => {
         try {
             const paymentIntentConfig = SdkConfig.get("payment_intent");
-            if (paymentIntentConfig?.enabled && destination?.wallet && currency) {
-                const trustlineAvailable = await checkTrustlineAvailable({
-                    recipientAddress: destination.wallet,
-                    token: { currency, issuer: tokenIssuer || undefined },
-                });
-                if (trustlineAvailable === null) {
+            const isIssuedToken = currency && currency !== "XRP";
+            if (isIssuedToken) {
+                if (!tokenIssuer) {
                     Modal.createDialog(ErrorDialog, {
                         title: _t("Unable to start payment"),
-                        description: _t("Trustline availability could not be checked. Please try again later."),
+                        description: _t(
+                            "This token does not include issuer information. Please select a valid token and try again.",
+                        ),
                     });
                     return;
                 }
-                if (trustlineAvailable === false) {
+                if (!paymentIntentConfig?.enabled) {
+                    Modal.createDialog(ErrorDialog, {
+                        title: _t("Unable to start payment"),
+                        description: _t(
+                            "Trustline verification is unavailable right now. Please try again in a moment.",
+                        ),
+                    });
+                    return;
+                }
+            }
+            if (paymentIntentConfig?.enabled && destination?.wallet && currency && isIssuedToken) {
+                const trustlineResult = await checkTrustlineAvailable({
+                    recipientAddress: destination.wallet,
+                    token: { currency, issuer: tokenIssuer || undefined },
+                });
+                if (paymentIntentConfig?.debug_logging) {
+                    const maskedRecipient =
+                        destination.wallet.length > 8
+                            ? `${destination.wallet.slice(0, 4)}…${destination.wallet.slice(-4)}`
+                            : destination.wallet;
+                    const maskedIssuer =
+                        tokenIssuer && tokenIssuer.length > 8
+                            ? `${tokenIssuer.slice(0, 4)}…${tokenIssuer.slice(-4)}`
+                            : tokenIssuer;
+                    console.debug("[ChatPay] trustline check", {
+                        recipient: maskedRecipient,
+                        currency,
+                        issuer: maskedIssuer || undefined,
+                        status: trustlineResult.status,
+                        reason: trustlineResult.reason,
+                    });
+                }
+                if (trustlineResult.status === "unknown") {
+                    Modal.createDialog(ErrorDialog, {
+                        title: _t("Unable to start payment"),
+                        description: _t(
+                            "Unable to verify whether the recipient can receive this token right now. Please try again in a moment.",
+                        ),
+                    });
+                    if (paymentIntentConfig?.debug_logging) {
+                        console.debug("[ChatPay] flow blocked due to unknown trustline status");
+                    }
+                    return;
+                }
+                if (trustlineResult.status === "missing") {
                     // Wallets block payments without trustlines; create a Check instead.
                     const checkPayload = await createCheckPayload({
                         recipientAddress: destination.wallet,
@@ -848,6 +891,9 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                         setPaymentFlowType("check");
                         setQrData(checkPayload);
                         setShowQRModal(true);
+                        if (paymentIntentConfig?.debug_logging) {
+                            console.debug("[ChatPay] flow selected: check");
+                        }
                         return;
                     }
                     Modal.createDialog(ErrorDialog, {
@@ -855,6 +901,9 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                         description: _t("The request to reserve funds could not be created. Please try again later."),
                     });
                     return;
+                }
+                if (paymentIntentConfig?.debug_logging) {
+                    console.debug("[ChatPay] flow selected: payment");
                 }
             }
 

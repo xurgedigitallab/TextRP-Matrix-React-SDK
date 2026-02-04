@@ -106,6 +106,7 @@ export interface IConfigOptions {
     };
     payment_intent?: {
         enabled?: boolean;
+        debug_logging?: boolean;
         trustline_check_url?: string;
         trustline_check_path?: string;
         trustline_check_method?: "GET" | "POST";
