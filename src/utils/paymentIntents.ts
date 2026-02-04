@@ -21,20 +21,39 @@ export interface PaymentIntent {
     createdAt: string;
     state: PaymentIntentState;
     reference?: string;
+    ledgerReference?: {
+        checkId?: string;
+        checkLedgerIndex?: string | number;
+        transactionHash?: string;
+    };
     roomId?: string;
     txId?: string;
 }
 
 interface PaymentIntentConfig {
     enabled?: boolean;
+    trustline_check_url?: string;
+    trustline_check_path?: string;
+    trustline_check_method?: "GET" | "POST";
+    trustline_check_fields?: string[];
+    trustline_check_true_values?: string[];
+    trustline_check_false_values?: string[];
     create_url?: string;
     create_path?: string;
+    check_create_url?: string;
+    check_create_path?: string;
+    check_create_method?: "GET" | "POST";
     status_url?: string;
     status_path?: string;
     notify_url?: string;
     notify_path?: string;
     accept_url_template?: string;
     decline_url_template?: string;
+    ledger_reference_fields?: {
+        check_id?: string;
+        check_ledger_index?: string;
+        transaction_hash?: string;
+    };
     request_timeout_ms?: number;
     polling_interval_ms?: number;
     timeout_ms?: number;
@@ -148,6 +167,7 @@ export async function createPaymentIntent(params: {
     amount: number;
     roomId?: string;
     failureTxId?: string;
+    ledgerReference?: PaymentIntent["ledgerReference"];
 }): Promise<PaymentIntent | null> {
     const config = getConfig();
     if (!config.enabled) return null;
@@ -165,6 +185,7 @@ export async function createPaymentIntent(params: {
             amount: params.amount,
             room_id: params.roomId,
             failure_tx_id: params.failureTxId,
+            ledger_reference: params.ledgerReference,
         },
     };
 
@@ -181,8 +202,119 @@ export async function createPaymentIntent(params: {
         createdAt: data.created_at || new Date().toISOString(),
         state: data.state || "pending_recipient",
         reference: data.reference,
+        ledgerReference: data.ledger_reference || params.ledgerReference,
         roomId: params.roomId,
     };
+}
+
+export async function checkTrustlineAvailable(params: {
+    recipientAddress: string;
+    token: PaymentIntentToken;
+}): Promise<boolean | null> {
+    const config = getConfig();
+    if (!config.enabled) return null;
+    const url = resolveUrl(config.trustline_check_url, config.trustline_check_path);
+    if (!url) return null;
+
+    const requestMethod = (config.trustline_check_method || "GET").toUpperCase() as "GET" | "POST";
+    const request: AxiosRequestConfig = {
+        url,
+        method: requestMethod,
+        timeout: config.request_timeout_ms && config.request_timeout_ms > 0 ? config.request_timeout_ms : undefined,
+    };
+    const payload = {
+        recipient: params.recipientAddress,
+        token: params.token,
+    };
+    if (requestMethod === "GET") {
+        request.params = payload;
+    } else {
+        request.data = payload;
+    }
+
+    const response = await axios.request(request);
+    const fields = config.trustline_check_fields || [];
+    if (!fields.length) return null;
+
+    const trueValues = normalizeList(config.trustline_check_true_values);
+    const falseValues = normalizeList(config.trustline_check_false_values);
+
+    for (const field of fields) {
+        const value = getValueByPath(response?.data, field);
+        if (typeof value === "boolean") {
+            return value;
+        }
+        if (value != null) {
+            const normalized = String(value).toLowerCase();
+            if (trueValues.includes(normalized)) return true;
+            if (falseValues.includes(normalized)) return false;
+        }
+    }
+
+    return false;
+}
+
+export async function createCheckPayload(params: {
+    recipientAddress: string;
+    senderAddress?: string;
+    token: PaymentIntentToken;
+    amount: number;
+    memos?: any[];
+    fee?: number;
+    flags?: any[];
+    destinationTag?: number;
+    sourceTag?: number;
+}): Promise<any | null> {
+    const config = getConfig();
+    if (!config.enabled) return null;
+    const url = resolveUrl(config.check_create_url, config.check_create_path);
+    if (!url) return null;
+
+    const requestMethod = (config.check_create_method || "POST").toUpperCase() as "GET" | "POST";
+    const payload = {
+        address: params.recipientAddress,
+        sender: params.senderAddress,
+        token: params.token,
+        amount: params.amount,
+        memos: params.memos,
+        fee: params.fee,
+        flags: params.flags,
+        destination_tag: params.destinationTag,
+        source_tag: params.sourceTag,
+    };
+
+    const request: AxiosRequestConfig = {
+        url,
+        method: requestMethod,
+        timeout: config.request_timeout_ms && config.request_timeout_ms > 0 ? config.request_timeout_ms : undefined,
+    };
+    if (requestMethod === "GET") {
+        request.params = payload;
+    } else {
+        request.data = payload;
+    }
+
+    const response = await axios.request(request);
+    return response?.data?.data || response?.data || null;
+}
+
+export function extractLedgerReference(response: unknown, txHash?: string): PaymentIntent["ledgerReference"] | undefined {
+    const config = getConfig();
+    const fields = config.ledger_reference_fields;
+    if (!fields) {
+        return txHash ? { transactionHash: txHash } : undefined;
+    }
+    const checkId = fields.check_id ? (getValueByPath(response, fields.check_id) as string) : undefined;
+    const checkLedgerIndex = fields.check_ledger_index
+        ? (getValueByPath(response, fields.check_ledger_index) as string | number)
+        : undefined;
+    const transactionHash =
+        fields.transaction_hash && getValueByPath(response, fields.transaction_hash)
+            ? String(getValueByPath(response, fields.transaction_hash))
+            : txHash;
+
+    if (!checkId && !checkLedgerIndex && !transactionHash) return undefined;
+    return { checkId, checkLedgerIndex, transactionHash };
 }
 
 export async function fetchPaymentIntentStatus(intentId: string): Promise<PaymentIntent | null> {
@@ -250,7 +382,7 @@ export async function notifyRecipientIfNeeded(params: {
     if (!acceptUrl || !declineUrl) return;
 
     const body = _t(
-        "%(sender)s wants to send you %(amount)s %(token)s. To receive it, enable a trustline.",
+        "%(sender)s wants to send you %(amount)s %(token)s. To receive it, enable a trustline and accept.",
         {
             sender: params.senderDisplayName,
             amount: params.intent.amount.toFixed(2),

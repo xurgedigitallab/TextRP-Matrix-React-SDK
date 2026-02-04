@@ -41,6 +41,7 @@ import { UserTab } from "../dialogs/UserTab";
 import SettingsStore from "../../../settings/SettingsStore";
 import CustomSelect from "./CustomSelect";
 import Modal from "../../../Modal";
+import ErrorDialog from "../dialogs/ErrorDialog";
 import RoomHeaderButtons from "../right_panel/RoomHeaderButtons";
 import E2EIcon from "./E2EIcon";
 import DecoratedRoomAvatar from "../avatars/DecoratedRoomAvatar";
@@ -101,6 +102,9 @@ import {
 } from "../../../utils/paymentVerification";
 import {
     createPaymentIntent,
+    checkTrustlineAvailable,
+    createCheckPayload,
+    extractLedgerReference,
     fetchPaymentIntentStatus,
     finalizeIntentResolution,
     getIntentPollingConfig,
@@ -274,6 +278,7 @@ function QRCodeModal({
     senderDisplayName,
     explorer,
     tokenIssuer,
+    paymentFlowType,
     onPaymentIntentCreated,
 }) {
     const [qrPng, setQrPng] = useState("");
@@ -307,7 +312,7 @@ function QRCodeModal({
                         user_id:sender
                     }),
                 }); 
-                if(checkbox){
+                if (paymentFlowType === "payment" && checkbox) {
                     // Only post to chat after the backend confirms the ledger result.
                     const verification = await verifyTransactionOnLedger({
                         txId: data?.txid,
@@ -347,6 +352,40 @@ function QRCodeModal({
                             });
                             if (intent) {
                                 // Persist the intent so the sender can recover state on reload.
+                                persistLocalIntent(intent);
+                                onPaymentIntentCreated?.(intent);
+                                await notifyRecipientIfNeeded({
+                                    client: MatrixClientPeg.get(),
+                                    intent,
+                                    senderDisplayName: senderDisplayName || senderId,
+                                });
+                            }
+                        }
+                    }
+                }
+                if (paymentFlowType === "check") {
+                    const verification = await verifyTransactionOnLedger({
+                        txId: data?.txid,
+                        payloadUuid: data?.payload_uuidv4,
+                    });
+                    if (verification.outcome === "success") {
+                        const recipientUserId =
+                            destinationId ||
+                            (typeof destination === "string" && destination.startsWith("@") ? destination : undefined);
+                        if (senderId && recipientUserId) {
+                            const ledgerReference = extractLedgerReference(verification.response, data?.txid);
+                            const intent = await createPaymentIntent({
+                                senderId,
+                                recipientId: recipientUserId,
+                                token: {
+                                    currency,
+                                    issuer: tokenIssuer || undefined,
+                                },
+                                amount,
+                                roomId: room?.roomId,
+                                ledgerReference,
+                            });
+                            if (intent) {
                                 persistLocalIntent(intent);
                                 onPaymentIntentCreated?.(intent);
                                 await notifyRecipientIfNeeded({
@@ -715,6 +754,8 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     const [paymentIntent, setPaymentIntent] = useState<PaymentIntent | null>(null);
     const [paymentIntentState, setPaymentIntentState] = useState<PaymentIntentState | null>(null);
     const intentPollRef = useRef<number | null>(null);
+    const [paymentIntentNotify, setPaymentIntentNotify] = useState<boolean>(false);
+    const [paymentFlowType, setPaymentFlowType] = useState<"payment" | "check">("payment");
     let destinations: string[] = [];
     
     const [inviteLinkCopied, setInviteLinkCopied] = useState<boolean>(false);
@@ -777,6 +818,46 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     }, [currency, props]);
     const makeTxn = async () => {
         try {
+            const paymentIntentConfig = SdkConfig.get("payment_intent");
+            if (paymentIntentConfig?.enabled && destination?.wallet && currency) {
+                const trustlineAvailable = await checkTrustlineAvailable({
+                    recipientAddress: destination.wallet,
+                    token: { currency, issuer: tokenIssuer || undefined },
+                });
+                if (trustlineAvailable === null) {
+                    Modal.createDialog(ErrorDialog, {
+                        title: _t("Unable to start payment"),
+                        description: _t("Trustline availability could not be checked. Please try again later."),
+                    });
+                    return;
+                }
+                if (trustlineAvailable === false) {
+                    // Wallets block payments without trustlines; create a Check instead.
+                    const checkPayload = await createCheckPayload({
+                        recipientAddress: destination.wallet,
+                        senderAddress: props.txnInfo.sender.address,
+                        token: { currency, issuer: tokenIssuer || undefined },
+                        amount,
+                        memos,
+                        fee: Number(calculatedFee) * 1000000,
+                        flags,
+                        destinationTag: Number(destinationTag),
+                        sourceTag: Number(sourceTag),
+                    });
+                    if (checkPayload) {
+                        setPaymentFlowType("check");
+                        setQrData(checkPayload);
+                        setShowQRModal(true);
+                        return;
+                    }
+                    Modal.createDialog(ErrorDialog, {
+                        title: _t("Unable to create check"),
+                        description: _t("The request to reserve funds could not be created. Please try again later."),
+                    });
+                    return;
+                }
+            }
+
             const res = await axios.post(`${SdkConfig.get("backend_url")}/accounts/makeTxn/${amount}`, {
                 address: destination?.wallet,
                 currency,
@@ -788,6 +869,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                 SourceTag: Number(sourceTag),
             });
             console.log("data", res?.data?.data);
+            setPaymentFlowType("payment");
             setQrData(res?.data?.data);
             setShowQRModal(true);
             // window.open(res?.data?.data?.next?.always, "_blank");
@@ -882,7 +964,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
             if (latest.state === "completed" && latest.txId && shouldResolveIntent(latest.id)) {
                 // Re-verify on-ledger success before emitting any chat confirmation.
                 const verification = await verifyTransactionOnLedger({ txId: latest.txId });
-                if (verification.outcome === "success" && props?.room?.roomId) {
+                if (verification.outcome === "success" && props?.room?.roomId && paymentIntentNotify) {
                     const recipientLabel =
                         props.room.getMember(latest.recipientId)?.name || latest.recipientId || destination?.displayName;
                     const senderId = props?.txnInfo?.senderId || client.getUserId();
@@ -936,6 +1018,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
     const handlePaymentIntentCreated = (intent: PaymentIntent) => {
         setPaymentIntent(intent);
         setPaymentIntentState(intent.state);
+        setPaymentIntentNotify(notify);
     };
     const options = ["No Direct Ripple", "Partial Payment", "Limit Quality"];
     const onAddMemo = () => {
@@ -1170,6 +1253,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
                                     <div style={{ marginTop: "12px", color: "#555" }}>
                                         <div>{_t("Waiting for recipient to accept")}</div>
                                         <div>{_t("The recipient does not yet have a trustline for this token.")}</div>
+                                        <div>{_t("Funds are reserved in a Check.")}</div>
                                         <div>{_t("A request has already been sent.")}</div>
                                     </div>
                                 )}
@@ -1224,6 +1308,7 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
             senderDisplayName={client.getUser(client.getUserId())?.displayName || client.getUserId()}
             explorer={explorer}
             tokenIssuer={tokenIssuer}
+            paymentFlowType={paymentFlowType}
             onPaymentIntentCreated={handlePaymentIntentCreated}
              />
         </>

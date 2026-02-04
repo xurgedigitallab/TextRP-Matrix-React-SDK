@@ -106,14 +106,28 @@ export interface IConfigOptions {
     };
     payment_intent?: {
         enabled?: boolean;
+        trustline_check_url?: string;
+        trustline_check_path?: string;
+        trustline_check_method?: "GET" | "POST";
+        trustline_check_fields?: string[];
+        trustline_check_true_values?: string[];
+        trustline_check_false_values?: string[];
         create_url?: string;
         create_path?: string;
+        check_create_url?: string;
+        check_create_path?: string;
+        check_create_method?: "GET" | "POST";
         status_url?: string;
         status_path?: string;
         notify_url?: string;
         notify_path?: string;
         accept_url_template?: string;
         decline_url_template?: string;
+        ledger_reference_fields?: {
+            check_id?: string;
+            check_ledger_index?: string;
+            transaction_hash?: string;
+        };
         request_timeout_ms?: number;
         polling_interval_ms?: number;
         timeout_ms?: number;
