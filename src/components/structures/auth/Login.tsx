@@ -43,6 +43,7 @@ import SdkConfig from "../../../SdkConfig";
 // Add to imports
 import XamanLogin from "../../views/auth/XamanLogin";
 import WalletConnectLogin from "../../views/auth/WalletConnectLogin";
+import CrossmarkLogin from "../../views/auth/CrossmarkLogin";
 
 // These are used in several places, and come from the js-sdk's autodiscovery
 // stuff. We define them here so that they'll be picked up by i18n.
@@ -90,7 +91,7 @@ interface IState {
     canTryLogin: boolean;
 
     flows?: LoginFlow[];
-    loginView?: 'welcome' | 'default' | 'xaman' | 'walletconnect';
+    loginView?: 'welcome' | 'default' | 'xaman' | 'walletconnect' | 'crossmark'; // which login screen to show
 
     // used for preserving form values when changing homeserver
     username: string;
@@ -1170,6 +1171,65 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                         </div>
                         <span style={{fontSize: "1.5rem", opacity: 0.6}}>→</span>
                     </button>
+
+                    {/* WalletConnect Button */}
+                    <button
+                        className="wallet-button-enhanced walletconnect"
+                        onClick={() => this.setState({ loginView: 'crossmark' })}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "1.25rem",
+                            padding: "1.75rem 2.25rem",
+                            border: "none",
+                            borderRadius: "16px",
+                            background: "white",
+                            cursor: "pointer",
+                            fontSize: "1.15rem",
+                            fontWeight: "700",
+                            color: "#2d3748",
+                            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                            boxShadow: "0 10px 30px rgba(0,0,0,0.2), 0 0 0 2px rgba(255,255,255,0.1)",
+                            position: "relative",
+                            overflow: "hidden"
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.transform = "translateY(-4px)";
+                            e.currentTarget.style.boxShadow = "0 20px 40px rgba(0,0,0,0.3), 0 0 0 3px #fc923b";
+                            e.currentTarget.style.background = "linear-gradient(135deg, #fc783b 0%, #fca35b 100%)";
+                            e.currentTarget.style.color = "white";
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2), 0 0 0 2px rgba(255,255,255,0.1)";
+                            e.currentTarget.style.background = "white";
+                            e.currentTarget.style.color = "#2d3748";
+                        }}
+                    >
+                        <div style={{
+                            width: "40px",
+                            height: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "linear-gradient(135deg, #fc583b 0%, #fc6e5b 100%)",
+                            borderRadius: "10px",
+                            fontSize: "22px"
+                        }}>
+                            💢
+                        </div>
+                        <div style={{
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-start",
+                            gap: "0.25rem"
+                        }}>
+                            <span>Crossmark</span>
+                        </div>
+                        <span style={{fontSize: "1.5rem", opacity: 0.6}}>→</span>
+                    </button>
                 </div>
 
 
@@ -1255,6 +1315,20 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         );
     };
 
+    private renderCrossmarkLogin = (): JSX.Element => {
+        const matrixClient: any = this.loginLogic.createTemporaryClient();
+        return (
+            <CrossmarkLogin
+                matrixClient={matrixClient}
+                loginLogic={this.loginLogic}
+                onLoginSuccess={this.onLoginSuccess}
+                onCancel={this.onWalletConnectCancel}
+                onAuthDataReceived={this.handleWalletConnectAuthData}
+            />
+        );
+    };
+
+
     // Handle auth data from WalletConnect for confirmation flow
     private handleWalletConnectAuthData = (authData: {
         method: 'jwt' | 'direct';
@@ -1313,6 +1387,11 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         // If we're in WalletConnect login view, show the WalletConnect component
         if (this.state.loginView === 'walletconnect') {
             return this.renderWalletConnectLogin();
+        }
+
+        // If we're in Crossmark login view, show the Crossmark component
+        if (this.state.loginView === 'crossmark') {
+            return this.renderCrossmarkLogin();
         }
 
         // Check if JWT flow is available for Xaman login option
