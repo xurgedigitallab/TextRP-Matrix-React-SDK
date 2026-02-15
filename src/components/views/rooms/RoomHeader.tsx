@@ -721,12 +721,72 @@ function XrpP2P({ props, onFinished }: any): JSX.Element {
             });
             console.log("data", res?.data);
 
-            // Check if this is a WalletConnect payment or Xaman payment
+            // Check wallet provider and route to appropriate handler
             if (res?.data?.wallet_provider === 'walletconnect') {
                 // WalletConnect flow - sign transaction client-side
                 await signAndSubmitWalletConnectTransaction(res.data.transaction, res.data.payment_id);
+
+            } else if (res?.data?.wallet_provider === 'crossmark') {
+                // ✅ NEW: Crossmark flow - sign and submit with Crossmark SDK
+                console.log("💎 Crossmark send money flow initiated");
+
+                const unsignedTx = res.data.transaction;
+                const paymentId = res.data.payment_id;
+
+                try {
+                    const sdk = (window as any).xrpl?.crossmark;
+
+                    if (!sdk) {
+                        throw new Error("Crossmark extension not found. Please install Crossmark.");
+                    }
+
+                    // Sign and submit with Crossmark
+                    console.log("💎 Requesting Crossmark to sign and submit transaction...");
+                    const submitResult = await sdk.methods.signAndSubmitAndWait(unsignedTx);
+
+                    console.log("💎 Crossmark submit result:", submitResult);
+
+                    if (submitResult.response?.data?.resp === "rejected") {
+                        throw new Error("Transaction rejected by user");
+                    }
+
+                    // Extract transaction hash
+                    const txHash = submitResult.response?.data?.resp?.result?.hash;
+
+                    if (!txHash) {
+                        throw new Error("Transaction hash not found in Crossmark response");
+                    }
+
+                    console.log("💎 Transaction hash:", txHash);
+
+                    // Verify transaction on backend
+                    const verifyResponse = await axios.post(
+                        `${SdkConfig.get("backend_url")}/payment/crossmark/verify`,
+                        {
+                            transaction_hash: txHash,
+                            payment_id: paymentId,
+                        }
+                    );
+
+                    if (verifyResponse.data.success) {
+                        alert(`✅ Payment Successful!\n\nTransaction Hash: ${txHash}`);
+
+                        // Send message to chat if notify checkbox is checked
+                        if (notify) {
+                            await sendMessageOnPaymentSuccess(room, txHash);
+                        }
+
+                        setShowQRModal(false);
+                    } else {
+                        throw new Error(verifyResponse.data.error || "Transaction verification failed");
+                    }
+                } catch (error) {
+                    console.error("💎 Crossmark send money error:", error);
+                    alert(`Payment failed: ${error.message}`);
+                }
+
             } else {
-                // Xaman flow - show QR code modal
+                // Xaman/XUMM flow - show QR code modal
                 setQrData(res?.data?.data);
                 setShowQRModal(true);
                 // window.open(res?.data?.data?.next?.always, "_blank");

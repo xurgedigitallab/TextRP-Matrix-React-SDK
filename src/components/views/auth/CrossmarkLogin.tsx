@@ -165,7 +165,31 @@ export default class WalletConnectLogin extends React.Component<IProps, IState> 
             if (loginData.display_name) {
                 this.addLog(`👤 Display name: ${loginData.display_name}`);
             }
-            
+
+            // STEP 4.5: Store Crossmark session in backend (required for payments)
+            this.addLog("💾 Storing Crossmark authentication in backend...");
+            try {
+                const backendUrl = 'https://backend.textrp.io'; // Update with actual backend URL
+                const storeResponse = await fetch(`${backendUrl}/crossmark/store-session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userAddress: address,
+                        walletProvider: 'crossmark'
+                    })
+                });
+
+                if (storeResponse.ok) {
+                    const storeData = await storeResponse.json();
+                    this.addLog(`✅ Crossmark auth stored: ${storeData.authProvider}`);
+                } else {
+                    this.addLog(`⚠️ Warning: Could not store Crossmark session (payments may not work)`);
+                }
+            } catch (storeError: any) {
+                this.addLog(`⚠️ Backend storage failed: ${storeError.message}`);
+                // Don't fail login if storage fails
+            }
+
             // STEP 5: Pass to confirmation page (or direct login)
             if (this.props.onAuthDataReceived) {
                 this.addLog("🔄 Using confirmation page flow...");
